@@ -1,14 +1,1172 @@
-<!DOCTYPE html>
+<!doctype html>
 <html>
+<head>
+<meta charset="utf-8">
+<!-- <link rel="shortcut icon" sizes="114x114" href="//s3.amazonaws.com/eventmobi-assets/eventsbyids/15925/114appIcon.png"> -->
+<title>Sizmek Creative Support</title>
+<link rel="stylesheet" href="styles/style.css" />
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+<!-- <link href="styles/font-awesome.min.css" rel="stylesheet" type="text/css"> -->
+</head>
+
 <body>
-<h1>Hello World!</h1>
-<div>
-			<textarea type="text" id="queryString" >bannerdivparent{margin-top:10%!;position:relative!;display:block!}</textarea><br>
-			<span>AddCSS</span><textarea type="text" id="queryStringScript" onClick="this.setSelectionRange(0, this.value.length)">https://secure-ds.serving-sys.com/BurstingRes/CustomScripts/PL_AddCSS_NCM.js?css1=</textarea><br>
-			<span>FB Sharer</span><textarea type="text" id="fbSharerScript" onClick="this.setSelectionRange(0, this.value.length)">https://www.facebook.com/sharer/sharer.php?u=[FB SHARE URL]&_rdc=1&_rdr</textarea><br>
+<div id="container">
+	<div id="ratio-calc">
+		<h3><b>Ratio Calculator</b></h3>
+		<div id="leftBox">
+			<b>Original Dimension</b><br>
+			<span>Width: </span><input type="number" id="r-width" class="ratioCalc" value="1920"/>
+			<span>Height: </span><input type="number" id="r-height" class="ratioCalc" value="1080"/>
+			<br><br>
+			<b>1.5x Dimension</b><br>
+			<span>Width: </span><input type="number" id="r15-width" class="ratioCalc" value="2880"/>
+			<span>Height: </span><input type="number" id="r15-height" class="ratioCalc" value="1620"/>
+			<br><br>
+			<b>2x Dimension</b><br>
+			<span>Width: </span><input type="number" id="r20-width" class="ratioCalc" value="3840"/>
+			<span>Height: </span><input type="number" id="r20-height" class="ratioCalc" value="2160"/>
+			<br><br>
+			<b>Custom Dimension</b><br>
+			<span>Width: </span><input type="number" id="p-width" class="ratioCalc" value="0"/>
+			<span>height: </span><input type="number" id="p-height" class="ratioCalc" value="0"/>
+		</div>
+		<div id="rightBox">
+			<b>Instructions</b>
+			<p>1. Enter the values for the original width & height in the Original Dimension.<br>
+			2. Enter either a new width or height in the Custom Dimension to calculate the remaining value.<br>
+			3. 1.5x and 2x Dimension are recommended for Mobile and Retina displays.<br>
+			</p>
+			<br>
+			<b>Your original aspect ratio is </b>
+			<div id="aspectRatio"><div id="aspectResult">16 : 9</div></div>
+		</div>
+	</div>
+<br>
+<br>
+<br>
+	<div id="query-string">
+		<h3><b>Query String Converter</b></h3>
+		<div>
+			<textarea type="text" id="queryString" >https://www.google.com</textarea><br>
+			<!-- <span>AddCSS</span><textarea type="text" id="queryStringScript" onClick="this.setSelectionRange(0, this.value.length)">https://secure-ds.serving-sys.com/BurstingRes/CustomScripts/PL_AddCSS_NCM.js?css1=</textarea><br>
+			<span>FB Sharer</span><textarea type="text" id="fbSharerScript" onClick="this.setSelectionRange(0, this.value.length)">https://www.facebook.com/sharer/sharer.php?u=[FB SHARE URL]&_rdc=1&_rdr</textarea><br> -->
 			<input type="button" onclick="decode()" value="Decode">
 			<input type="button" onclick="encode()" value="Encode">
 			<!--input type="button" onclick="encodeAddJS()" value="Encode & Add JS"-->
 		</div>
+
+		<div id="u-title"><b>Utility functions</b> <div id="u-plus">[+]</div></div>
+		<div id="u-content" style="display:none;">
+			bannerdivparent : "div#ebDiv"+cRand;<br>
+			banneriframediv : "div#ebIframeDiv_"+cAdID+"_"+cRand;<br>
+			banneriframe : "iframe#ebBannerIFrame_"+cAdID+"_"+cRand;<br>
+			paneldiv : "div[id^='ebAd"+cAdID+"_"+panel+"_div_']";<br>
+			panelflash : "[id^='ebAd"+cAdID+"_"+panel+"_asset_']";<br>
+			blankimg = : "img#ebBlankImg_"+cAdID+"_"+cRand;<br>
+			defaultimg : "img#ebDefaultImg_"+cAdID+"_"+cRand;<br>
+			<br>
+			<b>URL</b><br>
+			https://secure-ds.serving-sys.com/BurstingRes/CustomScripts/PL_AddCSS_NCM.js<br>
+
+			<table>
+			<tr>
+			<td>
+			Examples:<br>
+			<br>
+			(z-index CSS)<br>
+			PL_AddCSS_NCM.js?css1=div%23eyeDiv%7Bz-index%3A99999%21%7D<br>
+			<br>
+			(event-based CSS)<br>
+			PL_AddCSS_NCM.js?css1=div%23eyeDiv%7Bz-index%3A99999%21%7D&event1=after-expand[panel1]<br>
+			</td>
+			<td>
+			 Example:<br>
+			   before-collapse[panel1]<br>
+			   before-expand[panel1]<br>
+			   after-collapse[panel1]<br>
+			   after-expand[panel1]<br>
+			   ontime-collapse[panel1]<br>
+			   ontime-expand[panel1]<br>
+			</td>
+			</tr>
+			</table>
+		</div>
+	</div>
+<br>
+<br>
+<br>
+	<div id="imgGenContainer">
+	<h3><b>Backup Image Generator</b></h3>
+	<script>
+	function generateImgLink(){
+		event.preventDefault();
+		var imgWidth = $('#img-width').val();
+		var imgHeight = $('#img-height').val();
+
+		if(imgWidth == null || imgWidth == "" || imgHeight == null || imgHeight == ""){
+			alert("Please fill in width and height!");
+			return;
+		}
+
+
+		document.getElementById('imgLink').href = "http://sizmek-sea.com/creativesupport/imgGenerator/?size="+imgWidth+"x"+imgHeight;	
+
+		document.getElementById('imgLink').innerHTML = imgWidth+"x"+imgHeight;
+	}
+	</script>
+	<style>#imgGenContainer span{width: 120px; display: inline-block;}
+		#imgGenContainer{
+			display:inline-block;
+		}
+		#backupCommon{
+			display:inline-block;
+			vertical-align: top;
+		}	
+	</style>
+	<span>Image width: </span>
+	<input type="number" id="img-width" placeholder="" /><br>
+	<span>Image height: </span>
+	<input type="number" id="img-height" placeholder=""/><br>
+	<input type="submit" id="submitImg" value="Generate" onclick="generateImgLink();"><br><br>
+	<a id="imgLink" href="" target="_blank"></a>
+	
+	
+	</div>
+	<div id="backupCommon"><h3></h3></div>
+<!-- <br>
+<br>
+<br>	 -->
+	<!-- <div id="adPreviewContainer">
+	<h3><b>Ad Preview Generator</b></h3>
+	<script>
+	var urlV,pageURL, editURL;
+	function generateTestPage(){
+
+		event.preventDefault();
+		var widthV = $('#ad-width').val();
+		var heightV = $('#ad-height').val();
+		var borderV = $('#ad-border').val();
+		var posV = $('#ad-pos').val();
+		var posyV = $('#ad-posY').val();
+		var formatV = $('#ad-format').val();
+		var testTagV = $('#test-tag').val();
+		
+		var t = new Date().getTime();
+		
+		if(tagChange){
+			urlV = t.toString(36);
+			tagChange = false;
+
+			if(testTagV == null || testTagV == ""){
+				var testTag ="";
+			}else{
+				pageURL = "page="+urlV;
+				var posting = $.post("submit.php", {"url": urlV, "testTag":testTagV});
+				posting.done(function( data ) {
+					/*if(action == "close"){
+					}else{location.reload();
+					}*/
+				});
+			}
+		}
+
+		if(widthV == null || widthV == ""){
+			var width ="";
+		}else{
+			var width ="&width="+widthV;
+		}
+		if(heightV == null || heightV == ""){
+			var height ="";
+		}else{
+			var height ="&height="+heightV;
+		}
+		if(borderV == null || borderV == ""){
+			var border ="";
+		}else{
+			var border ="&border="+borderV;
+		}
+		if(posV == null || posV == ""){
+			var pos ="";
+		}else{
+			var pos ="&pos="+posV;
+		}
+		if(posyV == null || posyV == ""){
+			var posY ="";
+		}else{
+			var posY ="&posy="+posyV;
+		}
+		if(formatV == null || formatV == ""){
+			var format ="";
+		}else{
+			var format ="&format="+formatV;
+		}
+		var editable = document.getElementById("editable").checked;
+		if(editable){
+		   editURL = "&edit=yes";
+		}else{
+			editURL = "";
+		}
+		
+		document.getElementById('prevLink').href = "http://www.sizmek-sea.com/adPreview?"+pageURL+width+height+border+pos+posY+format+editURL;	
+		document.getElementById('prevLink').innerHTML = "http://www.sizmek-sea.com/adPreview?"+pageURL+width+height+border+pos+posY+format+editURL;
+	}
+		
+	function generateLink(){
+		event.preventDefault();
+		var adidV = $('#ad-adid').val();
+		var widthV = $('#ad-width').val();
+		var heightV = $('#ad-height').val();
+		var borderV = $('#ad-border').val();
+		var posV = $('#ad-pos').val();
+		var posyV = $('#ad-posY').val();
+		var formatV = $('#ad-format').val();
+		var versionV = $('#dco-version').val();
+		
+		if(adidV == null || adidV == ""){
+			//alert("Please fill in Adid!");
+			//return;
+			var adid = "";
+		}else{
+			var adid = "adid="+adidV;
+		}
+
+		if(widthV == null || widthV == ""){
+			var width ="";
+		}else{
+			var width ="&width="+widthV;
+		}
+		if(heightV == null || heightV == ""){
+			var height ="";
+		}else{
+			var height ="&height="+heightV;
+		}
+		if(borderV == null || borderV == ""){
+			var border ="";
+		}else{
+			var border ="&border="+borderV;
+		}
+		if(posV == null || posV == ""){
+			var pos ="";
+		}else{
+			var pos ="&pos="+posV;
+		}
+		if(posyV == null || posyV == ""){
+			var posY ="";
+		}else{
+			var posY ="&posy="+posyV;
+		}
+		if(formatV == null || formatV == ""){
+			var format ="";
+		}else{
+			var format ="&format="+formatV;
+		}if(versionV == null || versionV == ""){
+			var version ="";
+		}else{
+			var version ="&version="+versionV;
+		}
+		var sas = document.getElementById("sas").checked;
+		if(sas){
+			sasURL = "&platform=sas";
+		}else{
+			sasURL = "";
+		}
+		var blank = document.getElementById("blank").checked;
+		if(blank){
+			blankURL = "&bg=none";
+		}else{
+			blankURL = "";
+		}
+		document.getElementById('prevLink').href = "http://www.sizmek-sea.com/adPreview?"+adid+width+height+border+pos+posY+format+version+sasURL+blankURL;	
+		document.getElementById('prevLink').innerHTML = "http://www.sizmek-sea.com/adPreview?"+adid+width+height+border+pos+posY+format+version+sasURL+blankURL;
+	}
+		
+	function generatePreview(){
+		var testTagV = $('#test-tag').val();
+		
+		if(testTagV == null || testTagV == ""){
+			generateLink();
+		}else{
+			generateTestPage();
+		}
+	}
+	
+	</script>
+	<span>ADID: </span>
+	<input type="number" id="ad-adid" required/><input type="checkbox" id="sas" name="sas" value="sas"> SAS<img id="emoji" src="http://sizmek-sea.com/creativeSupport/lib/images/grimacing.png"><br>
+	<span>Banner width: </span>
+		<input type="number" id="ad-width" placeholder="" /><span style="width:200px;">**Leave blank for Responsive</span><br>
+	<span>Banner height: </span>
+	<input type="number" id="ad-height" placeholder=""/><span style="width:200px;">**Leave blank for Responsive</span><br>
+	<span>Border width: </span>
+	<input type="number" id="ad-border" placeholder=""/><input type="checkbox" id="blank" name="blank" value="blank"> Blank background<br>
+	<span>Ad PositionX: </span>
+	<select id="ad-pos">
+		<option value="">Center</option>
+		<option value="left">Left</option>
+		<option value="right">Right</option>
+	</select><br>
+	<span>Ad PositionY: </span>
+	<select id="ad-posY">
+		<option value="">Top</option>
+		<option value="middle">Middle</option>
+		<option value="bottom">Bottom</option>
+	</select><br>
+	<span>Ad Type: </span>
+	<select id="ad-format">
+		<option value="">Polite/Expandable</option>
+		<option value="pushdown">Pushdown</option>
+	</select><br>
+	<span>DCO Version: </span>
+	<input id="dco-version" placeholder=""/><br>
+		
+	<span>Test tag: </span>
+	<textarea type="text" id="test-tag" placeholder=""></textarea>
+		<input type="checkbox" id="editable" name="edit" value="edit"> Editable (<a href="http://www.sizmek-sea.com/adPreview/?page=jqoxs712&width=980&pos=left&edit=yes" target="_blank">Demo</a>)</a><br><br>
+		
+	<input type="submit" id="submit" value="Generate Preview" onclick="generatePreview();"><br><br>
+	<a id="prevLink" href="" target="_blank"></a>
+	</div> -->
+	
+<br>
+<br>
+<br>
+	<div id="szmk-script">
+		<h3><b>Sizmek EB script</b></h3>
+		<table>
+			<tr>
+				<td>EBLoader.js</td>
+				<td>
+					<textarea class="ebscript" type="text" onClick="this.setSelectionRange(0, this.value.length)" value='' readonly><script type="text/javascript" src="http://ds.serving-sys.com/BurstingScript/EBLoader.js"></script></textarea>
+				</td>
+			</tr>
+			<tr>
+				<td></td>
+				<td>
+					<textarea class="ebscript secure" type="text" onClick="this.setSelectionRange(0, this.value.length)" value='' readonly><script type="text/javascript" src="https://secure-ds.serving-sys.com/BurstingScript/EBLoader.js"></script></textarea>
+				</td>
+			</tr>
+			<tr>
+				<td>adkits.js</td>
+				<td>
+					<textarea class="ebscript" type="text" onClick="this.setSelectionRange(0, this.value.length)" value='' readonly><script type="text/javascript" src="http://ds.serving-sys.com/BurstingScript/adKit/adkit.js"></script></textarea>
+				</td>
+			</tr>
+			<tr>
+				<td></td>
+				<td>
+					<textarea class="ebscript secure" type="text" onClick="this.setSelectionRange(0, this.value.length)" value='' readonly><script type="text/javascript" src="https://secure-ds.serving-sys.com/BurstingScript/adKit/adkit.js"></script></textarea>
+				</td>
+			</tr>
+			<tr>
+				<td>ExpansionParams</td>
+				<td>
+					<textarea class="ebscript" type="text" onClick="this.setSelectionRange(0, this.value.length)" value='' readonly><script>try{EB.initExpansionParams(0, 0, 300, 600);}catch(e){}</script></textarea>
+				</td>
+			</tr>
+			<tr>
+				<td>EB functions</td>
+				<td>
+					<textarea class="ebfunctions" type="text"  value='' readonly>function clickthrough(){
+	EB.clickthrough();
+}</textarea>
+				</td>
+			</tr>
+			<tr>
+				<td></td>
+				<td>
+					<textarea class="ebfunctions" type="text" value='' readonly>function userActionCounter(){
+	EB.userActionCounter('CustomInteraction');
+}</textarea>
+				</td>
+			</tr>
+			<tr>
+				<td></td>
+				<td>
+					<textarea class="ebfunctions" type="text" value='' readonly>function expand(){
+	EB.expand({panelName: "expand"});
+	//EB.expand();
+}</textarea>
+				</td>
+			</tr>
+			<tr>
+				<td></td>
+				<td>
+					<textarea class="ebfunctions" type="text" value='' readonly>function collapse(){
+	EB.collapse();
+}</textarea>
+				</td>
+			</tr>
+			<tr>
+				<td>EBModulesToLoad<br>(EBloader video)</td>
+				<td>
+					<textarea class="ebscript" type="text" onClick="this.setSelectionRange(0, this.value.length)" value='' readonly><script type="text/javascript">EBModulesToLoad = ['Video', 'EBCMD'];</script></textarea>
+				</td>
+			</tr>
+			<tr>
+				<td>EBModulesToLoad<br>(Adkits video)</td>
+				<td>
+					<textarea class="ebscript" type="text" onClick="this.setSelectionRange(0, this.value.length)" value='' readonly><script type="text/javascript">EBModulesToLoad = ['Video','EBAPI','EBCMD'];</script></textarea>
+				</td>
+			</tr>
+			<tr>
+				<td>Video Metric<br>(Without SDK player)</td>
+				<td>
+					<textarea class="ebfunctions" type="text" value='' readonly>function initVideo() {
+	var videoTrackingModule = new EBG.VideoModule(video);
+}</textarea>
+				</td>
+			</tr>
+			<tr>
+				<td>Sample Adkit script.js<br>(Standard banner)</td>
+				<td>
+					<textarea class="scriptjs" type="text" onClick="this.setSelectionRange(0, this.value.length)" value='' readonly>function checkIfAdKitReady(event){
+	adkit.onReady(initializeCreative);
+}
+
+function initializeCreative(){
+	initializeGlobalVariables();
+	addEventListeners();
+}
+
+function initializeGlobalVariables(){
+	clickthrough = document.getElementById("clickthrough-button");
+}
+
+function addEventListeners(){
+	clickthrough.addEventListener("click", clickthrough);
+}
+
+function clickthrough(){
+    EB.clickthrough();
+}
+
+window.addEventListener("load", checkIfAdKitReady);
+</textarea>
+				</td>
+			</tr>
+			<tr>
+				<td>Sample EB script.js<br>(Standard banner)</td>
+				<td>
+					<textarea class="scriptjs" type="text" onClick="this.setSelectionRange(0, this.value.length)" value='' readonly>function initEB() {
+    if (!EB.isInitialized()) {
+        EB.addEventListener(EBG.EventName.EB_INITIALIZED, startAd);
+    } else {
+        startAd();
+    }
+}
+
+function startAd() {
+    addEventListeners();
+}
+
+function addEventListeners() {
+    document.getElementById("clickthrough-button").addEventListener("click", clickthrough);
+}
+
+function clickthrough() {
+    EB.clickthrough();
+}
+
+window.addEventListener("load", initEB);
+</textarea>
+				</td>
+			</tr>
+			</table>
+	</div>
+<div id="javascript">
+	<h3><b>Javascript</b></h3>
+		<table>
+			<tr>
+				<td>jQuery 3.3.1 min</td>
+				<td>
+					<textarea class="ebscript secure" type="text" onClick="this.setSelectionRange(0, this.value.length)" value='' readonly><script type="text/javascript" src="https://code.jquery.com/jquery-3.3.1.min.js"></script></textarea>
+				</td>
+			</tr>
+			<tr>
+				<td>jQuery 2.2.4 min</td>
+				<td>
+					<textarea class="ebscript secure" type="text" onClick="this.setSelectionRange(0, this.value.length)" value='' readonly><script type="text/javascript" src="https://code.jquery.com/jquery-2.2.4.min.js"></script></textarea>
+				</td>
+			</tr>
+			<tr>
+				<td>jQuery 1.12.4 min</td>
+				<td>
+					<textarea class="ebscript secure" type="text" onClick="this.setSelectionRange(0, this.value.length)" value='' readonly><script type="text/javascript" src="https://code.jquery.com/jquery-1.12.4.min.js"></script></textarea>
+				</td>
+			</tr>
+			<tr>
+				<td>jQuery UI 1.12.1 min</td>
+				<td>
+					<textarea class="ebscript secure" type="text" onClick="this.setSelectionRange(0, this.value.length)" value='' readonly><script type="text/javascript" src="https://code.jquery.com/ui/1.12.1/jquery-ui.min.js"></script></textarea>
+				</td>
+			</tr>
+			<tr>
+				<td>Add Class</td>
+				<td>
+					<textarea class="ebfunctions" type="text"  value='' readonly>document.getElementById("body").classList.add('show');</textarea>
+				</td>
+			</tr>
+			<tr>
+				<td>Remove Class</td>
+				<td>
+					<textarea class="ebfunctions" type="text"  value='' readonly>document.getElementById("body").classList.remove('show');</textarea>
+				</td>
+			</tr>
+			<tr>
+				<td>Toggle Class</td>
+				<td>
+					<textarea class="ebfunctions" type="text"  value='' readonly>document.getElementById("body").classList.toggle('show');</textarea>
+				</td>
+			</tr>
+			<tr>
+				<td>Style element</td>
+				<td>
+					<textarea class="ebfunctions" type="text"  value='' readonly>document.getElementById("body").style.display = "none";</textarea>
+				</td>
+			</tr>
+			<tr>
+				<td>HTML5 innerHTML</td>
+				<td>
+					<textarea class="ebfunctions" type="text"  value='' readonly>document.getElementById("body").innerHTML = "New Content";</textarea>
+				</td>
+			</tr>
+			<tr>
+				<td>To lower case</td>
+				<td>
+					<textarea class="ebfunctions" type="text"  value='' readonly>var str = "Hello World!";
+var res = str.toLowerCase();</textarea>
+				</td>
+			</tr>
+			<tr>
+				<td>To UPPER Case</td>
+				<td>
+					<textarea class="ebfunctions" type="text"  value='' readonly>var str = "Hello World!";
+var res = str.toUpperCase();</textarea>
+				</td>
+			</tr>
+	</table>
+</div>
+	<div id="html">
+		<h3><b>HTML</b></h3>
+		<table>
+			<tr>
+				<td>Meta document language</td>
+				<td>
+					<textarea class="ebscript" type="text" onClick="this.setSelectionRange(0, this.value.length)" value='' readonly><meta charset="UTF-8"></textarea>
+				</td>
+			</tr>
+			<tr>
+				<td>Meta viewport mobile</td>
+				<td>
+					<textarea class="ebscript" type="text" onClick="this.setSelectionRange(0, this.value.length)" value='' readonly><meta name="viewport" content="width=device-width, initial-scale=1.0"></textarea>
+				</td>
+			</tr>
+			<tr>
+				<td>Table</td>
+				<td>
+					<textarea class="htmlScript" type="text" onClick="this.setSelectionRange(0, this.value.length)" value='' readonly>
+<table>
+	<tr>
+		<td></td>
+		<td></td>
+	</tr>
+</table></textarea>
+				</td>
+			</tr>
+			</table>
+	</div>
+	
+	
+</div>
+<script>
+var tagChange = true;
+$( document ).ready(function() {
+    console.log( "ready!" );
+
+$('#test-tag').on('input propertychange paste', function() {
+		tagChange = true;
+});
+	
+$('#queryString').on('input propertychange paste', function() {
+	var addCSS = "https://secure-ds.serving-sys.com/BurstingRes/CustomScripts/PL_AddCSS_NCM.js?css1=";
+	var obj = document.getElementById('queryString');
+	var unencoded = obj.value;
+	var customScript = encodeURIComponent(unencoded).replace(/'/g,"%27").replace(/"/g,"%22").replace("%26","&").replace("%3D","=").replace("%5B","[").replace("%5D","]").replace("%24","$");	
+	document.getElementById("queryStringScript").value = addCSS+customScript;
+	
+	
+	var sharer1 = "https://www.facebook.com/sharer/sharer.php?u=";
+	var sharer2 = "&_rdc=1&_rdr";
+	document.getElementById("fbSharerScript").value = sharer1+customScript+sharer2;
+});
+
+$( "#r-width" ).keyup(function() {
+	calcRatio1();
+	calcARC();
+	calcRetina();
+	//console.log( "width" );
+	//console.log( r1 );
+});
+
+$( "#r-height" ).keyup(function() {
+	calcRatio1();
+	calcARC();
+	calcRetina();
+});
+
+$( "#p-width" ).keyup(function() {
+	calcRatio1();
+});
+
+$( "#p-height" ).keyup(function() {
+	calcRatio2();
+});
+
+function calcRatio1(){
+	var a = $( "#r-width" ).val();
+	var b = $( "#r-height" ).val();
+	var c = $( "#p-width" ).val();
+	var d = $( "#p-height" ).val();
+
+	var r1r = (b/a)*c;
+	var r1 = r1r.toFixed(0);
+	$( "#p-height" ).val( r1 );
+}
+
+function calcRatio2(){
+	var a = $( "#r-width" ).val();
+	var b = $( "#r-height" ).val();
+	var c = $( "#p-width" ).val();
+	var d = $( "#p-height" ).val();
+
+	var r1r = (a/b)*d;
+	var r1 = r1r.toFixed(0);
+	$( "#p-width" ).val( r1 );
+}
+	
+var gcd = function(a, b) {
+		if ( ! b) {
+			return a;
+		}
+
+		return gcd(b, a % b);
+		};
+	
+function calcARC(){
+	
+	var a = $( "#r-width" ).val();
+	var b = $( "#r-height" ).val();
+	var GCD = gcd(a, b);
+	
+	var aspectA = a/GCD;
+	var aspectB = b/GCD;
+	$( "#aspectResult" ).text( aspectA +" : " + aspectB );
+	//console.log(aspectA);
+	//console.log(aspectB);
+}
+
+function calcRetina(){
+	var a = $( "#r-width" ).val();
+	var b = $( "#r-height" ).val();
+	document.getElementById("r15-width").value = a*1.5;
+	document.getElementById("r15-height").value = b*1.5;
+	document.getElementById("r20-width").value = a*2;
+	document.getElementById("r20-height").value = b*2;
+}
+
+
+$( "#u-title" ).click(function() {
+  $( "#u-content" ).toggle("slow");
+  $('#u-plus').text(($('#u-plus').text() == '[-]') ? '[+]' : '[-]');
+});
+
+});
+
+function encodeAddJS() {
+	var obj = document.getElementById('queryString');
+	var unencoded = obj.value;
+	obj.value = "https://secure-ds.serving-sys.com/BurstingRes/CustomScripts/PL_AddCSS_NCM.js?css1="+encodeURIComponent(unencoded).replace(/'/g,"%27").replace(/"/g,"%22").replace("%26","&").replace("%3D","=").replace("%5B","[").replace("%5D","]").replace("%24","$");	
+}
+function encode() {
+	var obj = document.getElementById('queryString');
+	var unencoded = obj.value;
+	obj.value = encodeURIComponent(unencoded).replace(/'/g,"%27").replace(/"/g,"%22").replace("%26","&").replace("%3D","=").replace("%5B","[").replace("%5D","]").replace("%24","$");
+}
+function decode() {
+	var obj = document.getElementById('queryString');
+	var encoded = obj.value;
+	obj.value = decodeURIComponent(encoded.replace(/\+/g,  " "));
+}
+
+
+
+function expandNav(x) {
+    //x.classList.toggle("change");
+	document.getElementById("menu").classList.toggle("change");
+	document.getElementById("menuNav").classList.toggle("change");
+	document.getElementById("menuNavBg").classList.toggle("change");
+}
+
+</script>
+<style>
+	html, body {
+	margin: 0;
+	padding: 0;
+	font-family: Arial, Helvetica, sans-serif;
+	font-size: 14px;
+}
+select, input, textarea{
+	margin-bottom: 2px;
+}
+.linkTransfer #container {
+	width: 80%;
+	left: 0;
+	right: 0;
+	margin: auto;
+	max-width: 80%;
+    overflow: hidden;
+}
+.linkTransfermobile #container {
+	width: 90%;
+}
+
+.ltLinks{
+	display: inline-block;
+    width: 85%;
+}
+
+#menu{
+	cursor:pointer;
+	    z-index: 10;
+}
+
+#menuNav {
+    display: none;
+}
+
+#menuNav.change {
+    display: block;
+    position: absolute;
+    top: 50px;
+    width: 200px;
+    max-width: 875px;
+    background-color: #ffffff;
+    padding: 0.6%;
+    left: 0;
+    z-index: 10;
+	border: 3px solid rgba(0,0,0,0.2);
+}
+#menuNavBg.change{
+	width: 100%;
+    height: 100vh;
+    position: fixed;
+    left: 0;
+    top: 0;
+	display:none;
+}
+#menuNavBg.change{
+	display:block;
+}
+#menuNav a{
+	text-decoration: unset;
+    display: inline-block;
+    width: 100%;
+    text-align: left;
+    font-size: 15px;
+    line-height: 25px;
+    border-bottom: 1px solid;
+    padding: 8px 0;
+    color: #000000;
+}
+#menuNav a:hover{
+	font-weight: 600;
+    font-size: 16px;
+	
+}
+
+#menuNav a.last{
+	    border-bottom: 0;
+    padding-bottom: 6px;
+}
+.bar1, .bar2, .bar3 {
+    width: 23px;
+    height: 3px;
+    background-color: #ffffff;
+    margin: 5px 0;
+    transition: 0.4s;
+}
+.change .bar1 {
+    -webkit-transform: rotate(-45deg) translate(-5px, 3px);
+    transform: rotate(-45deg) translate(-5px, 3px);
+}
+.change .bar2 {
+    opacity: 0;
+}
+.change .bar3 {
+    -webkit-transform: rotate(45deg) translate(-8px, -6.5px);
+    transform: rotate(45deg) translate(-8px, -6.5px);
+}
+
+#linkSubmit{
+	margin:10px 0;
+}
+#colorPicker{
+	position: relative;
+	margin: 10px 0;
+}
+#colorPicker .color{
+	display: inline-block;
+    width: auto;
+    position: relative;
+}
+#colorPicker .radio{
+    opacity: 0;
+    cursor: pointer;
+}
+.checkmark{
+	position: absolute;
+    top: 0;
+    left: 0;
+    height: 17px;
+    width: 17px;
+    background-color: #fff;
+    border: 0.5px solid rgba(0,0,0,0.1);
+}
+
+/* On mouse-over, add a grey background color */
+.color:hover input ~ .checkmark {
+    border: 1px solid;
+}
+
+/* When the radio button is checked, add a blue background */
+.color input:checked ~ .checkmark {
+    border: 1px solid;
+}
+
+/* Create the indicator (the dot/circle - hidden when not checked) */
+.checkmark:after {
+    content: "";
+    position: absolute;
+    display: none;
+}
+/* Show the indicator (dot/circle) when checked */
+.color input:checked ~ .checkmark:after {
+    display: block;
+}
+
+/* Style the indicator (dot/circle) */
+.color .checkmark:after {
+ 	top: 9px;
+	left: 9px;
+	width: 8px;
+	height: 8px;
+}
+.red{background-color: #ff0000;}
+.green{background-color: #7fff00;}
+.blue{background-color: #0000ff;}
+.yellow{background-color: #ffff00;}
+.pink{background-color: #ffc0cb;}
+.orange{background-color: #ff8c00;}
+.purple{background-color: #9370db;}
+.black{background-color: #000000;}
+
+.indicator{
+	top: 0;
+    left: 0px;
+    height: 13px;
+    width: 13px;
+    display: inline-block;
+    margin-right: 5px;
+	text-align: center;
+    line-height: 12px;
+    color: #FFF;
+}
+.indicator.white{
+	color: #000;
+}
+textarea {
+	width: 100%;
+	height: 90px;
+}
+td {
+	padding: 2px 5px 5px 2px;
+}
+#queryString {
+	width: 800px;
+	height: 200px;
+}
+#queryStringScript, #fbSharerScript{
+	width: 680px;
+	height: 35px;
+}
+#u-title {
+	cursor: pointer;
+	width: 200px;
+}
+#u-plus {
+	font-weight: bold;
+	display: inline;
+	font-size: 16px;
+}
+.ratioCalc {
+	width: 60px;
+	margin: 5px 20px 10px 0;
+}
+#leftBox {
+	width: 300px;
+	position: relative;
+	display: inline-block;
+}
+#rightBox {
+	position: absolute;
+	display: inline-block;
+}
+#aspectRatio {
+	width: 300px;
+	position: relative;
+}
+#container, #customContainer {
+	width: 1000px;
+	margin: auto;
+}
+#customContainer #customTagField{
+	height: 200px;
+}
+.ebscript {
+	width: 750px;
+	height: 18px;
+	font-size: 12px;
+	padding: 5px;
+	overflow: hidden;
+}
+.secure.ebscript {
+	width: 746px;
+}
+.ebfunctions {
+	width: 500px;
+	height: 55px;
+	font-size: 12px;
+	padding: 5px;
+	overflow: hidden;
+}
+.scriptjs {
+	width: 750px;
+	height: 315px;
+	font-size: 12px;
+	padding: 5px;
+	overflow: hidden;
+}
+.secure {
+	border: 3px solid springgreen;
+}
+.htmlScript{
+	width: 500px;
+	height: 120px;
+	font-size: 12px;
+	padding: 5px;
+	overflow: hidden;
+}
+#header {
+	background-color: #0068ff;
+	height: 50px;
+	text-align: center;
+}
+#menu{
+	float: left;
+    position: relative;
+    display: block;
+	color: white;
+}
+#menu i {
+	cursor:pointer;
+}
+#logo {
+	height: 30px;
+	padding: 10px;
+	width: calc(100% - 20px);
+	max-width: 1000px;
+    margin: auto;
+	position: relative;
+}
+#logo img {
+	height: 100%;
+	width: auto;
+}
+#creativeSupport {
+	display: inline-block;
+	color: #fff;
+	font-weight: 600;
+}
+.centered {
+	top: 0;
+	right: 0;
+	bottom: 0;
+	left: 0;
+	position: absolute;
+}
+div#expand {
+	width: 100%;
+    display: none;
+    text-align: center;
+    padding: 10px 0;
+}
+#input-container{
+	margin-top: 10px;
+}
+#qrcode {
+	width: 100%;
+	height: 100%;
+	background-color: rgba(255,255,255,0.8);
+	display: none;
+	position: fixed;
+}
+#qrcode img {
+	width: 250px;
+	height: 250px;
+	left: 0;
+	right: 0;
+	top: 0;
+	bottom: 0;
+	position: absolute;
+	margin: auto;
+}
+.genQR {
+	display: inline-block;
+	vertical-align: bottom;
+	cursor: pointer;
+}
+.genQR.hidden {
+	display: none;
+}
+.linkTag {
+	overflow: hidden;
+	white-space: nowrap;
+	text-overflow: ellipsis;
+	width: 750px;
+	display: inline-block;
+}
+.mobile .linkTag {
+	width: 290px;
+}
+#getURL {
+	width: 80px;
+	height: 20px;
+	top: 0;
+	position: fixed;
+	right: 10%;
+	cursor: pointer;
+	text-align: center;
+	color: white;
+	padding: 5px 0;
+	background-color: #0068ff;
+}
+#qrcode.visible {
+	display: block;
+}
+div#latest {
+	margin: 30px 0;
+	font-size: 18px;
+	display: inline-block;
+	width: calc(100% - 20px);
+}
+#urlTable {
+	font-size: 14px;
+	margin: auto;
+	width: 100%;
+}
+#urlTable td {
+	padding: 2px 0;
+}
+#test-tag{
+	    width: 350px;
+    height: 71px;
+}
+.mobile #urlTable td a{
+	width: calc(100% - 19px);
+	
+}
+#dco-version{
+	width: 350px;
+}
+@media only screen and (max-width: 768px) {
+#getURL {
+	display: none;
+}
+#urlTable {
+	font-size: 12px;
+	margin: auto;
+}
+#urlTable td a{
+	max-width: 300px;
+    /*display: block;*/
+    text-overflow: ellipsis;
+    overflow: hidden;
+    white-space: nowrap;
+	width: calc(100% - 77px);
+    display: inline-block;
+}
+	
+html,body{
+	overflow-x:hidden;
+}
+}
+
+/* tag Wrapper*/
+#placementTag{
+	min-width: 500px;
+    min-height: 100px;
+}
+#textbox{
+	width: 100%;
+	height: 200px;
+	display: block;
+}
+	
+#create{
+	display:block;
+}
+.linkTransfer.mobile i {
+  border: solid black;
+  border-width: 0 3px 3px 0;
+  display: inline-block;
+  padding: 3px;
+}
+
+.right {
+    transform: rotate(-45deg);
+    -webkit-transform: rotate(-45deg);
+}
+
+.left {
+    transform: rotate(135deg);
+    -webkit-transform: rotate(135deg);
+}
+
+.up {
+    transform: rotate(-135deg);
+    -webkit-transform: rotate(-135deg);
+}
+
+.down {
+    transform: rotate(45deg);
+    -webkit-transform: rotate(45deg);
+}
+
+#adPreviewContainer span,#query-string span{
+			width: 120px;
+    		display: inline-block;
+			/*height: 40px;*/
+    		vertical-align: middle;
+			}
+			#query-string span{
+			height: 40px;
+			}
+			#emoji{
+			width: 16px;
+			height: 16px;
+			vertical-align: text-top;
+			}
+</style>
 </body>
 </html>
