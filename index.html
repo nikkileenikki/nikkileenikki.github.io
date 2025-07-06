@@ -2,11 +2,10 @@
 <html>
 <head>
 <meta charset="utf-8">
-<!-- <link rel="shortcut icon" sizes="114x114" href="//s3.amazonaws.com/eventmobi-assets/eventsbyids/15925/114appIcon.png"> -->
 <title>Creative Support</title>
+<link rel="stylesheet" href="styles/style.css" />
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
-<!-- <link href="styles/font-awesome.min.css" rel="stylesheet" type="text/css"> -->
 </head>
 
 <body>
@@ -330,174 +329,31 @@
 <br>
 <br>
 <br>
-	<div id="szmk-script">
-		<h3><b>Sizmek EB script</b></h3>
-		<table>
-			<tr>
-				<td>EBLoader.js</td>
-				<td>
-					<textarea class="ebscript" type="text" onClick="this.setSelectionRange(0, this.value.length)" value='' readonly><script type="text/javascript" src="http://ds.serving-sys.com/BurstingScript/EBLoader.js"></script></textarea>
-				</td>
-			</tr>
-			<tr>
-				<td></td>
-				<td>
-					<textarea class="ebscript secure" type="text" onClick="this.setSelectionRange(0, this.value.length)" value='' readonly><script type="text/javascript" src="https://secure-ds.serving-sys.com/BurstingScript/EBLoader.js"></script></textarea>
-				</td>
-			</tr>
-			<tr>
-				<td>adkits.js</td>
-				<td>
-					<textarea class="ebscript" type="text" onClick="this.setSelectionRange(0, this.value.length)" value='' readonly><script type="text/javascript" src="http://ds.serving-sys.com/BurstingScript/adKit/adkit.js"></script></textarea>
-				</td>
-			</tr>
-			<tr>
-				<td></td>
-				<td>
-					<textarea class="ebscript secure" type="text" onClick="this.setSelectionRange(0, this.value.length)" value='' readonly><script type="text/javascript" src="https://secure-ds.serving-sys.com/BurstingScript/adKit/adkit.js"></script></textarea>
-				</td>
-			</tr>
-			<tr>
-				<td>ExpansionParams</td>
-				<td>
-					<textarea class="ebscript" type="text" onClick="this.setSelectionRange(0, this.value.length)" value='' readonly><script>try{EB.initExpansionParams(0, 0, 300, 600);}catch(e){}</script></textarea>
-				</td>
-			</tr>
-			<tr>
-				<td>EB functions</td>
-				<td>
-					<textarea class="ebfunctions" type="text"  value='' readonly>function clickthrough(){
-	EB.clickthrough();
-}</textarea>
-				</td>
-			</tr>
-			<tr>
-				<td></td>
-				<td>
-					<textarea class="ebfunctions" type="text" value='' readonly>function userActionCounter(){
-	EB.userActionCounter('CustomInteraction');
-}</textarea>
-				</td>
-			</tr>
-			<tr>
-				<td></td>
-				<td>
-					<textarea class="ebfunctions" type="text" value='' readonly>function expand(){
-	EB.expand({panelName: "expand"});
-	//EB.expand();
-}</textarea>
-				</td>
-			</tr>
-			<tr>
-				<td></td>
-				<td>
-					<textarea class="ebfunctions" type="text" value='' readonly>function collapse(){
-	EB.collapse();
-}</textarea>
-				</td>
-			</tr>
-			<tr>
-				<td>EBModulesToLoad<br>(EBloader video)</td>
-				<td>
-					<textarea class="ebscript" type="text" onClick="this.setSelectionRange(0, this.value.length)" value='' readonly><script type="text/javascript">EBModulesToLoad = ['Video', 'EBCMD'];</script></textarea>
-				</td>
-			</tr>
-			<tr>
-				<td>EBModulesToLoad<br>(Adkits video)</td>
-				<td>
-					<textarea class="ebscript" type="text" onClick="this.setSelectionRange(0, this.value.length)" value='' readonly><script type="text/javascript">EBModulesToLoad = ['Video','EBAPI','EBCMD'];</script></textarea>
-				</td>
-			</tr>
-			<tr>
-				<td>Video Metric<br>(Without SDK player)</td>
-				<td>
-					<textarea class="ebfunctions" type="text" value='' readonly>function initVideo() {
-	var videoTrackingModule = new EBG.VideoModule(video);
-}</textarea>
-				</td>
-			</tr>
-			<tr>
-				<td>Sample Adkit script.js<br>(Standard banner)</td>
-				<td>
-					<textarea class="scriptjs" type="text" onClick="this.setSelectionRange(0, this.value.length)" value='' readonly>function checkIfAdKitReady(event){
-	adkit.onReady(initializeCreative);
-}
-
-function initializeCreative(){
-	initializeGlobalVariables();
-	addEventListeners();
-}
-
-function initializeGlobalVariables(){
-	clickthrough = document.getElementById("clickthrough-button");
-}
-
-function addEventListeners(){
-	clickthrough.addEventListener("click", clickthrough);
-}
-
-function clickthrough(){
-    EB.clickthrough();
-}
-
-window.addEventListener("load", checkIfAdKitReady);
-</textarea>
-				</td>
-			</tr>
-			<tr>
-				<td>Sample EB script.js<br>(Standard banner)</td>
-				<td>
-					<textarea class="scriptjs" type="text" onClick="this.setSelectionRange(0, this.value.length)" value='' readonly>function initEB() {
-    if (!EB.isInitialized()) {
-        EB.addEventListener(EBG.EventName.EB_INITIALIZED, startAd);
-    } else {
-        startAd();
-    }
-}
-
-function startAd() {
-    addEventListeners();
-}
-
-function addEventListeners() {
-    document.getElementById("clickthrough-button").addEventListener("click", clickthrough);
-}
-
-function clickthrough() {
-    EB.clickthrough();
-}
-
-window.addEventListener("load", initEB);
-</textarea>
-				</td>
-			</tr>
-			</table>
-	</div>
 <div id="javascript">
 	<h3><b>Javascript</b></h3>
 		<table>
 			<tr>
-				<td>jQuery 3.3.1 min</td>
+				<td>jQuery 3.7.1 min</td>
 				<td>
-					<textarea class="ebscript secure" type="text" onClick="this.setSelectionRange(0, this.value.length)" value='' readonly><script type="text/javascript" src="https://code.jquery.com/jquery-3.3.1.min.js"></script></textarea>
+					<textarea class="ebscript secure" type="text" onClick="this.setSelectionRange(0, this.value.length)" value='' readonly><script src="https://code.jquery.com/jquery-3.7.1.min.js"></script></textarea>
 				</td>
 			</tr>
 			<tr>
-				<td>jQuery 2.2.4 min</td>
+				<td>GSAP</td>
 				<td>
-					<textarea class="ebscript secure" type="text" onClick="this.setSelectionRange(0, this.value.length)" value='' readonly><script type="text/javascript" src="https://code.jquery.com/jquery-2.2.4.min.js"></script></textarea>
+					<textarea class="ebscript secure" type="text" onClick="this.setSelectionRange(0, this.value.length)" value='' readonly><script src="https://cdn.jsdelivr.net/npm/gsap@3.13.0/dist/gsap.min.js"></script></script></textarea>
 				</td>
 			</tr>
 			<tr>
-				<td>jQuery 1.12.4 min</td>
+				<td>GSAP - Draggable</td>
 				<td>
-					<textarea class="ebscript secure" type="text" onClick="this.setSelectionRange(0, this.value.length)" value='' readonly><script type="text/javascript" src="https://code.jquery.com/jquery-1.12.4.min.js"></script></textarea>
+					<textarea class="ebscript secure" type="text" onClick="this.setSelectionRange(0, this.value.length)" value='' readonly><script src="https://cdn.jsdelivr.net/npm/gsap@3.13.0/dist/Draggable.min.js"></script></textarea>
 				</td>
 			</tr>
 			<tr>
-				<td>jQuery UI 1.12.1 min</td>
+				<td>Lottie web</td>
 				<td>
-					<textarea class="ebscript secure" type="text" onClick="this.setSelectionRange(0, this.value.length)" value='' readonly><script type="text/javascript" src="https://code.jquery.com/ui/1.12.1/jquery-ui.min.js"></script></textarea>
+					<textarea class="ebscript secure" type="text" onClick="this.setSelectionRange(0, this.value.length)" value='' readonly><script src="https://cdnjs.cloudflare.com/ajax/libs/lottie-web/5.10.0/lottie.min.js"></script></textarea>
 				</td>
 			</tr>
 			<tr>
@@ -531,6 +387,14 @@ window.addEventListener("load", initEB);
 				</td>
 			</tr>
 			<tr>
+				<td>HTML5 Video</td>
+				<td>
+					<textarea class="ebfunctions" type="text"  value='' readonly><video id="video" class="video" controls autoplay muted playsinline>
+    <source src="video.mp4" type="video/mp4">
+</video></textarea>
+				</td>
+			</tr>
+			<tr>
 				<td>To lower case</td>
 				<td>
 					<textarea class="ebfunctions" type="text"  value='' readonly>var str = "Hello World!";
@@ -544,6 +408,54 @@ var res = str.toLowerCase();</textarea>
 var res = str.toUpperCase();</textarea>
 				</td>
 			</tr>
+			<tr>
+				<td>jQuery.html</td>
+				<td>
+					<textarea class="ebfunctions" type="text"  value='' readonly>$("#text1").html("Hello world!");</textarea>
+				</td>
+			</tr>
+			<tr>
+				<td>jQuery video</td>
+				<td>
+					<textarea class="ebfunctions" type="text"  value='' readonly>$('#video1').get(0).play();
+$('#video1').get(0).pause();</textarea>
+				</td>
+			</tr>
+			 <tr>
+				<td>jQuery Mouseenter</td>
+				<td>
+					<textarea class="ebfunctions" type="text"  value='' readonly>$("#container").on("mouseenter", function(e){});</textarea>
+				</td>
+			</tr>
+			<tr>
+				<td>jQuery Mouseleave</td>
+				<td>
+					<textarea class="ebfunctions" type="text"  value='' readonly>$("#container").on("mouseleave", function(e){});</textarea>
+				</td>
+			</tr>
+			<tr>
+				<td>jQuery Click</td>
+				<td>
+					<textarea class="ebfunctions" type="text"  value='' readonly>$('.clicktag').on("click", function(){});</textarea>
+				</td>
+			</tr>
+			<tr>
+				<td>GSAP Timeline</td>
+				<td>
+					<textarea class="ebfunctions" type="text"  value='' readonly>tl
+.set('#container', {autoAlpha:1},"start")
+.to('#frame1', {autoAlpha:1},"start+=0.1")</textarea>
+				</td>
+			</tr>
+			 <tr>
+				<td>Preload files</td>
+				<td>
+					 <textarea class="ebfunctions" type="text"  value='' readonly>function preloadFiles(){
+        function startPreload(){function t(){e===a-1?r[a]():e++}var e=0,n=new Array,a=startPreload.arguments.length-1,r=startPreload.arguments;for(i=0;i<a;i++)n[i]=new Image,n[i].src=startPreload.arguments[i],addEvent(n[i],"load",t)}function _(t){return document.querySelector(t)}function addEvent(t,e,n){t.addEventListener?t.addEventListener(e,n,!1):t.attachEvent&&t.attachEvent("on"+e,n)}function removeEvent(t,e,n){t.addEventListener?t.removeEventListener(e,n,!1):t.attachEvent&&t.detachEvent("on"+e,n)}
+		startPreload('logo.png'startAnim)
+    }</textarea>
+				</td>
+			 </tr>
 	</table>
 </div>
 	<div id="html">
