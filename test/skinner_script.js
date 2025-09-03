@@ -1,9 +1,9 @@
-console.log("Git loaddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd")
+console.log("Git testtttttttttttttttttttttttttttttttttttttttttt")
   setTimeout(() => {
     function updateSize2() {
       centerWidth = document.getElementById('center').offsetWidth;
       centerHeight = document.getElementById('center').offsetHeight;
-      panelWidth = ((window.innerWidth*0.8) - centerWidth) / 2;
+      panelWidth = (innerWidth - (centerWidth/0.8)) / 2;
       panelHeight = centerHeight + 500;
       gsap.set(".left, .right", { width: panelWidth });
       const leftPanelContent = document.querySelector(".left #image2");
@@ -19,6 +19,9 @@ console.log("Git loadddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd
         rightPanelContent.style.top = "40px";
       }  console.log("resize");    
     }
+
   window.removeEventListener("resize", updateSize);
   window.addEventListener("resize", updateSize2);
+
+
   }, 3000);
