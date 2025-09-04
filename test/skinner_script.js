@@ -3,7 +3,7 @@ console.log("Git testtttttttttttttttttttttttttttttttttttttttttt")
     function updateSize2() {
       centerWidth = document.getElementById('center').offsetWidth;
       centerHeight = document.getElementById('center').offsetHeight;
-      panelWidth = (innerWidth - (centerWidth/0.8)) / 2;
+      panelWidth = (window.innerWidth - (centerWidth/0.8)) / 2;
       panelHeight = centerHeight + 500;
       gsap.set(".left, .right", { width: panelWidth });
       const leftPanelContent = document.querySelector(".left #image2");
