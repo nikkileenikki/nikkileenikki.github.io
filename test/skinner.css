@@ -30,7 +30,7 @@ body {
 .skinner-container {
     position: fixed;
     width: 100%;
-    height: 100vh;
+    height: 100%;
     display: grid;
     grid-template-rows: 250px 1fr 200px;
     /* Top = 250px */
@@ -167,7 +167,7 @@ body {
     grid-area: left;
     position: fixed;
     width: 100%;
-    height: 100vh;
+    height: 100%;
     top: 0;
     left: 0;
     opacity: 0;
@@ -188,7 +188,7 @@ body {
     width: 100%;
     height: 720px;
     margin: auto;
-    top: 180px;
+    top: 0px;
 }
 
 .left .content img,
@@ -202,6 +202,7 @@ body {
 .right .content .title {
     left: 0;
     right: 0;
+    top: 80px;
 }
 
 .left .content .price {
@@ -283,7 +284,7 @@ body {
     animation-name: slideInRight;
     position: fixed;
     width: 100%;
-    height: 100vh;
+    height: 100%;
     top: 0;
     right: 0;
     opacity: 0;
@@ -384,8 +385,8 @@ body {
 
     .left .content,
     .right .content {
-        top: 100px;
-        height: 650px;
+        top: 0px;
+        height: 100%;
     }
 
     .right .content .price {
