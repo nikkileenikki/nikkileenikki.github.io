@@ -1,0 +1,265 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Live OTT Overlay (Web)</title>
+
+  <!-- Video.js -->
+  <link
+    href="https://vjs.zencdn.net/8.10.0/video-js.css"
+    rel="stylesheet"
+  />
+
+  <style>
+    body {
+      margin: 0;
+      background: #000;
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial;
+    }
+
+    .player-wrap {
+      position: relative;
+      width: 100vw;
+      height: 100vh;
+    }
+
+    #livePlayer {
+      width: 100%;
+      height: 100%;
+    }
+
+    /* Overlay */
+    #adOverlay {
+      position: absolute;
+      inset: 0;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      background: rgba(0, 0, 0, 0.35);
+      z-index: 10;
+      pointer-events: none;
+    }
+
+    #adBox {
+      position: relative;
+      width: min(80vw, 720px);
+      aspect-ratio: 16 / 9;
+      background: #000;
+      border-radius: 16px;
+      overflow: hidden;
+      pointer-events: auto;
+      box-shadow: 0 20px 50px rgba(0,0,0,.6);
+    }
+
+    #adVideo {
+      width: 100%;
+      height: 100%;
+    }
+
+    #adUI {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      padding: 12px;
+      color: #fff;
+      pointer-events: none;
+    }
+
+    #adTop {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    #badge {
+      background: rgba(0,0,0,.6);
+      padding: 6px 10px;
+      border-radius: 999px;
+      font-size: 12px;
+    }
+
+    #skipBtn {
+      pointer-events: auto;
+      display: none;
+      background: rgba(255,255,255,.15);
+      border: 1px solid rgba(255,255,255,.25);
+      color: #fff;
+      padding: 6px 12px;
+      border-radius: 999px;
+      cursor: pointer;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="player-wrap">
+    <video
+      id="livePlayer"
+      class="video-js vjs-default-skin"
+      autoplay
+      muted
+      controls
+      playsinline
+    ></video>
+
+    <!-- Overlay -->
+    <div id="adOverlay">
+      <div id="adBox">
+        <video id="adVideo" playsinline></video>
+        <div id="adUI">
+          <div id="adTop">
+            <div id="badge">Ad • <span id="countdown">15</span>s</div>
+            <button id="skipBtn">Skip</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Video.js -->
+  <script src="https://vjs.zencdn.net/8.10.0/video.min.js"></script>
+
+  <script>
+    /*************************************************
+     * CONFIG (UPDATED AS REQUESTED)
+     *************************************************/
+    const HLS_URL =
+      "https://devstreaming-cdn.apple.com/videos/streaming/examples/bipbop_16x9/bipbop_16x9_variant.m3u8";
+
+    const SCHEDULE_URL =
+      "https://nikkileenikki.github.io/test/schedule.json";
+
+    const TIME_URL =
+      "https://time-api.nikki-lee-nikki.workers.dev";
+
+    /*************************************************
+     * PLAYER INIT
+     *************************************************/
+    const player = videojs("livePlayer", {
+      liveui: true,
+      html5: {
+        vhs: { overrideNative: true }
+      },
+      sources: [
+        {
+          src: HLS_URL,
+          type: "application/x-mpegURL"
+        }
+      ]
+    });
+
+    /*************************************************
+     * TIME SYNC
+     *************************************************/
+    async function getServerOffsetMs() {
+      try {
+        const t0 = performance.now();
+        const r = await fetch(TIME_URL, { cache: "no-store" });
+        const j = await r.json();
+        const t1 = performance.now();
+        return (j.unixMs + (t1 - t0) / 2) - Date.now();
+      } catch {
+        return 0;
+      }
+    }
+
+    let serverOffsetMs = 0;
+    let schedule = [];
+    let playing = false;
+    const playedIds = new Set();
+
+    /*************************************************
+     * OVERLAY CONTROL
+     *************************************************/
+    const overlay = document.getElementById("adOverlay");
+    const adVideo = document.getElementById("adVideo");
+    const countdownEl = document.getElementById("countdown");
+    const skipBtn = document.getElementById("skipBtn");
+
+    function showOverlay() {
+      overlay.style.display = "flex";
+    }
+
+    function hideOverlay() {
+      overlay.style.display = "none";
+    }
+
+    async function playOverlayAd(item) {
+      if (playing || playedIds.has(item.id)) return;
+
+      playing = true;
+      playedIds.add(item.id);
+
+      showOverlay();
+      adVideo.src = item.mediaUrl || item.vastUrl; // simple test support
+      adVideo.currentTime = 0;
+      adVideo.play().catch(() => {});
+
+      let remaining = item.durationSec;
+      countdownEl.textContent = remaining;
+      skipBtn.style.display = "none";
+
+      const timer = setInterval(() => {
+        remaining--;
+        countdownEl.textContent = remaining;
+
+        if (remaining <= item.durationSec - 5) {
+          skipBtn.style.display = "inline-block";
+        }
+
+        if (remaining <= 0) {
+          stop();
+        }
+      }, 1000);
+
+      function stop() {
+        clearInterval(timer);
+        adVideo.pause();
+        adVideo.removeAttribute("src");
+        hideOverlay();
+        playing = false;
+      }
+
+      skipBtn.onclick = stop;
+      adVideo.onended = stop;
+    }
+
+    /*************************************************
+     * SCHEDULER
+     *************************************************/
+    async function loadSchedule() {
+      schedule = await fetch(SCHEDULE_URL, { cache: "no-store" }).then(r => r.json());
+    }
+
+    function nowMs() {
+      return Date.now() + serverOffsetMs;
+    }
+
+    function startLoop() {
+      setInterval(() => {
+        const t = nowMs();
+        const windowMs = 8000;
+
+        schedule.forEach(item => {
+          const startMs = item.startUnix * 1000;
+          if (t >= startMs && t < startMs + windowMs) {
+            playOverlayAd(item);
+          }
+        });
+      }, 500);
+    }
+
+    /*************************************************
+     * BOOT
+     *************************************************/
+    (async function init() {
+      serverOffsetMs = await getServerOffsetMs();
+      await loadSchedule();
+      setInterval(loadSchedule, 60_000);
+      startLoop();
+    })();
+  </script>
+</body>
+</html>
