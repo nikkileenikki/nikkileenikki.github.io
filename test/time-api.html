@@ -5,36 +5,18 @@
   <title>Live OTT Overlay (Web)</title>
 
   <!-- Video.js -->
-  <link
-    href="https://vjs.zencdn.net/8.10.0/video-js.css"
-    rel="stylesheet"
-  />
+  <link href="https://vjs.zencdn.net/8.10.0/video-js.css" rel="stylesheet" />
 
   <style>
-    body {
-      margin: 0;
-      background: #000;
-      font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial;
-    }
-
-    .player-wrap {
-      position: relative;
-      width: 100vw;
-      height: 100vh;
-    }
-
-    #livePlayer {
-      width: 100%;
-      height: 100%;
-    }
+    body { margin: 0; background: #000; font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial; }
+    .player-wrap { position: relative; width: 100vw; height: 100vh; }
+    #livePlayer { width: 100%; height: 100%; }
 
     /* Overlay */
     #adOverlay {
-      position: absolute;
-      inset: 0;
+      position: absolute; inset: 0;
       display: none;
-      align-items: center;
-      justify-content: center;
+      align-items: center; justify-content: center;
       background: rgba(0, 0, 0, 0.35);
       z-index: 10;
       pointer-events: none;
@@ -51,27 +33,17 @@
       box-shadow: 0 20px 50px rgba(0,0,0,.6);
     }
 
-    #adVideo {
-      width: 100%;
-      height: 100%;
-    }
+    #adVideo { width: 100%; height: 100%; }
 
     #adUI {
-      position: absolute;
-      inset: 0;
-      display: flex;
-      flex-direction: column;
+      position: absolute; inset: 0;
+      display: flex; flex-direction: column;
       justify-content: space-between;
-      padding: 12px;
-      color: #fff;
+      padding: 12px; color: #fff;
       pointer-events: none;
     }
 
-    #adTop {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
+    #adTop { display: flex; justify-content: space-between; align-items: center; }
 
     #badge {
       background: rgba(0,0,0,.6);
@@ -89,6 +61,20 @@
       padding: 6px 12px;
       border-radius: 999px;
       cursor: pointer;
+    }
+
+    /* Optional “tap to play” hint (shows only if autoplay blocked) */
+    #tapHint {
+      position: absolute;
+      left: 12px; right: 12px; bottom: 12px;
+      background: rgba(0,0,0,.6);
+      padding: 10px 12px;
+      border-radius: 12px;
+      font-size: 12px;
+      display: none;
+      pointer-events: auto;
+      cursor: pointer;
+      user-select: none;
     }
   </style>
 </head>
@@ -108,12 +94,15 @@
     <div id="adOverlay">
       <div id="adBox">
         <video id="adVideo" playsinline></video>
+
         <div id="adUI">
           <div id="adTop">
             <div id="badge">Ad • <span id="countdown">15</span>s</div>
             <button id="skipBtn">Skip</button>
           </div>
         </div>
+
+        <div id="tapHint">Tap to play ad</div>
       </div>
     </div>
   </div>
@@ -123,7 +112,7 @@
 
   <script>
     /*************************************************
-     * CONFIG (UPDATED AS REQUESTED)
+     * CONFIG
      *************************************************/
     const HLS_URL =
       "https://devstreaming-cdn.apple.com/videos/streaming/examples/bipbop_16x9/bipbop_16x9_variant.m3u8";
@@ -131,23 +120,20 @@
     const SCHEDULE_URL =
       "https://nikkileenikki.github.io/test/schedule.json";
 
-    const TIME_URL =
+    // Your Worker base (updated)
+    const WORKER_BASE =
       "https://time-api2.nikki-lee-nikki.workers.dev";
+
+    const TIME_URL = WORKER_BASE + "/time";
+    const VAST_PROXY = WORKER_BASE + "/vast?url=";
 
     /*************************************************
      * PLAYER INIT
      *************************************************/
     const player = videojs("livePlayer", {
       liveui: true,
-      html5: {
-        vhs: { overrideNative: true }
-      },
-      sources: [
-        {
-          src: HLS_URL,
-          type: "application/x-mpegURL"
-        }
-      ]
+      html5: { vhs: { overrideNative: true } },
+      sources: [{ src: HLS_URL, type: "application/x-mpegURL" }]
     });
 
     /*************************************************
@@ -156,11 +142,12 @@
     async function getServerOffsetMs() {
       try {
         const t0 = performance.now();
-        const r = await fetch(TIME_URL, { cache: "no-store" });
+        const r = await fetch(TIME_URL, { cache: "no-store", mode: "cors" });
         const j = await r.json();
         const t1 = performance.now();
         return (j.unixMs + (t1 - t0) / 2) - Date.now();
-      } catch {
+      } catch (e) {
+        console.warn("Time sync failed, using device time:", e);
         return 0;
       }
     }
@@ -177,74 +164,169 @@
     const adVideo = document.getElementById("adVideo");
     const countdownEl = document.getElementById("countdown");
     const skipBtn = document.getElementById("skipBtn");
+    const tapHint = document.getElementById("tapHint");
 
-    function showOverlay() {
-      overlay.style.display = "flex";
+    function showOverlay() { overlay.style.display = "flex"; }
+    function hideOverlay() { overlay.style.display = "none"; tapHint.style.display = "none"; }
+
+    function fireBeacon(url) {
+      if (!url) return;
+      const img = new Image();
+      img.src = url + (url.includes("?") ? "&" : "?") + "cb=" + Math.random();
     }
 
-    function hideOverlay() {
-      overlay.style.display = "none";
+    async function fetchVastXml(vastUrl) {
+      const proxied = VAST_PROXY + encodeURIComponent(vastUrl);
+      const r = await fetch(proxied, { cache: "no-store", mode: "cors" });
+      if (!r.ok) throw new Error("VAST fetch failed: " + r.status);
+      return await r.text();
+    }
+
+    function pickFirstMediaFile(doc) {
+      const mediaFiles = Array.from(doc.getElementsByTagName("MediaFile"));
+
+      // Prefer MP4 progressive
+      const mp4 = mediaFiles.find(n => ((n.getAttribute("type") || "").toLowerCase().includes("mp4")))
+              || mediaFiles[0];
+
+      return mp4 ? (mp4.textContent || "").trim() : null;
+    }
+
+    function getImpressions(doc) {
+      return Array.from(doc.getElementsByTagName("Impression"))
+        .map(n => (n.textContent || "").trim())
+        .filter(Boolean);
+    }
+
+    function getTracking(doc) {
+      const out = {};
+      const nodes = Array.from(doc.getElementsByTagName("Tracking"));
+      for (const n of nodes) {
+        const ev = n.getAttribute("event");
+        const u = (n.textContent || "").trim();
+        if (!ev || !u) continue;
+        (out[ev] ||= []).push(u);
+      }
+      return out;
+    }
+
+    async function resolveVast(vastUrl, maxWrappers = 3) {
+      let current = vastUrl;
+
+      for (let i = 0; i <= maxWrappers; i++) {
+        const xml = await fetchVastXml(current);
+        const doc = new DOMParser().parseFromString(xml, "text/xml");
+
+        const mediaUrl = pickFirstMediaFile(doc);
+        const impressions = getImpressions(doc);
+        const tracking = getTracking(doc);
+
+        if (mediaUrl) return { mediaUrl, impressions, tracking };
+
+        const next = doc.getElementsByTagName("VASTAdTagURI")[0];
+        const nextUrl = next ? (next.textContent || "").trim() : null;
+        if (!nextUrl) throw new Error("No MediaFile and no Wrapper VASTAdTagURI");
+        current = nextUrl;
+      }
+
+      throw new Error("Too many VAST wrappers");
     }
 
     async function playOverlayAd(item) {
-  if (playing || playedIds.has(item.id)) return;
+      if (playing || playedIds.has(item.id)) return;
 
-  // Must have a playable file URL
-  if (!item.mediaUrl) {
-    console.warn("No mediaUrl in schedule item:", item);
-    return;
-  }
+      if (!item.vastUrl) {
+        console.warn("Missing vastUrl in schedule item:", item);
+        return;
+      }
 
-  playing = true;
-  playedIds.add(item.id);
+      playing = true;
+      playedIds.add(item.id);
 
-  showOverlay();
+      showOverlay();
 
-  // Autoplay rules: keep it muted unless user interacted
-  adVideo.muted = true;
-  adVideo.playsInline = true;
-  adVideo.src = item.mediaUrl;
-  adVideo.load();
+      const total = Math.max(5, Number(item.durationSec) || 15);
+      let remaining = total;
+      countdownEl.textContent = remaining;
+      skipBtn.style.display = "none";
 
-  let remaining = item.durationSec || 15;
-  countdownEl.textContent = remaining;
-  skipBtn.style.display = "none";
+      // Resolve VAST -> MP4
+      let vast;
+      try {
+        vast = await resolveVast(item.vastUrl);
+      } catch (e) {
+        console.error("VAST resolve failed:", e, item.vastUrl);
+        hideOverlay();
+        playing = false;
+        return;
+      }
 
-  const timer = setInterval(() => {
-    remaining--;
-    countdownEl.textContent = remaining;
+      // Fire impressions at start
+      (vast.impressions || []).forEach(fireBeacon);
 
-    if (remaining <= (item.durationSec || 15) - 5) {
-      skipBtn.style.display = "inline-block";
+      // Setup ad video
+      adVideo.muted = true;        // autoplay-safe
+      adVideo.playsInline = true;
+      adVideo.preload = "auto";
+      adVideo.src = vast.mediaUrl;
+      adVideo.load();
+
+      const fired = new Set();
+      const tick = setInterval(() => {
+        remaining -= 1;
+        countdownEl.textContent = Math.max(0, remaining);
+
+        const elapsed = total - remaining;
+        if (elapsed >= 5) skipBtn.style.display = "inline-block";
+
+        // Quartile tracking best-effort
+        const t = adVideo.currentTime || elapsed;
+        const d = (adVideo.duration && isFinite(adVideo.duration)) ? adVideo.duration : total;
+        const pct = d > 0 ? (t / d) : 0;
+
+        if (!fired.has("start")) { fired.add("start"); (vast.tracking.start || []).forEach(fireBeacon); }
+        if (pct >= 0.25 && !fired.has("firstQuartile")) { fired.add("firstQuartile"); (vast.tracking.firstQuartile || []).forEach(fireBeacon); }
+        if (pct >= 0.5 && !fired.has("midpoint")) { fired.add("midpoint"); (vast.tracking.midpoint || []).forEach(fireBeacon); }
+        if (pct >= 0.75 && !fired.has("thirdQuartile")) { fired.add("thirdQuartile"); (vast.tracking.thirdQuartile || []).forEach(fireBeacon); }
+
+        if (remaining <= 0) stop("timer");
+      }, 1000);
+
+      function stop(reason) {
+        clearInterval(tick);
+        (vast.tracking.complete || []).forEach(fireBeacon);
+
+        adVideo.pause();
+        adVideo.removeAttribute("src");
+        adVideo.load();
+
+        hideOverlay();
+        playing = false;
+      }
+
+      skipBtn.onclick = () => stop("skip");
+      adVideo.onended = () => stop("ended");
+      adVideo.onerror = () => {
+        console.error("Ad media failed to play:", vast.mediaUrl);
+        stop("error");
+      };
+
+      try {
+        await adVideo.play();
+      } catch (e) {
+        // Autoplay blocked: keep overlay open + allow user tap to start
+        console.warn("Autoplay blocked. Tap to play.", e);
+        tapHint.style.display = "block";
+        tapHint.onclick = async () => {
+          try {
+            await adVideo.play();
+            tapHint.style.display = "none";
+          } catch (e2) {
+            console.warn("Still blocked:", e2);
+          }
+        };
+      }
     }
-
-    if (remaining <= 0) stop();
-  }, 1000);
-
-  function stop() {
-    clearInterval(timer);
-    adVideo.pause();
-    adVideo.removeAttribute("src");
-    adVideo.load();
-    hideOverlay();
-    playing = false;
-  }
-
-  skipBtn.onclick = stop;
-  adVideo.onended = stop;
-  adVideo.onerror = () => {
-    console.error("Ad video failed to load:", item.mediaUrl);
-    stop();
-  };
-
-  try {
-    await adVideo.play();
-  } catch (e) {
-    console.warn("Autoplay blocked. User interaction needed.", e);
-    // If you want: show a "Tap to play ad" button here.
-  }
-}
-
 
     /*************************************************
      * SCHEDULER
