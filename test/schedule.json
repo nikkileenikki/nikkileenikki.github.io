@@ -1,14 +1,8 @@
 [
   {
-    "id": "break-0915",
-    "startUnix": 1765522805,
+    "id": "vast-1",
+    "startUnix": 1765523405,
     "durationSec": 30,
-    "mediaUrl": "https://servedby.flashtalking.com/imp/7/280531;9796687;208;xml;AstroMalaysia;VASTtest/?gdpr=${GDPR}&gdpr_consent=${GDPR_CONSENT_78}&us_privacy=${US_PRIVACY}&pbMethods=[PLAYBACKMETHODS]|[CONTINUOUSPLAY]|[TIMESINCEINTERACTION]&cachebuster=[CACHEBUSTER]"
-  },
-  {
-    "id": "break-0930",
-    "startUnix": 1765503000,
-    "durationSec": 30,
-    "mediaUrl": "https://servedby.flashtalking.com/imp/7/280531;9844357;208;xml;AstroMalaysia;VASTtest3/?gdpr=${GDPR}&gdpr_consent=${GDPR_CONSENT_78}&us_privacy=${US_PRIVACY}&pbMethods=[PLAYBACKMETHODS]|[CONTINUOUSPLAY]|[TIMESINCEINTERACTION]&cachebuster=[CACHEBUSTER]"
+    "mediaUrl": "https://servedby.flashtalking.com/imp/7/280531;9796687;208;xml;AstroMalaysia;VASTtest/?slot=overlay15"
   }
 ]
