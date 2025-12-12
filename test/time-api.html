@@ -74,7 +74,28 @@
       cursor: pointer;
       user-select: none;
       text-align: center;
+      z-index: 30;
     }
+
+    /* Debug panel */
+    #debugPanel {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      z-index: 50;
+      background: rgba(0,0,0,.65);
+      border: 1px solid rgba(255,255,255,.15);
+      border-radius: 12px;
+      padding: 10px 12px;
+      color: #fff;
+      font-size: 12px;
+      line-height: 1.35;
+      max-width: min(520px, 92vw);
+      user-select: text;
+    }
+    #debugPanel .row { display: flex; gap: 8px; }
+    #debugPanel .k { opacity: .75; min-width: 150px; }
+    #debugPanel .v { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace; word-break: break-all; }
   </style>
 </head>
 
@@ -88,6 +109,18 @@
       controls
       playsinline
     ></video>
+
+    <!-- Debug -->
+    <div id="debugPanel">
+      <div class="row"><div class="k">Program time:</div><div class="v" id="dbgProgram">-</div></div>
+      <div class="row"><div class="k">Program unix ms:</div><div class="v" id="dbgProgramMs">-</div></div>
+      <div class="row"><div class="k">Player currentTime:</div><div class="v" id="dbgCT">-</div></div>
+      <div class="row"><div class="k">Paused:</div><div class="v" id="dbgPaused">-</div></div>
+      <div class="row"><div class="k">Schedule items:</div><div class="v" id="dbgItems">-</div></div>
+      <div class="row"><div class="k">Next break (startUnix):</div><div class="v" id="dbgNext">-</div></div>
+      <div class="row"><div class="k">Next break in:</div><div class="v" id="dbgNextIn">-</div></div>
+      <div class="row"><div class="k">ProgramDateTime seen:</div><div class="v" id="dbgPdtSeen">-</div></div>
+    </div>
 
     <div id="adOverlay">
       <div id="adBox">
@@ -126,14 +159,10 @@
     /*************************************************
      * AUDIO STATE
      *************************************************/
-    // Browsers block autoplay-with-sound until user gesture.
-    // We'll treat "soundEnabled" as "user has interacted and wants audio".
     let soundEnabled = false;
 
-    // First user interaction enables sound for ads (and later content)
     function enableSound() {
       soundEnabled = true;
-      // Unmute live stream if no ad is playing
       if (!playing) player.muted(false);
     }
     window.addEventListener("pointerdown", enableSound, { once: true });
@@ -148,8 +177,68 @@
       sources: [{ src: HLS_URL, type: "application/x-mpegURL" }]
     });
 
+    let isPaused = false;
+    player.on("pause", () => isPaused = true);
+    player.on("play", () => isPaused = false);
+
     /*************************************************
-     * TIME SYNC
+     * PROGRAM TIME (EXT-X-PROGRAM-DATE-TIME)
+     *************************************************/
+    function getProgramTimeUnixMs() {
+      try {
+        const tech = player.tech(true);
+        const vhs = tech && tech.vhs;
+        const pl = vhs && vhs.playlists && vhs.playlists.media && vhs.playlists.media();
+        if (!pl || !pl.segments || !pl.segments.length) return null;
+
+        const ct = player.currentTime();
+        let acc = 0;
+
+        for (const seg of pl.segments) {
+          const dur = seg.duration || pl.targetDuration || 6;
+          if (ct >= acc && ct < acc + dur) {
+            if (!seg.programDateTime) return null;
+            const segStartMs = (seg.programDateTime instanceof Date)
+              ? seg.programDateTime.getTime()
+              : Date.parse(seg.programDateTime);
+            const offsetMs = (ct - acc) * 1000;
+            return segStartMs + offsetMs;
+          }
+          acc += dur;
+        }
+
+        const last = pl.segments[pl.segments.length - 1];
+        if (last && last.programDateTime) {
+          const lastMs = (last.programDateTime instanceof Date)
+            ? last.programDateTime.getTime()
+            : Date.parse(last.programDateTime);
+          return lastMs;
+        }
+
+        return null;
+      } catch {
+        return null;
+      }
+    }
+
+    function getAnyProgramDateTimeSeen() {
+      try {
+        const tech = player.tech(true);
+        const vhs = tech && tech.vhs;
+        const pl = vhs && vhs.playlists && vhs.playlists.media && vhs.playlists.media();
+        const segs = pl && pl.segments;
+        if (!segs || !segs.length) return null;
+        const any = segs.find(s => s.programDateTime);
+        if (!any) return null;
+        const ms = (any.programDateTime instanceof Date) ? any.programDateTime.getTime() : Date.parse(any.programDateTime);
+        return { raw: any.programDateTime, iso: new Date(ms).toISOString() };
+      } catch {
+        return null;
+      }
+    }
+
+    /*************************************************
+     * TIME SYNC (fallback only)
      *************************************************/
     async function getServerOffsetMs() {
       try {
@@ -242,46 +331,35 @@
 
     async function playOverlayAd(item) {
       if (playing || playedIds.has(item.id)) return;
-
-      if (!item.vastUrl) {
-        console.warn("Missing vastUrl in schedule item:", item);
-        return;
-      }
+      if (!item.vastUrl) return;
 
       playing = true;
       playedIds.add(item.id);
 
       showOverlay();
-
-      // ✅ MUTE LIVE STREAM DURING AD
       player.muted(true);
 
       const total = Math.max(5, Number(item.durationSec) || 30);
       let remaining = total;
       countdownEl.textContent = remaining;
-      skipBtn.style.display = "none";
 
       let vast;
       try {
         vast = await resolveVast(item.vastUrl);
       } catch (e) {
-        console.error("VAST resolve failed:", e, item.vastUrl);
+        console.error("VAST resolve failed:", e);
         hideOverlay();
         playing = false;
-        // Restore live sound if allowed
         if (soundEnabled) player.muted(false);
         return;
       }
 
       (vast.impressions || []).forEach(fireBeacon);
 
-      // ✅ PLAY AD AUDIO (if user has enabled sound)
       adVideo.playsInline = true;
       adVideo.preload = "auto";
       adVideo.src = vast.mediaUrl;
       adVideo.load();
-
-      // If user hasn't interacted yet, autoplay-with-sound will be blocked.
       adVideo.muted = !soundEnabled;
 
       const fired = new Set();
@@ -290,8 +368,6 @@
         countdownEl.textContent = Math.max(0, remaining);
 
         const elapsed = total - remaining;
-        if (elapsed >= 5) skipBtn.style.display = "inline-block";
-
         const t = adVideo.currentTime || elapsed;
         const d = (adVideo.duration && isFinite(adVideo.duration)) ? adVideo.duration : total;
         const pct = d > 0 ? (t / d) : 0;
@@ -314,29 +390,21 @@
 
         hideOverlay();
         playing = false;
-
-        // ✅ RESTORE LIVE AUDIO AFTER AD (only if user enabled sound)
         if (soundEnabled) player.muted(false);
       }
 
-      skipBtn.onclick = () => stop("skip");
       adVideo.onended = () => stop("ended");
-      adVideo.onerror = () => {
-        console.error("Ad media failed to play:", vast.mediaUrl);
-        stop("error");
-      };
+      adVideo.onerror = () => stop("error");
 
       try {
         await adVideo.play();
         tapHint.style.display = "none";
       } catch (e) {
-        // Autoplay blocked: keep overlay open and ask for tap to enable sound + start playback
-        console.warn("Autoplay blocked. Tap to enable sound.", e);
         tapHint.style.display = "block";
         tapHint.onclick = async () => {
           try {
-            soundEnabled = true;     // user gesture happened here
-            adVideo.muted = false;   // allow ad audio
+            soundEnabled = true;
+            adVideo.muted = false;
             await adVideo.play();
             tapHint.style.display = "none";
           } catch (e2) {
@@ -347,29 +415,77 @@
     }
 
     /*************************************************
-     * SCHEDULER
+     * SCHEDULER (Program-time driven)
      *************************************************/
     async function loadSchedule() {
-      schedule = await fetch(SCHEDULE_URL, { cache: "no-store" }).then(r => r.json());
+      const url = SCHEDULE_URL + "?cb=" + Date.now(); // avoid GH cache
+      schedule = await fetch(url, { cache: "no-store" }).then(r => r.json());
     }
 
     function nowMs() {
-      return Date.now() + serverOffsetMs;
+      const programMs = getProgramTimeUnixMs();
+      if (programMs) return programMs;          // ✅ cue by video time
+      return Date.now() + serverOffsetMs;       // fallback
     }
 
     function startLoop() {
       setInterval(() => {
+        if (isPaused) return; // don’t fire while paused
         const t = nowMs();
         const windowMs = 8000;
 
-        schedule.forEach(item => {
+        for (const item of schedule) {
           const startMs = item.startUnix * 1000;
           if (t >= startMs && t < startMs + windowMs) {
             playOverlayAd(item);
           }
-        });
+        }
       }, 500);
     }
+
+    /*************************************************
+     * DEBUG PANEL
+     *************************************************/
+    const dbgProgram = document.getElementById("dbgProgram");
+    const dbgProgramMs = document.getElementById("dbgProgramMs");
+    const dbgCT = document.getElementById("dbgCT");
+    const dbgPaused = document.getElementById("dbgPaused");
+    const dbgItems = document.getElementById("dbgItems");
+    const dbgNext = document.getElementById("dbgNext");
+    const dbgNextIn = document.getElementById("dbgNextIn");
+    const dbgPdtSeen = document.getElementById("dbgPdtSeen");
+
+    function updateDebug() {
+      const programMs = getProgramTimeUnixMs();
+      dbgProgramMs.textContent = programMs ? String(Math.round(programMs)) : "-";
+      dbgProgram.textContent = programMs ? new Date(programMs).toISOString() : "-";
+      dbgCT.textContent = (player && typeof player.currentTime === "function")
+        ? player.currentTime().toFixed(3) + "s"
+        : "-";
+      dbgPaused.textContent = String(isPaused);
+      dbgItems.textContent = String(schedule.length);
+
+      // Next break based on program time (or fallback time)
+      const t = nowMs();
+      const future = schedule
+        .map(it => ({ it, startMs: it.startUnix * 1000 }))
+        .filter(x => x.startMs >= t)
+        .sort((a, b) => a.startMs - b.startMs)[0];
+
+      if (future) {
+        dbgNext.textContent = String(future.it.startUnix) + " (" + new Date(future.startMs).toISOString() + ")";
+        const diffSec = Math.max(0, Math.round((future.startMs - t) / 1000));
+        dbgNextIn.textContent = diffSec + "s";
+      } else {
+        dbgNext.textContent = "-";
+        dbgNextIn.textContent = "-";
+      }
+
+      const seen = getAnyProgramDateTimeSeen();
+      dbgPdtSeen.textContent = seen ? (seen.iso + "  (raw: " + seen.raw + ")") : "no segment programDateTime yet";
+    }
+
+    setInterval(updateDebug, 500);
 
     /*************************************************
      * BOOT
