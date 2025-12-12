@@ -1,8 +1,8 @@
 [
   {
     "id": "vast-1",
-    "startUnix": 1765523405,
+    "startUnix": 1765523705,
     "durationSec": 30,
-    "mediaUrl": "https://servedby.flashtalking.com/imp/7/280531;9796687;208;xml;AstroMalaysia;VASTtest/?slot=overlay15"
+    "vastUrl": "https://servedby.flashtalking.com/imp/7/280531;9796687;208;xml;AstroMalaysia;VASTtest/?slot=overlay15"
   }
 ]
