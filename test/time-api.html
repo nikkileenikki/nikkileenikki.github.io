@@ -4,7 +4,6 @@
   <meta charset="utf-8" />
   <title>Live OTT Overlay (Web)</title>
 
-  <!-- Video.js -->
   <link href="https://vjs.zencdn.net/8.10.0/video-js.css" rel="stylesheet" />
 
   <style>
@@ -12,7 +11,6 @@
     .player-wrap { position: relative; width: 100vw; height: 100vh; }
     #livePlayer { width: 100%; height: 100%; }
 
-    /* Overlay */
     #adOverlay {
       position: absolute; inset: 0;
       display: none;
@@ -27,7 +25,8 @@
       width: 100%;
       height: 100%;
       aspect-ratio: 16 / 9;
-      background: rgba(0,0,0,0);
+      background: #000;
+      border-radius: 16px;
       overflow: hidden;
       pointer-events: auto;
       box-shadow: 0 20px 50px rgba(0,0,0,.6);
@@ -63,7 +62,6 @@
       cursor: pointer;
     }
 
-    /* Optional “tap to play” hint (shows only if autoplay blocked) */
     #tapHint {
       position: absolute;
       left: 12px; right: 12px; bottom: 12px;
@@ -75,6 +73,7 @@
       pointer-events: auto;
       cursor: pointer;
       user-select: none;
+      text-align: center;
     }
   </style>
 </head>
@@ -90,7 +89,6 @@
       playsinline
     ></video>
 
-    <!-- Overlay -->
     <div id="adOverlay">
       <div id="adBox">
         <video id="adVideo" playsinline></video>
@@ -102,12 +100,11 @@
           </div>
         </div>
 
-        <div id="tapHint">Tap to play ad</div>
+        <div id="tapHint">Tap to enable sound</div>
       </div>
     </div>
   </div>
 
-  <!-- Video.js -->
   <script src="https://vjs.zencdn.net/8.10.0/video.min.js"></script>
 
   <script>
@@ -120,12 +117,27 @@
     const SCHEDULE_URL =
       "https://nikkileenikki.github.io/test/schedule.json";
 
-    // Your Worker base (updated)
     const WORKER_BASE =
       "https://time-api2.nikki-lee-nikki.workers.dev";
 
     const TIME_URL = WORKER_BASE + "/time";
     const VAST_PROXY = WORKER_BASE + "/vast?url=";
+
+    /*************************************************
+     * AUDIO STATE
+     *************************************************/
+    // Browsers block autoplay-with-sound until user gesture.
+    // We'll treat "soundEnabled" as "user has interacted and wants audio".
+    let soundEnabled = false;
+
+    // First user interaction enables sound for ads (and later content)
+    function enableSound() {
+      soundEnabled = true;
+      // Unmute live stream if no ad is playing
+      if (!playing) player.muted(false);
+    }
+    window.addEventListener("pointerdown", enableSound, { once: true });
+    window.addEventListener("keydown", enableSound, { once: true });
 
     /*************************************************
      * PLAYER INIT
@@ -184,11 +196,7 @@
 
     function pickFirstMediaFile(doc) {
       const mediaFiles = Array.from(doc.getElementsByTagName("MediaFile"));
-
-      // Prefer MP4 progressive
-      const mp4 = mediaFiles.find(n => ((n.getAttribute("type") || "").toLowerCase().includes("mp4")))
-              || mediaFiles[0];
-
+      const mp4 = mediaFiles.find(n => ((n.getAttribute("type") || "").toLowerCase().includes("mp4"))) || mediaFiles[0];
       return mp4 ? (mp4.textContent || "").trim() : null;
     }
 
@@ -245,12 +253,14 @@
 
       showOverlay();
 
+      // ✅ MUTE LIVE STREAM DURING AD
+      player.muted(true);
+
       const total = Math.max(5, Number(item.durationSec) || 15);
       let remaining = total;
       countdownEl.textContent = remaining;
       skipBtn.style.display = "none";
 
-      // Resolve VAST -> MP4
       let vast;
       try {
         vast = await resolveVast(item.vastUrl);
@@ -258,18 +268,21 @@
         console.error("VAST resolve failed:", e, item.vastUrl);
         hideOverlay();
         playing = false;
+        // Restore live sound if allowed
+        if (soundEnabled) player.muted(false);
         return;
       }
 
-      // Fire impressions at start
       (vast.impressions || []).forEach(fireBeacon);
 
-      // Setup ad video
-      adVideo.muted = true;        // autoplay-safe
+      // ✅ PLAY AD AUDIO (if user has enabled sound)
       adVideo.playsInline = true;
       adVideo.preload = "auto";
       adVideo.src = vast.mediaUrl;
       adVideo.load();
+
+      // If user hasn't interacted yet, autoplay-with-sound will be blocked.
+      adVideo.muted = !soundEnabled;
 
       const fired = new Set();
       const tick = setInterval(() => {
@@ -279,7 +292,6 @@
         const elapsed = total - remaining;
         if (elapsed >= 5) skipBtn.style.display = "inline-block";
 
-        // Quartile tracking best-effort
         const t = adVideo.currentTime || elapsed;
         const d = (adVideo.duration && isFinite(adVideo.duration)) ? adVideo.duration : total;
         const pct = d > 0 ? (t / d) : 0;
@@ -302,6 +314,9 @@
 
         hideOverlay();
         playing = false;
+
+        // ✅ RESTORE LIVE AUDIO AFTER AD (only if user enabled sound)
+        if (soundEnabled) player.muted(false);
       }
 
       skipBtn.onclick = () => stop("skip");
@@ -313,12 +328,15 @@
 
       try {
         await adVideo.play();
+        tapHint.style.display = "none";
       } catch (e) {
-        // Autoplay blocked: keep overlay open + allow user tap to start
-        console.warn("Autoplay blocked. Tap to play.", e);
+        // Autoplay blocked: keep overlay open and ask for tap to enable sound + start playback
+        console.warn("Autoplay blocked. Tap to enable sound.", e);
         tapHint.style.display = "block";
         tapHint.onclick = async () => {
           try {
+            soundEnabled = true;     // user gesture happened here
+            adVideo.muted = false;   // allow ad audio
             await adVideo.play();
             tapHint.style.display = "none";
           } catch (e2) {
