@@ -187,44 +187,64 @@
     }
 
     async function playOverlayAd(item) {
-      if (playing || playedIds.has(item.id)) return;
+  if (playing || playedIds.has(item.id)) return;
 
-      playing = true;
-      playedIds.add(item.id);
+  // Must have a playable file URL
+  if (!item.mediaUrl) {
+    console.warn("No mediaUrl in schedule item:", item);
+    return;
+  }
 
-      showOverlay();
-      adVideo.src = item.mediaUrl || item.vastUrl; // simple test support
-      adVideo.currentTime = 0;
-      adVideo.play().catch(() => {});
+  playing = true;
+  playedIds.add(item.id);
 
-      let remaining = item.durationSec;
-      countdownEl.textContent = remaining;
-      skipBtn.style.display = "none";
+  showOverlay();
 
-      const timer = setInterval(() => {
-        remaining--;
-        countdownEl.textContent = remaining;
+  // Autoplay rules: keep it muted unless user interacted
+  adVideo.muted = true;
+  adVideo.playsInline = true;
+  adVideo.src = item.mediaUrl;
+  adVideo.load();
 
-        if (remaining <= item.durationSec - 5) {
-          skipBtn.style.display = "inline-block";
-        }
+  let remaining = item.durationSec || 15;
+  countdownEl.textContent = remaining;
+  skipBtn.style.display = "none";
 
-        if (remaining <= 0) {
-          stop();
-        }
-      }, 1000);
+  const timer = setInterval(() => {
+    remaining--;
+    countdownEl.textContent = remaining;
 
-      function stop() {
-        clearInterval(timer);
-        adVideo.pause();
-        adVideo.removeAttribute("src");
-        hideOverlay();
-        playing = false;
-      }
-
-      skipBtn.onclick = stop;
-      adVideo.onended = stop;
+    if (remaining <= (item.durationSec || 15) - 5) {
+      skipBtn.style.display = "inline-block";
     }
+
+    if (remaining <= 0) stop();
+  }, 1000);
+
+  function stop() {
+    clearInterval(timer);
+    adVideo.pause();
+    adVideo.removeAttribute("src");
+    adVideo.load();
+    hideOverlay();
+    playing = false;
+  }
+
+  skipBtn.onclick = stop;
+  adVideo.onended = stop;
+  adVideo.onerror = () => {
+    console.error("Ad video failed to load:", item.mediaUrl);
+    stop();
+  };
+
+  try {
+    await adVideo.play();
+  } catch (e) {
+    console.warn("Autoplay blocked. User interaction needed.", e);
+    // If you want: show a "Tap to play ad" button here.
+  }
+}
+
 
     /*************************************************
      * SCHEDULER
