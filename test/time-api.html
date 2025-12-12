@@ -53,7 +53,7 @@
 
     #skipBtn {
       pointer-events: auto;
-      display: none;
+      display: none!important;
       background: rgba(255,255,255,.15);
       border: 1px solid rgba(255,255,255,.25);
       color: #fff;
@@ -256,7 +256,7 @@
       // ✅ MUTE LIVE STREAM DURING AD
       player.muted(true);
 
-      const total = Math.max(5, Number(item.durationSec) || 15);
+      const total = Math.max(5, Number(item.durationSec) || 30);
       let remaining = total;
       countdownEl.textContent = remaining;
       skipBtn.style.display = "none";
