@@ -1739,9 +1739,6 @@
             line-height: 1.2;
             word-wrap: break-word;
             z-index: ${element.zIndex};
-            display: flex;
-            align-items: center;
-            justify-content: ${element.textAlign === 'center' ? 'center' : element.textAlign === 'right' ? 'flex-end' : 'flex-start'};
         ">${element.text}</div>`;
             } else if (element.type === 'clickthrough') {
                 elementsHtml += `
