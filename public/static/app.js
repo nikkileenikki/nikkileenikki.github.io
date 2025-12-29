@@ -90,7 +90,6 @@
         $canvas.on('mousedown', '.resize-handle', handleResizeStart);
         $(document).on('mousemove', handleMouseMove);
         $(document).on('mouseup', handleMouseUp);
-        $(document).on('keydown', handleKeyboardMove);
         
         // Layer selection and controls
         $layersList.on('click', '.layer-item', handleLayerClick);
