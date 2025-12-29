@@ -106,6 +106,10 @@ app.get('/', (c) => {
                                 <i class="fas fa-font mr-2"></i>Add Text
                             </button>
                             
+                            <button id="addShapeBtn" class="w-full bg-teal-600 hover:bg-teal-700 text-white py-3 rounded transition-colors">
+                                <i class="fas fa-shapes mr-2"></i>Add Shape
+                            </button>
+                            
                             <button id="addClickthroughBtn" class="w-full bg-purple-600 hover:bg-purple-700 text-white py-3 rounded transition-colors">
                                 <i class="fas fa-mouse-pointer mr-2"></i>Add Clickthrough
                             </button>
@@ -198,30 +202,34 @@ app.get('/', (c) => {
                             </div>
                             
                             <!-- Common Properties -->
-                            <div>
-                                <label class="text-sm text-gray-400">Width</label>
-                                <input type="number" id="propWidth" class="w-full bg-gray-800 rounded px-3 py-2 text-sm">
-                            </div>
-                            <div>
-                                <label class="text-sm text-gray-400">Height</label>
-                                <input type="number" id="propHeight" class="w-full bg-gray-800 rounded px-3 py-2 text-sm">
-                            </div>
-                            <div>
-                                <label class="text-sm text-gray-400">X Position</label>
-                                <input type="number" id="propX" class="w-full bg-gray-800 rounded px-3 py-2 text-sm">
-                            </div>
-                            <div>
-                                <label class="text-sm text-gray-400">Y Position</label>
-                                <input type="number" id="propY" class="w-full bg-gray-800 rounded px-3 py-2 text-sm">
-                            </div>
-                            <div>
-                                <label class="text-sm text-gray-400">Rotation</label>
-                                <input type="number" id="propRotation" class="w-full bg-gray-800 rounded px-3 py-2 text-sm" placeholder="degrees">
-                            </div>
-                            <div>
-                                <label class="text-sm text-gray-400">Opacity</label>
-                                <input type="range" id="propOpacity" class="w-full" min="0" max="1" step="0.1" value="1">
-                                <span id="opacityValue" class="text-xs text-gray-500">100%</span>
+                            <div class="grid grid-cols-2 gap-3">
+                                <div>
+                                    <label class="text-sm text-gray-400">Width</label>
+                                    <input type="number" id="propWidth" class="w-full bg-gray-800 rounded px-3 py-2 text-sm">
+                                </div>
+                                <div>
+                                    <label class="text-sm text-gray-400">Height</label>
+                                    <input type="number" id="propHeight" class="w-full bg-gray-800 rounded px-3 py-2 text-sm">
+                                </div>
+                                <div>
+                                    <label class="text-sm text-gray-400">X Position</label>
+                                    <input type="number" id="propX" class="w-full bg-gray-800 rounded px-3 py-2 text-sm">
+                                </div>
+                                <div>
+                                    <label class="text-sm text-gray-400">Y Position</label>
+                                    <input type="number" id="propY" class="w-full bg-gray-800 rounded px-3 py-2 text-sm">
+                                </div>
+                                <div>
+                                    <label class="text-sm text-gray-400">Rotation</label>
+                                    <input type="number" id="propRotation" class="w-full bg-gray-800 rounded px-3 py-2 text-sm" placeholder="degrees">
+                                </div>
+                                <div>
+                                    <label class="text-sm text-gray-400">Opacity</label>
+                                    <div>
+                                        <input type="range" id="propOpacity" class="w-full" min="0" max="1" step="0.1" value="1">
+                                        <span id="opacityValue" class="text-xs text-gray-500">100%</span>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -414,10 +422,10 @@ app.get('/', (c) => {
                         <label class="block text-sm text-gray-400 mb-2">Animation Loop</label>
                         <select id="animLoop" class="w-full bg-gray-700 rounded px-3 py-2">
                             <option value="infinite">Loop Forever</option>
-                            <option value="1">Play Once</option>
-                            <option value="2">Play Twice</option>
-                            <option value="3">Play 3 Times</option>
-                            <option value="5">Play 5 Times</option>
+                            <option value="0">Play Once</option>
+                            <option value="1">Play Twice</option>
+                            <option value="2">Play 3 Times</option>
+                            <option value="4">Play 5 Times</option>
                         </select>
                     </div>
                     
@@ -475,6 +483,55 @@ app.get('/', (c) => {
                     
                     <button id="saveClickthroughBtn" class="w-full bg-purple-600 hover:bg-purple-700 text-white py-2 rounded transition-colors">
                         Add Clickthrough Layer
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Shape Modal -->
+        <div id="shapeModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div class="bg-gray-800 rounded-lg p-6 w-[500px]">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-xl font-bold">Add Shape</h3>
+                    <button id="closeShapeModal" class="text-gray-400 hover:text-white">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-sm text-gray-400 mb-2">Shape Type</label>
+                        <select id="shapeType" class="w-full bg-gray-700 rounded px-3 py-2">
+                            <option value="rectangle">Rectangle</option>
+                            <option value="circle">Circle</option>
+                            <option value="rounded-rectangle">Rounded Rectangle</option>
+                        </select>
+                    </div>
+                    
+                    <div class="grid grid-cols-2 gap-3">
+                        <div>
+                            <label class="block text-sm text-gray-400 mb-2">Width</label>
+                            <input type="number" id="shapeWidth" value="200" class="w-full bg-gray-700 rounded px-3 py-2">
+                        </div>
+                        <div>
+                            <label class="block text-sm text-gray-400 mb-2">Height</label>
+                            <input type="number" id="shapeHeight" value="150" class="w-full bg-gray-700 rounded px-3 py-2">
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm text-gray-400 mb-2">Fill Color</label>
+                        <input type="color" id="shapeFillColor" value="#3b82f6" class="w-full bg-gray-700 rounded px-3 py-2 h-10">
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm text-gray-400 mb-2">Opacity</label>
+                        <input type="range" id="shapeOpacity" class="w-full" min="0" max="1" step="0.1" value="1">
+                        <span id="shapeOpacityValue" class="text-xs text-gray-500">100%</span>
+                    </div>
+                    
+                    <button id="saveShapeBtn" class="w-full bg-teal-600 hover:bg-teal-700 text-white py-2 rounded transition-colors">
+                        Add Shape
                     </button>
                 </div>
             </div>

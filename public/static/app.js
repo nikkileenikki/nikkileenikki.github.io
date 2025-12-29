@@ -66,6 +66,15 @@
         $('#closeClickthroughModal').on('click', closeClickthroughModal);
         $('#saveClickthroughBtn').on('click', saveClickthrough);
         
+        // Shape
+        $('#addShapeBtn').on('click', openShapeModal);
+        $('#closeShapeModal').on('click', closeShapeModal);
+        $('#saveShapeBtn').on('click', saveShape);
+        $('#shapeOpacity').on('input', function() {
+            const val = $(this).val();
+            $('#shapeOpacityValue').text(Math.round(val * 100) + '%');
+        });
+        
         // Canvas size
         $('#canvasSize').on('change', handleCanvasSizeChange);
         $('#customWidth, #customHeight').on('change', updateCustomCanvasSize);
@@ -104,6 +113,10 @@
         $('#propClickUrl').on('change', updateClickUrl);
         $('#propClickTarget').on('change', updateClickTarget);
         
+        // Shape properties
+        $('#propShapeType').on('change', updateShapeType);
+        $('#propShapeColor').on('change', updateShapeColor);
+        
         // Animation
         $('#addAnimBtn').on('click', openAnimationModal);
         $('#closeModal').on('click', closeAnimationModal);
@@ -115,6 +128,10 @@
             e.stopPropagation();
             handleDeleteAnimation(e);
         });
+        
+        // Timeline block dragging and resizing
+        $timelineTracks.on('mousedown', '.timeline-block', handleTimelineBlockDragStart);
+        $timelineTracks.on('mousedown', '.timeline-block-resize-handle', handleTimelineBlockResizeStart);
         
         // Timeline controls
         $('#timelineDuration').on('change', updateTotalDuration);
@@ -167,6 +184,142 @@
             isPlayheadDragging = false;
             $(document).off('mousemove', moveHandler);
             $(document).off('mouseup', upHandler);
+        };
+        
+        $(document).on('mousemove', moveHandler);
+        $(document).on('mouseup', upHandler);
+    }
+    
+    // ============================================
+    // TIMELINE BLOCK DRAGGING AND RESIZING
+    // ============================================
+    let isTimelineBlockDragging = false;
+    let isTimelineBlockResizing = false;
+    let draggedBlock = null;
+    let resizeDirection = null;
+    
+    function handleTimelineBlockDragStart(e) {
+        // Don't drag if clicking on resize handle or delete button
+        if ($(e.target).hasClass('timeline-block-resize-handle') || 
+            $(e.target).closest('.delete-anim').length > 0) {
+            return;
+        }
+        
+        e.preventDefault();
+        e.stopPropagation();
+        
+        const $block = $(e.currentTarget);
+        const animId = $block.data('anim-id');
+        const elementId = $block.data('element-id');
+        
+        isTimelineBlockDragging = true;
+        draggedBlock = { animId, elementId, $block };
+        
+        const $track = $block.parent();
+        const trackOffset = $track.offset().left;
+        const trackWidth = $track.width();
+        const blockOffset = $block.offset().left;
+        const startX = e.pageX;
+        const initialLeft = blockOffset - trackOffset;
+        
+        const moveHandler = function(moveEvent) {
+            if (!isTimelineBlockDragging) return;
+            
+            const deltaX = moveEvent.pageX - startX;
+            let newLeft = initialLeft + deltaX;
+            newLeft = Math.max(0, Math.min(trackWidth - $block.width(), newLeft));
+            
+            const newLeftPercent = (newLeft / trackWidth) * 100;
+            $block.css('left', newLeftPercent + '%');
+            
+            // Update animation start time
+            const element = elements.find(el => el.id === elementId);
+            if (element) {
+                const anim = element.animations.find(a => a.id === animId);
+                if (anim) {
+                    anim.start = (newLeftPercent / 100) * totalDuration;
+                }
+            }
+        };
+        
+        const upHandler = function() {
+            isTimelineBlockDragging = false;
+            draggedBlock = null;
+            $(document).off('mousemove', moveHandler);
+            $(document).off('mouseup', upHandler);
+            rebuildTimeline();
+        };
+        
+        $(document).on('mousemove', moveHandler);
+        $(document).on('mouseup', upHandler);
+    }
+    
+    function handleTimelineBlockResizeStart(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        
+        const $handle = $(e.currentTarget);
+        const $block = $handle.parent();
+        const animId = $block.data('anim-id');
+        const elementId = $block.data('element-id');
+        
+        isTimelineBlockResizing = true;
+        resizeDirection = $handle.hasClass('left') ? 'left' : 'right';
+        draggedBlock = { animId, elementId, $block };
+        
+        const $track = $block.parent();
+        const trackOffset = $track.offset().left;
+        const trackWidth = $track.width();
+        const startX = e.pageX;
+        const initialLeft = parseFloat($block.css('left'));
+        const initialWidth = $block.width();
+        
+        const moveHandler = function(moveEvent) {
+            if (!isTimelineBlockResizing) return;
+            
+            const deltaX = moveEvent.pageX - startX;
+            const deltaPercent = (deltaX / trackWidth) * 100;
+            
+            const element = elements.find(el => el.id === elementId);
+            if (!element) return;
+            
+            const anim = element.animations.find(a => a.id === animId);
+            if (!anim) return;
+            
+            if (resizeDirection === 'left') {
+                // Resize from left - adjust start and duration
+                let newLeft = initialLeft + deltaPercent;
+                newLeft = Math.max(0, newLeft);
+                
+                const widthPercent = parseFloat($block.css('width'));
+                const newWidthPercent = widthPercent - (newLeft - initialLeft);
+                
+                if (newWidthPercent > 2) { // Minimum 2% width
+                    $block.css('left', newLeft + '%');
+                    $block.css('width', newWidthPercent + '%');
+                    
+                    anim.start = (newLeft / 100) * totalDuration;
+                    anim.duration = (newWidthPercent / 100) * totalDuration;
+                }
+            } else {
+                // Resize from right - adjust duration only
+                const currentWidthPx = initialWidth + deltaX;
+                const maxWidth = trackWidth - parseFloat($block.position().left);
+                const newWidthPx = Math.max(20, Math.min(currentWidthPx, maxWidth));
+                const newWidthPercent = (newWidthPx / trackWidth) * 100;
+                
+                $block.css('width', newWidthPercent + '%');
+                anim.duration = (newWidthPercent / 100) * totalDuration;
+            }
+        };
+        
+        const upHandler = function() {
+            isTimelineBlockResizing = false;
+            resizeDirection = null;
+            draggedBlock = null;
+            $(document).off('mousemove', moveHandler);
+            $(document).off('mouseup', upHandler);
+            rebuildTimeline();
         };
         
         $(document).on('mousemove', moveHandler);
@@ -325,6 +478,80 @@
         const target = $('#clickthroughTarget').val() || '_blank';
         addClickthroughToCanvas(url, target);
         closeClickthroughModal();
+    }
+    
+    // ============================================
+    // SHAPE
+    // ============================================
+    function openShapeModal() {
+        $('#shapeModal').removeClass('hidden');
+    }
+    
+    function closeShapeModal() {
+        $('#shapeModal').addClass('hidden');
+    }
+    
+    function saveShape() {
+        const shapeType = $('#shapeType').val();
+        const width = parseInt($('#shapeWidth').val()) || 200;
+        const height = parseInt($('#shapeHeight').val()) || 150;
+        const fillColor = $('#shapeFillColor').val();
+        const opacity = parseFloat($('#shapeOpacity').val()) || 1;
+        
+        addShapeToCanvas(shapeType, width, height, fillColor, opacity);
+        closeShapeModal();
+    }
+    
+    function addShapeToCanvas(shapeType, width, height, fillColor, opacity) {
+        elementCounter++;
+        const id = `element_${elementCounter}`;
+        
+        const element = {
+            id: id,
+            type: 'shape',
+            shapeType: shapeType,
+            fillColor: fillColor,
+            x: 50,
+            y: 50,
+            width: width,
+            height: height,
+            rotation: 0,
+            opacity: opacity,
+            zIndex: elements.length,
+            animations: []
+        };
+        
+        elements.push(element);
+        
+        let shapeStyle = `background-color: ${fillColor};`;
+        if (shapeType === 'circle') {
+            shapeStyle += ' border-radius: 50%;';
+        } else if (shapeType === 'rounded-rectangle') {
+            shapeStyle += ' border-radius: 12px;';
+        }
+        
+        const $element = $(`
+            <div class="canvas-element" id="${id}" style="
+                left: ${element.x}px;
+                top: ${element.y}px;
+                width: ${element.width}px;
+                height: ${element.height}px;
+                opacity: ${element.opacity};
+                transform: rotate(${element.rotation}deg);
+                z-index: ${element.zIndex};
+                ${shapeStyle}
+            ">
+                <div class="resize-handle nw"></div>
+                <div class="resize-handle ne"></div>
+                <div class="resize-handle sw"></div>
+                <div class="resize-handle se"></div>
+            </div>
+        `);
+        
+        $canvas.append($element);
+        updateLayersList();
+        selectElement(id);
+        updateTimelineTracks();
     }
     
     function addClickthroughToCanvas(url, target) {
@@ -604,6 +831,9 @@
             } else if (element.type === 'clickthrough') {
                 icon = 'fa-mouse-pointer';
                 label = 'Clickthrough';
+            } else if (element.type === 'shape') {
+                icon = 'fa-shapes';
+                label = element.shapeType.charAt(0).toUpperCase() + element.shapeType.slice(1).replace('-', ' ');
             } else {
                 icon = 'fa-image';
                 label = (element.filename || 'Image').substring(0, 20);
@@ -760,6 +990,16 @@
             $('#propClickTarget').val(element.target);
         } else {
             $clickthroughProps.addClass('hidden');
+        }
+        
+        // Show/hide shape properties
+        const $shapeProps = $('#shapeProps');
+        if (element.type === 'shape') {
+            $shapeProps.removeClass('hidden');
+            $('#propShapeType').val(element.shapeType);
+            $('#propShapeColor').val(element.fillColor);
+        } else {
+            $shapeProps.addClass('hidden');
         }
         
         // Common properties
@@ -928,6 +1168,33 @@
             <div class="text-xs">Clickthrough</div>
             <div class="text-xs font-bold">${element.url}</div>
         `);
+    }
+    
+    // Shape property updates
+    function updateShapeType() {
+        if (!selectedElement) return;
+        const element = elements.find(el => el.id === selectedElement);
+        if (element.type !== 'shape') return;
+        
+        element.shapeType = $(this).val();
+        const $el = $(`#${selectedElement}`);
+        
+        if (element.shapeType === 'circle') {
+            $el.css('border-radius', '50%');
+        } else if (element.shapeType === 'rounded-rectangle') {
+            $el.css('border-radius', '12px');
+        } else {
+            $el.css('border-radius', '0');
+        }
+    }
+    
+    function updateShapeColor() {
+        if (!selectedElement) return;
+        const element = elements.find(el => el.id === selectedElement);
+        if (element.type !== 'shape') return;
+        
+        element.fillColor = $(this).val();
+        $(`#${selectedElement}`).css('background-color', element.fillColor);
     }
     
     // ============================================
@@ -1168,10 +1435,12 @@
                 const $block = $(`
                     <div class="timeline-block" style="left: ${leftPercent}%; width: ${widthPercent}%;" 
                          data-anim-id="${anim.id}" data-element-id="${element.id}">
+                        <div class="timeline-block-resize-handle left"></div>
                         <div class="timeline-block-label">${anim.type}</div>
                         <button class="delete-anim" data-anim-id="${anim.id}" data-element-id="${element.id}">
                             <i class="fas fa-times"></i>
                         </button>
+                        <div class="timeline-block-resize-handle right"></div>
                     </div>
                 `);
                 
@@ -1262,19 +1531,19 @@
         isPlaying = true;
         
         // Calculate actual playback time based on loop setting
+        // animLoop values: -1 = infinite, 0 = once, 1 = twice, 2 = 3 times, etc.
         let playbackTime;
         if (animLoop === -1) {
-            // Infinite loop - play for 3 iterations then stop
+            // Infinite loop - play for 3 iterations then stop preview
             playbackTime = totalDuration * 3 * 1000;
-            timeline.repeat(2); // repeat 2 times = play 3 times total (1 initial + 2 repeats)
-        } else if (animLoop === 0) {
-            // Play once
-            playbackTime = totalDuration * 1000;
-            timeline.repeat(0); // no repeat
+            timeline.repeat(2); // repeat 2 times = play 3 times total
         } else {
-            // Play N times: animLoop = 1 means play twice, etc.
+            // Play (animLoop + 1) times
+            // animLoop=0 -> repeat(0) -> play 1 time
+            // animLoop=1 -> repeat(1) -> play 2 times
+            // animLoop=2 -> repeat(2) -> play 3 times
             playbackTime = totalDuration * (animLoop + 1) * 1000;
-            timeline.repeat(animLoop); // repeat N times = play (N+1) times
+            timeline.repeat(animLoop);
         }
         
         timeline.duration(totalDuration);
@@ -1305,6 +1574,20 @@
                 transform: `rotate(${element.rotation}deg)`,
                 'z-index': element.zIndex
             };
+            
+            // Restore text-specific properties
+            if (element.type === 'text') {
+                style['font-size'] = element.fontSize + 'px';
+                style['font-family'] = element.fontFamily;
+                style['color'] = element.color;
+                style['font-weight'] = element.bold ? 'bold' : 'normal';
+                style['font-style'] = element.italic ? 'italic' : 'normal';
+                style['text-decoration'] = element.underline ? 'underline' : 'none';
+                style['text-align'] = element.textAlign;
+                style['justify-content'] = element.textAlign === 'left' ? 'flex-start' : 
+                                           element.textAlign === 'right' ? 'flex-end' : 'center';
+            }
+            
             $(`#${element.id}`).css(style);
         });
     }
