@@ -38,8 +38,6 @@
 
 .canvas-element.text-element {
     border: none;
-    display: flex;
-    align-items: center;
 }
 
 .canvas-element.text-element.selected {
