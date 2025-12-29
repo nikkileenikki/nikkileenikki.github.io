@@ -128,8 +128,7 @@
         $('#saveAnimBtn').on('click', saveAnimation);
         $('#deleteAnimBtn').on('click', deleteEditingAnimation);
         $('#animType').on('change', toggleCustomAnimProps);
-        // Removed: $timelineTracks.on('click', '.timeline-block', editAnimation);
-        // Timeline blocks now update automatically on drag/resize
+        $timelineTracks.on('click', '.timeline-block', editAnimation);
         $timelineTracks.on('click', '.delete-anim', function(e) {
             e.stopPropagation();
             handleDeleteAnimation(e);
@@ -1195,6 +1194,9 @@
     }
     
     function editAnimation(e) {
+        // Don't open modal if we just finished dragging/resizing
+        if (isTimelineBlockDragging || isTimelineBlockResizing) return;
+        
         const animId = $(e.currentTarget).data('anim-id');
         const elementId = $(e.currentTarget).data('element-id');
         
@@ -1235,12 +1237,12 @@
         
         const element = elements.find(el => el.id === selectedElement);
         const type = $('#animType').val();
-        const start = parseFloat($('#animStart').val());
-        const duration = parseFloat($('#animDuration').val());
+        const start = Math.round(parseFloat($('#animStart').val()) * 10) / 10; // Cap to 1 decimal
+        const duration = Math.round(parseFloat($('#animDuration').val()) * 10) / 10; // Cap to 1 decimal
         const ease = $('#animEase').val();
         
         // Update total duration if needed
-        const newTotalDuration = parseFloat($('#timelineDuration').val());
+        const newTotalDuration = Math.round(parseFloat($('#timelineDuration').val()) * 10) / 10; // Cap to 1 decimal
         if (newTotalDuration !== totalDuration) {
             totalDuration = newTotalDuration;
             updateTimelineRuler();
@@ -1508,7 +1510,8 @@
             timeline.repeat(animLoop);
         }
         
-        timeline.duration(totalDuration);
+        // Don't set timeline.duration() - it stretches all animations
+        // Let GSAP use the natural duration based on individual animation timings
         timeline.play(0);
         
         setTimeout(() => {
@@ -1806,14 +1809,22 @@
         const targetEl = elements.find(el => el.id === targetId);
         
         if (draggedEl && targetEl) {
-            // Swap z-indexes
-            const temp = draggedEl.zIndex;
-            draggedEl.zIndex = targetEl.zIndex;
-            targetEl.zIndex = temp;
+            // Reorder by sequence instead of swap
+            const draggedIndex = elements.indexOf(draggedEl);
+            const targetIndex = elements.indexOf(targetEl);
             
-            // Update DOM
-            $(`#${draggedEl.id}`).css('z-index', draggedEl.zIndex);
-            $(`#${targetEl.id}`).css('z-index', targetEl.zIndex);
+            // Remove dragged element from array
+            elements.splice(draggedIndex, 1);
+            
+            // Insert at target position
+            const newTargetIndex = elements.indexOf(targetEl);
+            elements.splice(newTargetIndex, 0, draggedEl);
+            
+            // Reassign z-indexes based on new order (highest index = highest z-index)
+            elements.forEach((el, idx) => {
+                el.zIndex = idx;
+                $(`#${el.id}`).css('z-index', el.zIndex);
+            });
             
             updateLayersList();
         }
