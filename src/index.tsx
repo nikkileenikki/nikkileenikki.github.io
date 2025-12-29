@@ -84,8 +84,8 @@ app.get('/', (c) => {
     <body class="bg-gray-900 text-gray-100">
         <div class="flex h-screen">
             <!-- Left Sidebar - Tools -->
-            <div class="w-80 bg-gray-800 border-r border-gray-700 overflow-y-auto">
-                <div class="p-6">
+            <div class="w-80 bg-gray-800 border-r border-gray-700 overflow-y-auto flex flex-col max-h-screen">
+                <div class="p-6 flex-1 overflow-y-auto"
                     <h1 class="text-2xl font-bold mb-6 flex items-center">
                         <i class="fas fa-ad mr-2 text-blue-400"></i>
                         Ad Builder
@@ -177,6 +177,23 @@ app.get('/', (c) => {
                                             <i class="fas fa-align-right"></i>
                                         </button>
                                     </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Clickthrough Properties -->
+                            <div id="clickthroughProps" class="hidden space-y-3 pb-3 border-b border-gray-700">
+                                <div>
+                                    <label class="text-sm text-gray-400">Click URL</label>
+                                    <input type="text" id="propClickUrl" class="w-full bg-gray-800 rounded px-3 py-2 text-sm" placeholder="https://example.com">
+                                </div>
+                                <div>
+                                    <label class="text-sm text-gray-400">Target</label>
+                                    <select id="propClickTarget" class="w-full bg-gray-800 rounded px-3 py-2 text-sm">
+                                        <option value="_blank">New Window (_blank)</option>
+                                        <option value="_self">Same Window (_self)</option>
+                                        <option value="_parent">Parent Frame (_parent)</option>
+                                        <option value="_top">Top Frame (_top)</option>
+                                    </select>
                                 </div>
                             </div>
                             
@@ -272,7 +289,7 @@ app.get('/', (c) => {
                 <!-- Canvas -->
                 <div class="flex-1 flex flex-col p-8 overflow-auto bg-gray-900">
                     <div class="flex items-center justify-center flex-1">
-                        <div id="canvasWrapper" class="relative bg-white shadow-2xl" style="width: 300px; height: 250px;">
+                        <div id="canvasWrapper" class="relative shadow-2xl" style="width: 300px; height: 250px;">
                             <div id="canvas" class="w-full h-full relative overflow-hidden">
                                 <!-- Elements will be added here -->
                             </div>
@@ -392,6 +409,17 @@ app.get('/', (c) => {
                     <div>
                         <label class="block text-sm text-gray-400 mb-2">Total Timeline Duration</label>
                         <input type="number" id="timelineDuration" value="5" step="0.5" min="1" max="60" class="w-full bg-gray-700 rounded px-3 py-2">
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm text-gray-400 mb-2">Animation Loop</label>
+                        <select id="animLoop" class="w-full bg-gray-700 rounded px-3 py-2">
+                            <option value="infinite">Loop Forever</option>
+                            <option value="1">Play Once</option>
+                            <option value="2">Play Twice</option>
+                            <option value="3">Play 3 Times</option>
+                            <option value="5">Play 5 Times</option>
+                        </select>
                     </div>
                     
                     <div>

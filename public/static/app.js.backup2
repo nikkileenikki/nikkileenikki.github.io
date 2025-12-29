@@ -15,8 +15,7 @@
     let timeline = gsap.timeline({ paused: true });
     let totalDuration = 5;
     let isPlaying = false;
-    let zoomLevel = 1; // Now controls timeline duration scale
-    let animLoop = -1; // -1 = infinite loop
+    let zoomLevel = 1; // 1 = 100%, 0.5 = 50%, 2 = 200%
     let editingAnimation = null; // For editing existing animations
     
     // Canvas dimensions
@@ -100,10 +99,6 @@
         $('#propUnderline').on('click', toggleUnderline);
         $('.text-align-btn').on('click', updateTextAlign);
         
-        // Clickthrough properties
-        $('#propClickUrl').on('change', updateClickUrl);
-        $('#propClickTarget').on('change', updateClickTarget);
-        
         // Animation
         $('#addAnimBtn').on('click', openAnimationModal);
         $('#closeModal').on('click', closeAnimationModal);
@@ -118,7 +113,6 @@
         
         // Timeline controls
         $('#timelineDuration').on('change', updateTotalDuration);
-        $('#animLoop').on('change', updateAnimLoop);
         $('#zoomIn').on('click', zoomIn);
         $('#zoomOut').on('click', zoomOut);
         $('#playTimeline').on('click', playTimeline);
@@ -567,12 +561,8 @@
             }
             
             const $layer = $(`
-                <div class="layer-item p-2 rounded border border-gray-700 flex items-center justify-between" 
-                     data-id="${element.id}" 
-                     draggable="true" 
-                     data-index="${index}">
+                <div class="layer-item p-2 rounded border border-gray-700 flex items-center justify-between" data-id="${element.id}">
                     <div class="flex items-center flex-1">
-                        <i class="fas fa-grip-vertical text-gray-600 mr-2 cursor-move"></i>
                         <i class="fas ${icon} text-blue-400 mr-2"></i>
                         <span class="text-sm">${label}</span>
                     </div>
@@ -589,13 +579,6 @@
                     </div>
                 </div>
             `);
-            
-            // Add drag and drop events
-            $layer.on('dragstart', handleDragStart);
-            $layer.on('dragover', handleDragOver);
-            $layer.on('drop', handleLayerDrop);
-            $layer.on('dragend', handleDragEnd);
-            
             $layersList.append($layer);
         });
         
@@ -707,16 +690,6 @@
             $(`.text-align-btn[data-align="${element.textAlign}"]`).addClass('active');
         } else {
             $textProps.addClass('hidden');
-        }
-        
-        // Show/hide clickthrough properties
-        const $clickthroughProps = $('#clickthroughProps');
-        if (element.type === 'clickthrough') {
-            $clickthroughProps.removeClass('hidden');
-            $('#propClickUrl').val(element.url);
-            $('#propClickTarget').val(element.target);
-        } else {
-            $clickthroughProps.addClass('hidden');
         }
         
         // Common properties
@@ -853,33 +826,6 @@
         $(e.currentTarget).addClass('active');
         
         $(`#${selectedElement}`).css('text-align', align);
-    }
-    
-    // Clickthrough property updates
-    function updateClickUrl() {
-        if (!selectedElement) return;
-        const element = elements.find(el => el.id === selectedElement);
-        if (element.type !== 'clickthrough') return;
-        
-        element.url = $(this).val() || 'https://example.com';
-        updateClickthroughDisplay(element);
-    }
-    
-    function updateClickTarget() {
-        if (!selectedElement) return;
-        const element = elements.find(el => el.id === selectedElement);
-        if (element.type !== 'clickthrough') return;
-        
-        element.target = $(this).val() || '_blank';
-    }
-    
-    function updateClickthroughDisplay(element) {
-        const $element = $(`#${element.id}`);
-        $element.find('div').last().html(`
-            <i class="fas fa-mouse-pointer text-2xl mb-2"></i>
-            <div class="text-xs">Clickthrough</div>
-            <div class="text-xs font-bold">${element.url}</div>
-        `);
     }
     
     // ============================================
@@ -1040,24 +986,13 @@
         updateTimelineTracks();
     }
     
-    function updateAnimLoop() {
-        const value = $('#animLoop').val();
-        animLoop = value === 'infinite' ? -1 : parseInt(value);
-    }
-    
     function zoomIn() {
-        // Zoom in = decrease duration to see more detail
-        totalDuration = Math.max(totalDuration - 2, 2);
-        $('#timelineDuration').val(totalDuration);
-        updateTimelineRuler();
+        zoomLevel = Math.min(zoomLevel * 1.5, 4);
         updateTimelineTracks();
     }
     
     function zoomOut() {
-        // Zoom out = increase duration to see more time
-        totalDuration = Math.min(totalDuration + 2, 60);
-        $('#timelineDuration').val(totalDuration);
-        updateTimelineRuler();
+        zoomLevel = Math.max(zoomLevel / 1.5, 0.25);
         updateTimelineTracks();
     }
     
@@ -1105,7 +1040,7 @@
                         <i class="fas ${icon} text-blue-400 mr-2"></i>
                         <span class="truncate">${label}</span>
                     </div>
-                    <div class="timeline-track-content" id="track_${element.id}">
+                    <div class="timeline-track-content" id="track_${element.id}" style="min-width: ${1000 * zoomLevel}px;">
                     </div>
                 </div>
             `);
@@ -1392,7 +1327,7 @@
     </div>
     
     <script>
-        const tl = gsap.timeline({ repeat: ${animLoop} });
+        const tl = gsap.timeline({ repeat: -1 });
         ${animationsJs}
     </script>
 </body>
@@ -1463,49 +1398,3 @@
     }
     
 })();
-    
-    // Drag and drop handlers for layer reordering
-    let draggedElement = null;
-    
-    function handleDragStart(e) {
-        draggedElement = $(e.currentTarget).data('id');
-        $(e.currentTarget).addClass('dragging');
-    }
-    
-    function handleDragOver(e) {
-        e.preventDefault();
-        const $target = $(e.currentTarget);
-        if (!$target.hasClass('dragging')) {
-            $('.layer-item').removeClass('drag-over');
-            $target.addClass('drag-over');
-        }
-    }
-    
-    function handleLayerDrop(e) {
-        e.preventDefault();
-        e.stopPropagation();
-        
-        const targetId = $(e.currentTarget).data('id');
-        if (!draggedElement || draggedElement === targetId) return;
-        
-        const draggedEl = elements.find(el => el.id === draggedElement);
-        const targetEl = elements.find(el => el.id === targetId);
-        
-        if (draggedEl && targetEl) {
-            // Swap z-indexes
-            const temp = draggedEl.zIndex;
-            draggedEl.zIndex = targetEl.zIndex;
-            targetEl.zIndex = temp;
-            
-            // Update DOM
-            $(`#${draggedEl.id}`).css('z-index', draggedEl.zIndex);
-            $(`#${targetEl.id}`).css('z-index', targetEl.zIndex);
-            
-            updateLayersList();
-        }
-    }
-    
-    function handleDragEnd(e) {
-        $('.layer-item').removeClass('dragging drag-over');
-        draggedElement = null;
-    }

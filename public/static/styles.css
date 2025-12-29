@@ -13,6 +13,15 @@
     border-color: rgb(59, 130, 246);
 }
 
+.layer-item.dragging {
+    opacity: 0.5;
+    cursor: move;
+}
+
+.layer-item.drag-over {
+    border-top: 2px solid rgb(59, 130, 246);
+}
+
 .canvas-element {
     position: absolute;
     cursor: move;
@@ -62,12 +71,21 @@
     background: rgb(59, 130, 246);
     border: 1px solid white;
     border-radius: 50%;
+    display: none;
+}
+
+.canvas-element.selected .resize-handle {
+    display: block;
 }
 
 .resize-handle.nw { top: -5px; left: -5px; cursor: nw-resize; }
 .resize-handle.ne { top: -5px; right: -5px; cursor: ne-resize; }
 .resize-handle.sw { bottom: -5px; left: -5px; cursor: sw-resize; }
 .resize-handle.se { bottom: -5px; right: -5px; cursor: se-resize; }
+
+#canvasWrapper {
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+}
 
 #canvas {
     background: 
@@ -77,6 +95,7 @@
         linear-gradient(-45deg, transparent 75%, #f0f0f0 75%);
     background-size: 20px 20px;
     background-position: 0 0, 0 10px, 10px -10px, -10px 0px;
+    background-color: white;
 }
 
 .anim-item {
