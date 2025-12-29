@@ -91,15 +91,21 @@ app.get('/', (c) => {
                         Ad Builder
                     </h1>
                     
-                    <!-- Upload Section -->
+                    <!-- Add Elements -->
                     <div class="mb-6">
-                        <h2 class="text-lg font-semibold mb-3">Upload Image</h2>
-                        <div id="dropzone" class="border-2 border-dashed border-gray-600 rounded-lg p-6 text-center cursor-pointer hover:border-blue-400 transition-colors">
-                            <i class="fas fa-cloud-upload-alt text-4xl text-gray-500 mb-2"></i>
-                            <p class="text-sm text-gray-400">Drop image here or click to upload</p>
-                            <p class="text-xs text-gray-500 mt-1">JPG, PNG, GIF</p>
+                        <h2 class="text-lg font-semibold mb-3">Add Elements</h2>
+                        <div class="space-y-2">
+                            <div id="dropzone" class="border-2 border-dashed border-gray-600 rounded-lg p-4 text-center cursor-pointer hover:border-blue-400 transition-colors">
+                                <i class="fas fa-cloud-upload-alt text-3xl text-gray-500 mb-1"></i>
+                                <p class="text-sm text-gray-400">Upload Image</p>
+                                <p class="text-xs text-gray-500 mt-1">JPG, PNG, GIF</p>
+                            </div>
+                            <input type="file" id="fileInput" accept="image/jpeg,image/png,image/gif" class="hidden">
+                            
+                            <button id="addTextBtn" class="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 rounded transition-colors">
+                                <i class="fas fa-font mr-2"></i>Add Text
+                            </button>
                         </div>
-                        <input type="file" id="fileInput" accept="image/jpeg,image/png,image/gif" class="hidden">
                     </div>
 
                     <!-- Layers Panel -->
@@ -114,6 +120,63 @@ app.get('/', (c) => {
                     <div id="propertiesPanel" class="mb-6 hidden">
                         <h2 class="text-lg font-semibold mb-3">Properties</h2>
                         <div class="space-y-3 bg-gray-900 rounded-lg p-3">
+                            <!-- Text Properties -->
+                            <div id="textProps" class="hidden space-y-3 pb-3 border-b border-gray-700">
+                                <div>
+                                    <label class="text-sm text-gray-400">Text Content</label>
+                                    <input type="text" id="propText" class="w-full bg-gray-800 rounded px-3 py-2 text-sm">
+                                </div>
+                                <div>
+                                    <label class="text-sm text-gray-400">Font Family</label>
+                                    <select id="propFontFamily" class="w-full bg-gray-800 rounded px-3 py-2 text-sm">
+                                        <option value="Arial">Arial</option>
+                                        <option value="Helvetica">Helvetica</option>
+                                        <option value="Times New Roman">Times New Roman</option>
+                                        <option value="Georgia">Georgia</option>
+                                        <option value="Courier New">Courier New</option>
+                                        <option value="Verdana">Verdana</option>
+                                        <option value="Impact">Impact</option>
+                                        <option value="Comic Sans MS">Comic Sans MS</option>
+                                        <option value="Trebuchet MS">Trebuchet MS</option>
+                                        <option value="Arial Black">Arial Black</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="text-sm text-gray-400">Font Size</label>
+                                    <input type="number" id="propFontSize" class="w-full bg-gray-800 rounded px-3 py-2 text-sm" min="8" max="200">
+                                </div>
+                                <div>
+                                    <label class="text-sm text-gray-400">Color</label>
+                                    <input type="color" id="propColor" class="w-full bg-gray-800 rounded px-3 py-2 h-10">
+                                </div>
+                                <div class="flex space-x-2">
+                                    <button id="propBold" class="flex-1 bg-gray-700 hover:bg-gray-600 rounded py-2 text-sm">
+                                        <i class="fas fa-bold"></i>
+                                    </button>
+                                    <button id="propItalic" class="flex-1 bg-gray-700 hover:bg-gray-600 rounded py-2 text-sm">
+                                        <i class="fas fa-italic"></i>
+                                    </button>
+                                    <button id="propUnderline" class="flex-1 bg-gray-700 hover:bg-gray-600 rounded py-2 text-sm">
+                                        <i class="fas fa-underline"></i>
+                                    </button>
+                                </div>
+                                <div>
+                                    <label class="text-sm text-gray-400">Text Align</label>
+                                    <div class="flex space-x-2">
+                                        <button class="text-align-btn flex-1 bg-gray-700 hover:bg-gray-600 rounded py-2 text-sm" data-align="left">
+                                            <i class="fas fa-align-left"></i>
+                                        </button>
+                                        <button class="text-align-btn flex-1 bg-gray-700 hover:bg-gray-600 rounded py-2 text-sm" data-align="center">
+                                            <i class="fas fa-align-center"></i>
+                                        </button>
+                                        <button class="text-align-btn flex-1 bg-gray-700 hover:bg-gray-600 rounded py-2 text-sm" data-align="right">
+                                            <i class="fas fa-align-right"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Common Properties -->
                             <div>
                                 <label class="text-sm text-gray-400">Width</label>
                                 <input type="number" id="propWidth" class="w-full bg-gray-800 rounded px-3 py-2 text-sm">
@@ -144,13 +207,14 @@ app.get('/', (c) => {
 
                     <!-- Animation Panel -->
                     <div class="mb-6">
-                        <h2 class="text-lg font-semibold mb-3">Animation</h2>
+                        <h2 class="text-lg font-semibold mb-3">Timeline</h2>
                         <div class="space-y-3 bg-gray-900 rounded-lg p-3">
                             <button id="addAnimBtn" class="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 rounded transition-colors">
-                                <i class="fas fa-plus mr-2"></i>Add Animation
+                                <i class="fas fa-plus mr-2"></i>Add to Timeline
                             </button>
-                            <div id="animationsList" class="space-y-2 mt-3">
-                                <!-- Animations will be listed here -->
+                            <div>
+                                <label class="text-sm text-gray-400">Total Duration (seconds)</label>
+                                <input type="number" id="totalDuration" value="5" step="0.5" min="1" max="60" class="w-full bg-gray-800 rounded px-3 py-2 text-sm">
                             </div>
                         </div>
                     </div>
@@ -195,10 +259,57 @@ app.get('/', (c) => {
                 </div>
 
                 <!-- Canvas -->
-                <div class="flex-1 flex items-center justify-center p-8 overflow-auto bg-gray-900">
-                    <div id="canvasWrapper" class="relative bg-white shadow-2xl" style="width: 300px; height: 250px;">
-                        <div id="canvas" class="w-full h-full relative overflow-hidden">
-                            <!-- Elements will be added here -->
+                <div class="flex-1 flex flex-col p-8 overflow-auto bg-gray-900">
+                    <div class="flex items-center justify-center flex-1">
+                        <div id="canvasWrapper" class="relative bg-white shadow-2xl" style="width: 300px; height: 250px;">
+                            <div id="canvas" class="w-full h-full relative overflow-hidden">
+                                <!-- Elements will be added here -->
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Timeline Editor -->
+                    <div class="mt-6 bg-gray-800 rounded-lg p-4 border border-gray-700">
+                        <div class="flex items-center justify-between mb-3">
+                            <h3 class="text-lg font-semibold flex items-center">
+                                <i class="fas fa-film mr-2 text-purple-400"></i>
+                                Animation Timeline
+                            </h3>
+                            <div class="flex space-x-2">
+                                <button id="playTimeline" class="bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded text-sm transition-colors">
+                                    <i class="fas fa-play mr-1"></i>Play
+                                </button>
+                                <button id="stopTimeline" class="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded text-sm transition-colors">
+                                    <i class="fas fa-stop mr-1"></i>Stop
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <!-- Timeline Container -->
+                        <div id="timelineContainer" class="bg-gray-900 rounded-lg overflow-x-auto">
+                            <div class="min-w-[800px]">
+                                <!-- Timeline Header -->
+                                <div class="flex border-b border-gray-700">
+                                    <div class="w-40 p-2 bg-gray-800 border-r border-gray-700">
+                                        <span class="text-xs text-gray-400 font-semibold">LAYER</span>
+                                    </div>
+                                    <div class="flex-1 relative h-8">
+                                        <div id="timelineRuler" class="absolute inset-0 flex">
+                                            <!-- Time markers will be added here -->
+                                        </div>
+                                        <div id="timelinePlayhead" class="absolute top-0 bottom-0 w-0.5 bg-red-500 z-10" style="left: 0;">
+                                            <div class="w-3 h-3 bg-red-500 rounded-full absolute -top-1 -left-1"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <!-- Timeline Tracks -->
+                                <div id="timelineTracks">
+                                    <div class="text-center text-gray-500 text-sm py-8">
+                                        Add elements and animations to see timeline
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -209,7 +320,7 @@ app.get('/', (c) => {
         <div id="animModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
             <div class="bg-gray-800 rounded-lg p-6 w-[500px] max-h-[90vh] overflow-y-auto">
                 <div class="flex justify-between items-center mb-4">
-                    <h3 class="text-xl font-bold">Add Animation</h3>
+                    <h3 class="text-xl font-bold">Add to Timeline</h3>
                     <button id="closeModal" class="text-gray-400 hover:text-white">
                         <i class="fas fa-times"></i>
                     </button>
@@ -228,7 +339,37 @@ app.get('/', (c) => {
                             <option value="scale">Scale</option>
                             <option value="rotate">Rotate</option>
                             <option value="bounce">Bounce</option>
+                            <option value="custom">Custom Properties</option>
                         </select>
+                    </div>
+                    
+                    <!-- Custom Animation Properties -->
+                    <div id="customAnimProps" class="hidden space-y-3 p-3 bg-gray-700 rounded">
+                        <div>
+                            <label class="block text-xs text-gray-400 mb-1">Target X</label>
+                            <input type="number" id="animCustomX" class="w-full bg-gray-800 rounded px-2 py-1 text-sm" placeholder="Leave empty to keep current">
+                        </div>
+                        <div>
+                            <label class="block text-xs text-gray-400 mb-1">Target Y</label>
+                            <input type="number" id="animCustomY" class="w-full bg-gray-800 rounded px-2 py-1 text-sm" placeholder="Leave empty to keep current">
+                        </div>
+                        <div>
+                            <label class="block text-xs text-gray-400 mb-1">Target Scale</label>
+                            <input type="number" id="animCustomScale" step="0.1" class="w-full bg-gray-800 rounded px-2 py-1 text-sm" placeholder="e.g. 1.5">
+                        </div>
+                        <div>
+                            <label class="block text-xs text-gray-400 mb-1">Target Rotation (deg)</label>
+                            <input type="number" id="animCustomRotation" class="w-full bg-gray-800 rounded px-2 py-1 text-sm" placeholder="e.g. 360">
+                        </div>
+                        <div>
+                            <label class="block text-xs text-gray-400 mb-1">Target Opacity</label>
+                            <input type="number" id="animCustomOpacity" step="0.1" min="0" max="1" class="w-full bg-gray-800 rounded px-2 py-1 text-sm" placeholder="0 to 1">
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm text-gray-400 mb-2">Start Time (seconds)</label>
+                        <input type="number" id="animStart" value="0" step="0.1" min="0" class="w-full bg-gray-700 rounded px-3 py-2">
                     </div>
                     
                     <div>
@@ -237,16 +378,12 @@ app.get('/', (c) => {
                     </div>
                     
                     <div>
-                        <label class="block text-sm text-gray-400 mb-2">Delay (seconds)</label>
-                        <input type="number" id="animDelay" value="0" step="0.1" min="0" class="w-full bg-gray-700 rounded px-3 py-2">
-                    </div>
-                    
-                    <div>
                         <label class="block text-sm text-gray-400 mb-2">Easing</label>
                         <select id="animEase" class="w-full bg-gray-700 rounded px-3 py-2">
                             <option value="power1.out">Power1 Out</option>
                             <option value="power2.out">Power2 Out</option>
                             <option value="power3.out">Power3 Out</option>
+                            <option value="power1.inOut">Power1 InOut</option>
                             <option value="back.out">Back Out</option>
                             <option value="elastic.out">Elastic Out</option>
                             <option value="bounce.out">Bounce Out</option>
@@ -255,7 +392,30 @@ app.get('/', (c) => {
                     </div>
                     
                     <button id="saveAnimBtn" class="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 rounded transition-colors">
-                        Save Animation
+                        Add to Timeline
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Text Modal -->
+        <div id="textModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div class="bg-gray-800 rounded-lg p-6 w-[500px]">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-xl font-bold">Add Text</h3>
+                    <button id="closeTextModal" class="text-gray-400 hover:text-white">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-sm text-gray-400 mb-2">Text Content</label>
+                        <input type="text" id="textContent" value="Your Text Here" class="w-full bg-gray-700 rounded px-3 py-2">
+                    </div>
+                    
+                    <button id="saveTextBtn" class="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 rounded transition-colors">
+                        Add Text
                     </button>
                 </div>
             </div>

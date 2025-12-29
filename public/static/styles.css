@@ -28,6 +28,13 @@
     border-color: rgb(59, 130, 246);
 }
 
+.canvas-element.text-element {
+    border: 2px dashed transparent;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
 .resize-handle {
     position: absolute;
     width: 10px;
@@ -63,3 +70,100 @@
 .anim-item:hover {
     background: rgba(139, 92, 246, 0.2);
 }
+
+/* Timeline Styles */
+.timeline-track {
+    display: flex;
+    border-bottom: 1px solid rgb(55, 65, 81);
+    min-height: 48px;
+}
+
+.timeline-track-label {
+    width: 160px;
+    padding: 8px;
+    background: rgb(31, 41, 55);
+    border-right: 1px solid rgb(55, 65, 81);
+    display: flex;
+    align-items: center;
+    font-size: 12px;
+}
+
+.timeline-track-content {
+    flex: 1;
+    position: relative;
+    background: rgb(17, 24, 39);
+}
+
+.timeline-block {
+    position: absolute;
+    height: 32px;
+    top: 8px;
+    background: linear-gradient(135deg, rgba(139, 92, 246, 0.8), rgba(168, 85, 247, 0.8));
+    border: 1px solid rgba(139, 92, 246, 1);
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.2s;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    padding: 0 8px;
+}
+
+.timeline-block:hover {
+    background: linear-gradient(135deg, rgba(139, 92, 246, 1), rgba(168, 85, 247, 1));
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(139, 92, 246, 0.4);
+}
+
+.timeline-block-label {
+    font-size: 10px;
+    font-weight: 600;
+    color: white;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.timeline-block .delete-anim {
+    position: absolute;
+    right: 4px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: rgba(239, 68, 68, 0.9);
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    font-size: 10px;
+}
+
+.timeline-block:hover .delete-anim {
+    display: flex;
+}
+
+.timeline-time-marker {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    width: 1px;
+    background: rgba(156, 163, 175, 0.3);
+}
+
+.timeline-time-label {
+    position: absolute;
+    top: 2px;
+    font-size: 10px;
+    color: rgb(156, 163, 175);
+    transform: translateX(-50%);
+}
+
+.text-align-btn.active {
+    background-color: rgb(59, 130, 246);
+}
+
+#propBold.active, #propItalic.active, #propUnderline.active {
+    background-color: rgb(59, 130, 246);
+}
+

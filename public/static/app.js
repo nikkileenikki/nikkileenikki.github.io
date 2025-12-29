@@ -1,8 +1,10 @@
-// HTML5 Ad Builder - Main Application
+// HTML5 Ad Builder - Enhanced with Text and Timeline
 (function() {
     'use strict';
     
-    // State management
+    // ============================================
+    // STATE MANAGEMENT
+    // ============================================
     let elements = [];
     let selectedElement = null;
     let dragOffset = { x: 0, y: 0 };
@@ -11,6 +13,8 @@
     let resizeHandle = null;
     let elementCounter = 0;
     let timeline = gsap.timeline({ paused: true });
+    let totalDuration = 5;
+    let isPlaying = false;
     
     // Canvas dimensions
     let canvasWidth = 300;
@@ -23,22 +27,35 @@
     const $dropzone = $('#dropzone');
     const $fileInput = $('#fileInput');
     const $propertiesPanel = $('#propertiesPanel');
+    const $textProps = $('#textProps');
     const $animModal = $('#animModal');
-    const $animationsList = $('#animationsList');
+    const $textModal = $('#textModal');
+    const $timelineTracks = $('#timelineTracks');
+    const $timelineRuler = $('#timelineRuler');
     
-    // Initialize
+    // ============================================
+    // INITIALIZATION
+    // ============================================
     $(document).ready(function() {
         initEventListeners();
         updateCanvasSize();
+        updateTimelineRuler();
     });
     
-    // Event Listeners
+    // ============================================
+    // EVENT LISTENERS
+    // ============================================
     function initEventListeners() {
         // File upload
         $dropzone.on('click', () => $fileInput.click());
         $dropzone.on('dragover', handleDragOver);
         $dropzone.on('drop', handleDrop);
         $fileInput.on('change', handleFileSelect);
+        
+        // Text
+        $('#addTextBtn').on('click', openTextModal);
+        $('#closeTextModal').on('click', closeTextModal);
+        $('#saveTextBtn').on('click', saveText);
         
         // Canvas size
         $('#canvasSize').on('change', handleCanvasSizeChange);
@@ -54,7 +71,7 @@
         $layersList.on('click', '.layer-item', handleLayerClick);
         $layersList.on('click', '.delete-layer', handleDeleteLayer);
         
-        // Properties
+        // Common properties
         $('#propWidth').on('change', updateElementWidth);
         $('#propHeight').on('change', updateElementHeight);
         $('#propX').on('change', updateElementX);
@@ -62,19 +79,37 @@
         $('#propRotation').on('change', updateElementRotation);
         $('#propOpacity').on('input', updateElementOpacity);
         
+        // Text properties
+        $('#propText').on('input', updateTextContent);
+        $('#propFontFamily').on('change', updateFontFamily);
+        $('#propFontSize').on('change', updateFontSize);
+        $('#propColor').on('change', updateColor);
+        $('#propBold').on('click', toggleBold);
+        $('#propItalic').on('click', toggleItalic);
+        $('#propUnderline').on('click', toggleUnderline);
+        $('.text-align-btn').on('click', updateTextAlign);
+        
         // Animation
         $('#addAnimBtn').on('click', openAnimationModal);
         $('#closeModal').on('click', closeAnimationModal);
         $('#saveAnimBtn').on('click', saveAnimation);
-        $animationsList.on('click', '.delete-anim', handleDeleteAnimation);
+        $('#animType').on('change', toggleCustomAnimProps);
+        $timelineTracks.on('click', '.delete-anim', handleDeleteAnimation);
+        
+        // Timeline
+        $('#totalDuration').on('change', updateTotalDuration);
+        $('#playTimeline').on('click', playTimeline);
+        $('#stopTimeline').on('click', stopTimeline);
         
         // Actions
-        $('#previewBtn').on('click', previewAnimation);
+        $('#previewBtn').on('click', playTimeline);
         $('#exportBtn').on('click', exportToZip);
         $('#clearBtn').on('click', clearAll);
     }
     
-    // File Upload Handlers
+    // ============================================
+    // FILE UPLOAD
+    // ============================================
     function handleDragOver(e) {
         e.preventDefault();
         e.stopPropagation();
@@ -100,19 +135,16 @@
     }
     
     async function uploadFile(file) {
-        // Validate file type
         const validTypes = ['image/jpeg', 'image/png', 'image/gif'];
         if (!validTypes.includes(file.type)) {
             alert('Please upload a JPG, PNG, or GIF file.');
             return;
         }
         
-        // Create FormData
         const formData = new FormData();
         formData.append('image', file);
         
         try {
-            // Upload to server
             const response = await fetch('/api/upload', {
                 method: 'POST',
                 body: formData
@@ -131,12 +163,89 @@
         }
     }
     
-    // Canvas Management
+    // ============================================
+    // TEXT MANAGEMENT
+    // ============================================
+    function openTextModal() {
+        $('#textContent').val('Your Text Here');
+        $textModal.removeClass('hidden');
+    }
+    
+    function closeTextModal() {
+        $textModal.addClass('hidden');
+    }
+    
+    function saveText() {
+        const text = $('#textContent').val() || 'Your Text Here';
+        addTextToCanvas(text);
+        closeTextModal();
+    }
+    
+    function addTextToCanvas(text) {
+        elementCounter++;
+        const id = `element_${elementCounter}`;
+        
+        const element = {
+            id: id,
+            type: 'text',
+            text: text,
+            x: 50,
+            y: 50,
+            width: 200,
+            height: 50,
+            rotation: 0,
+            opacity: 1,
+            fontSize: 24,
+            fontFamily: 'Arial',
+            color: '#000000',
+            bold: false,
+            italic: false,
+            underline: false,
+            textAlign: 'left',
+            animations: []
+        };
+        
+        elements.push(element);
+        
+        const $element = $(`
+            <div class="canvas-element text-element" id="${id}" style="
+                left: ${element.x}px;
+                top: ${element.y}px;
+                width: ${element.width}px;
+                height: ${element.height}px;
+                opacity: ${element.opacity};
+                transform: rotate(${element.rotation}deg);
+                font-size: ${element.fontSize}px;
+                font-family: ${element.fontFamily};
+                color: ${element.color};
+                font-weight: ${element.bold ? 'bold' : 'normal'};
+                font-style: ${element.italic ? 'italic' : 'normal'};
+                text-decoration: ${element.underline ? 'underline' : 'none'};
+                text-align: ${element.textAlign};
+                padding: 5px;
+                line-height: 1.2;
+                word-wrap: break-word;
+            ">
+                ${text}
+                <div class="resize-handle nw"></div>
+                <div class="resize-handle ne"></div>
+                <div class="resize-handle sw"></div>
+                <div class="resize-handle se"></div>
+            </div>
+        `);
+        
+        $canvas.append($element);
+        updateLayersList();
+        selectElement(id);
+    }
+    
+    // ============================================
+    // CANVAS MANAGEMENT
+    // ============================================
     function addImageToCanvas(url, filename) {
         elementCounter++;
         const id = `element_${elementCounter}`;
         
-        // Create element data
         const element = {
             id: id,
             type: 'image',
@@ -153,7 +262,6 @@
         
         elements.push(element);
         
-        // Create DOM element
         const $element = $(`
             <div class="canvas-element" id="${id}" style="
                 left: ${element.x}px;
@@ -181,6 +289,7 @@
             width: canvasWidth + 'px',
             height: canvasHeight + 'px'
         });
+        updateTimelineRuler();
     }
     
     function handleCanvasSizeChange(e) {
@@ -205,7 +314,9 @@
         updateCanvasSize();
     }
     
-    // Element Interaction
+    // ============================================
+    // ELEMENT INTERACTION
+    // ============================================
     function handleElementMouseDown(e) {
         if ($(e.target).hasClass('resize-handle')) return;
         
@@ -231,7 +342,7 @@
         e.stopPropagation();
         
         isResizing = true;
-        resizeHandle = $(e.target).attr('class').split(' ')[1]; // Get handle direction
+        resizeHandle = $(e.target).attr('class').split(' ')[1];
         
         const $element = $(e.target).closest('.canvas-element');
         selectElement($element.attr('id'));
@@ -247,11 +358,9 @@
         const canvasOffset = $canvas.offset();
         
         if (isDragging) {
-            // Calculate new position
             let newX = e.pageX - canvasOffset.left - dragOffset.x;
             let newY = e.pageY - canvasOffset.top - dragOffset.y;
             
-            // Constrain to canvas bounds
             newX = Math.max(0, Math.min(newX, canvasWidth - element.width));
             newY = Math.max(0, Math.min(newY, canvasHeight - element.height));
             
@@ -318,11 +427,12 @@
         resizeHandle = null;
     }
     
-    // Element Selection
+    // ============================================
+    // ELEMENT SELECTION
+    // ============================================
     function selectElement(id) {
         selectedElement = id;
         
-        // Update UI
         $('.canvas-element').removeClass('selected');
         $(`#${id}`).addClass('selected');
         
@@ -332,22 +442,27 @@
         updatePropertiesPanel();
     }
     
-    // Layers Panel
+    // ============================================
+    // LAYERS PANEL
+    // ============================================
     function updateLayersList() {
         if (elements.length === 0) {
             $layersList.html('<p class="text-sm text-gray-500 text-center py-4">No layers yet</p>');
+            updateTimelineTracks();
             return;
         }
         
         $layersList.empty();
         
-        // Reverse order to show newest first
         [...elements].reverse().forEach((element, index) => {
+            const icon = element.type === 'text' ? 'fa-font' : 'fa-image';
+            const label = element.type === 'text' ? element.text.substring(0, 20) : (element.filename || 'Image');
+            
             const $layer = $(`
                 <div class="layer-item p-2 rounded border border-gray-700 flex items-center justify-between" data-id="${element.id}">
                     <div class="flex items-center">
-                        <i class="fas fa-image text-blue-400 mr-2"></i>
-                        <span class="text-sm">${element.filename || 'Image'}</span>
+                        <i class="fas ${icon} text-blue-400 mr-2"></i>
+                        <span class="text-sm">${label}</span>
                     </div>
                     <button class="delete-layer text-red-400 hover:text-red-300" data-id="${element.id}">
                         <i class="fas fa-trash text-xs"></i>
@@ -356,6 +471,8 @@
             `);
             $layersList.append($layer);
         });
+        
+        updateTimelineTracks();
     }
     
     function handleLayerClick(e) {
@@ -368,13 +485,9 @@
         e.stopPropagation();
         const id = $(e.currentTarget).data('id');
         
-        // Remove from array
         elements = elements.filter(el => el.id !== id);
-        
-        // Remove from DOM
         $(`#${id}`).remove();
         
-        // Clear selection if deleted element was selected
         if (selectedElement === id) {
             selectedElement = null;
             $propertiesPanel.addClass('hidden');
@@ -384,7 +497,9 @@
         rebuildTimeline();
     }
     
-    // Properties Panel
+    // ============================================
+    // PROPERTIES PANEL
+    // ============================================
     function updatePropertiesPanel() {
         if (!selectedElement) {
             $propertiesPanel.addClass('hidden');
@@ -395,6 +510,26 @@
         if (!element) return;
         
         $propertiesPanel.removeClass('hidden');
+        
+        // Show/hide text properties
+        if (element.type === 'text') {
+            $textProps.removeClass('hidden');
+            $('#propText').val(element.text);
+            $('#propFontFamily').val(element.fontFamily);
+            $('#propFontSize').val(element.fontSize);
+            $('#propColor').val(element.color);
+            
+            $('#propBold').toggleClass('active', element.bold);
+            $('#propItalic').toggleClass('active', element.italic);
+            $('#propUnderline').toggleClass('active', element.underline);
+            
+            $('.text-align-btn').removeClass('active');
+            $(`.text-align-btn[data-align="${element.textAlign}"]`).addClass('active');
+        } else {
+            $textProps.addClass('hidden');
+        }
+        
+        // Common properties
         $('#propWidth').val(Math.round(element.width));
         $('#propHeight').val(Math.round(element.height));
         $('#propX').val(Math.round(element.x));
@@ -404,6 +539,7 @@
         $('#opacityValue').text(Math.round(element.opacity * 100) + '%');
     }
     
+    // Common property updates
     function updateElementWidth() {
         if (!selectedElement) return;
         const element = elements.find(el => el.id === selectedElement);
@@ -447,12 +583,98 @@
         $('#opacityValue').text(Math.round(element.opacity * 100) + '%');
     }
     
-    // Animation
+    // Text property updates
+    function updateTextContent() {
+        if (!selectedElement) return;
+        const element = elements.find(el => el.id === selectedElement);
+        if (element.type !== 'text') return;
+        
+        element.text = $(this).val();
+        $(`#${selectedElement}`).text(element.text);
+        updateLayersList();
+    }
+    
+    function updateFontFamily() {
+        if (!selectedElement) return;
+        const element = elements.find(el => el.id === selectedElement);
+        if (element.type !== 'text') return;
+        
+        element.fontFamily = $(this).val();
+        $(`#${selectedElement}`).css('font-family', element.fontFamily);
+    }
+    
+    function updateFontSize() {
+        if (!selectedElement) return;
+        const element = elements.find(el => el.id === selectedElement);
+        if (element.type !== 'text') return;
+        
+        element.fontSize = parseInt($(this).val()) || 24;
+        $(`#${selectedElement}`).css('font-size', element.fontSize + 'px');
+    }
+    
+    function updateColor() {
+        if (!selectedElement) return;
+        const element = elements.find(el => el.id === selectedElement);
+        if (element.type !== 'text') return;
+        
+        element.color = $(this).val();
+        $(`#${selectedElement}`).css('color', element.color);
+    }
+    
+    function toggleBold() {
+        if (!selectedElement) return;
+        const element = elements.find(el => el.id === selectedElement);
+        if (element.type !== 'text') return;
+        
+        element.bold = !element.bold;
+        $(this).toggleClass('active', element.bold);
+        $(`#${selectedElement}`).css('font-weight', element.bold ? 'bold' : 'normal');
+    }
+    
+    function toggleItalic() {
+        if (!selectedElement) return;
+        const element = elements.find(el => el.id === selectedElement);
+        if (element.type !== 'text') return;
+        
+        element.italic = !element.italic;
+        $(this).toggleClass('active', element.italic);
+        $(`#${selectedElement}`).css('font-style', element.italic ? 'italic' : 'normal');
+    }
+    
+    function toggleUnderline() {
+        if (!selectedElement) return;
+        const element = elements.find(el => el.id === selectedElement);
+        if (element.type !== 'text') return;
+        
+        element.underline = !element.underline;
+        $(this).toggleClass('active', element.underline);
+        $(`#${selectedElement}`).css('text-decoration', element.underline ? 'underline' : 'none');
+    }
+    
+    function updateTextAlign(e) {
+        if (!selectedElement) return;
+        const element = elements.find(el => el.id === selectedElement);
+        if (element.type !== 'text') return;
+        
+        const align = $(e.currentTarget).data('align');
+        element.textAlign = align;
+        
+        $('.text-align-btn').removeClass('active');
+        $(e.currentTarget).addClass('active');
+        
+        $(`#${selectedElement}`).css('text-align', align);
+    }
+    
+    // ============================================
+    // ANIMATION & TIMELINE
+    // ============================================
     function openAnimationModal() {
         if (!selectedElement) {
             alert('Please select an element first');
             return;
         }
+        $('#animStart').val(0);
+        $('#animDuration').val(1);
         $animModal.removeClass('hidden');
     }
     
@@ -460,65 +682,133 @@
         $animModal.addClass('hidden');
     }
     
+    function toggleCustomAnimProps() {
+        const type = $('#animType').val();
+        if (type === 'custom') {
+            $('#customAnimProps').removeClass('hidden');
+        } else {
+            $('#customAnimProps').addClass('hidden');
+        }
+    }
+    
     function saveAnimation() {
         if (!selectedElement) return;
         
         const element = elements.find(el => el.id === selectedElement);
         const type = $('#animType').val();
+        const start = parseFloat($('#animStart').val());
         const duration = parseFloat($('#animDuration').val());
-        const delay = parseFloat($('#animDelay').val());
         const ease = $('#animEase').val();
         
         const animation = {
             type,
+            start,
             duration,
-            delay,
             ease,
-            id: `anim_${Date.now()}`
+            id: `anim_${Date.now()}`,
+            customProps: {}
         };
         
-        element.animations.push(animation);
-        updateAnimationsList();
-        rebuildTimeline();
-        closeAnimationModal();
-    }
-    
-    function updateAnimationsList() {
-        if (!selectedElement) return;
-        
-        const element = elements.find(el => el.id === selectedElement);
-        $animationsList.empty();
-        
-        if (element.animations.length === 0) {
-            return;
+        // Get custom properties if custom type
+        if (type === 'custom') {
+            const x = $('#animCustomX').val();
+            const y = $('#animCustomY').val();
+            const scale = $('#animCustomScale').val();
+            const rotation = $('#animCustomRotation').val();
+            const opacity = $('#animCustomOpacity').val();
+            
+            if (x !== '') animation.customProps.x = parseFloat(x);
+            if (y !== '') animation.customProps.y = parseFloat(y);
+            if (scale !== '') animation.customProps.scale = parseFloat(scale);
+            if (rotation !== '') animation.customProps.rotation = parseFloat(rotation);
+            if (opacity !== '') animation.customProps.opacity = parseFloat(opacity);
         }
         
-        element.animations.forEach(anim => {
-            const $anim = $(`
-                <div class="anim-item flex justify-between items-center">
-                    <div>
-                        <div class="font-semibold text-purple-300">${anim.type}</div>
-                        <div class="text-gray-400">${anim.duration}s / delay: ${anim.delay}s</div>
-                    </div>
-                    <button class="delete-anim text-red-400 hover:text-red-300" data-anim-id="${anim.id}">
-                        <i class="fas fa-trash text-xs"></i>
-                    </button>
-                </div>
-            `);
-            $animationsList.append($anim);
-        });
+        element.animations.push(animation);
+        rebuildTimeline();
+        updateTimelineTracks();
+        closeAnimationModal();
     }
     
     function handleDeleteAnimation(e) {
         e.stopPropagation();
-        if (!selectedElement) return;
         
         const animId = $(e.currentTarget).data('anim-id');
-        const element = elements.find(el => el.id === selectedElement);
+        const elementId = $(e.currentTarget).data('element-id');
         
-        element.animations = element.animations.filter(a => a.id !== animId);
-        updateAnimationsList();
-        rebuildTimeline();
+        const element = elements.find(el => el.id === elementId);
+        if (element) {
+            element.animations = element.animations.filter(a => a.id !== animId);
+            rebuildTimeline();
+            updateTimelineTracks();
+        }
+    }
+    
+    function updateTotalDuration() {
+        totalDuration = parseFloat($('#totalDuration').val()) || 5;
+        updateTimelineRuler();
+        updateTimelineTracks();
+    }
+    
+    function updateTimelineRuler() {
+        $timelineRuler.empty();
+        
+        const steps = Math.ceil(totalDuration);
+        const stepWidth = 100 / steps;
+        
+        for (let i = 0; i <= steps; i++) {
+            const left = (i / steps) * 100;
+            $timelineRuler.append(`
+                <div class="timeline-time-marker" style="left: ${left}%">
+                    <div class="timeline-time-label">${i}s</div>
+                </div>
+            `);
+        }
+    }
+    
+    function updateTimelineTracks() {
+        if (elements.length === 0) {
+            $timelineTracks.html('<div class="text-center text-gray-500 text-sm py-8">Add elements and animations to see timeline</div>');
+            return;
+        }
+        
+        $timelineTracks.empty();
+        
+        elements.forEach(element => {
+            const icon = element.type === 'text' ? 'fa-font' : 'fa-image';
+            const label = element.type === 'text' ? element.text.substring(0, 15) : (element.filename || 'Image').substring(0, 15);
+            
+            const $track = $(`
+                <div class="timeline-track">
+                    <div class="timeline-track-label">
+                        <i class="fas ${icon} text-blue-400 mr-2"></i>
+                        <span class="truncate">${label}</span>
+                    </div>
+                    <div class="timeline-track-content" id="track_${element.id}">
+                    </div>
+                </div>
+            `);
+            
+            $timelineTracks.append($track);
+            
+            // Add animation blocks
+            element.animations.forEach(anim => {
+                const leftPercent = (anim.start / totalDuration) * 100;
+                const widthPercent = (anim.duration / totalDuration) * 100;
+                
+                const $block = $(`
+                    <div class="timeline-block" style="left: ${leftPercent}%; width: ${widthPercent}%;" 
+                         data-anim-id="${anim.id}" data-element-id="${element.id}">
+                        <div class="timeline-block-label">${anim.type}</div>
+                        <button class="delete-anim" data-anim-id="${anim.id}" data-element-id="${element.id}">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                `);
+                
+                $(`#track_${element.id}`).append($block);
+            });
+        });
     }
     
     function rebuildTimeline() {
@@ -526,46 +816,58 @@
         
         elements.forEach(element => {
             element.animations.forEach(anim => {
-                const props = getAnimationProps(anim.type, element);
+                const props = getAnimationProps(anim.type, element, anim.customProps);
+                
+                // Set initial state if needed
+                if (props.startAt) {
+                    gsap.set(`#${element.id}`, props.startAt);
+                    delete props.startAt;
+                }
+                
                 timeline.to(`#${element.id}`, {
                     ...props,
                     duration: anim.duration,
-                    delay: anim.delay,
                     ease: anim.ease
-                }, 0);
+                }, anim.start);
             });
         });
+        
+        timeline.eventCallback('onUpdate', updatePlayhead);
     }
     
-    function getAnimationProps(type, element) {
+    function getAnimationProps(type, element, customProps = {}) {
         const props = {};
+        
+        if (type === 'custom') {
+            return customProps;
+        }
         
         switch(type) {
             case 'fadeIn':
-                gsap.set(`#${element.id}`, { opacity: 0 });
+                props.startAt = { opacity: 0 };
                 props.opacity = element.opacity;
                 break;
             case 'fadeOut':
                 props.opacity = 0;
                 break;
             case 'slideLeft':
-                gsap.set(`#${element.id}`, { x: -canvasWidth });
+                props.startAt = { x: -canvasWidth };
                 props.x = 0;
                 break;
             case 'slideRight':
-                gsap.set(`#${element.id}`, { x: canvasWidth });
+                props.startAt = { x: canvasWidth };
                 props.x = 0;
                 break;
             case 'slideUp':
-                gsap.set(`#${element.id}`, { y: -canvasHeight });
+                props.startAt = { y: -canvasHeight };
                 props.y = 0;
                 break;
             case 'slideDown':
-                gsap.set(`#${element.id}`, { y: canvasHeight });
+                props.startAt = { y: canvasHeight };
                 props.y = 0;
                 break;
             case 'scale':
-                gsap.set(`#${element.id}`, { scale: 0 });
+                props.startAt = { scale: 0 };
                 props.scale = 1;
                 break;
             case 'rotate':
@@ -581,12 +883,52 @@
         return props;
     }
     
-    function previewAnimation() {
+    function playTimeline() {
+        if (elements.length === 0 || !elements.some(el => el.animations.length > 0)) {
+            alert('Please add some animations first');
+            return;
+        }
+        
         rebuildTimeline();
-        timeline.restart();
+        isPlaying = true;
+        timeline.duration(totalDuration);
+        timeline.play(0);
+        
+        // Reset when done
+        setTimeout(() => {
+            isPlaying = false;
+            $('#timelinePlayhead').css('left', '0');
+        }, totalDuration * 1000);
     }
     
-    // Export
+    function stopTimeline() {
+        timeline.pause(0);
+        isPlaying = false;
+        $('#timelinePlayhead').css('left', '0');
+        
+        // Reset all elements to their initial state
+        elements.forEach(element => {
+            gsap.set(`#${element.id}`, { clearProps: 'all' });
+            $(`#${element.id}`).css({
+                left: element.x + 'px',
+                top: element.y + 'px',
+                width: element.width + 'px',
+                height: element.height + 'px',
+                opacity: element.opacity,
+                transform: `rotate(${element.rotation}deg)`
+            });
+        });
+    }
+    
+    function updatePlayhead() {
+        if (!isPlaying) return;
+        const progress = timeline.progress();
+        $('#timelinePlayhead').css('left', (progress * 100) + '%');
+    }
+    
+    // ============================================
+    // EXPORT
+    // ============================================
     async function exportToZip() {
         if (elements.length === 0) {
             alert('Please add at least one element to export');
@@ -595,13 +937,13 @@
         
         const zip = new JSZip();
         
-        // Generate HTML
         const html = generateHTML();
         zip.file('index.html', html);
         
         // Add images
-        for (let i = 0; i < elements.length; i++) {
-            const element = elements[i];
+        const imageElements = elements.filter(el => el.type === 'image');
+        for (let i = 0; i < imageElements.length; i++) {
+            const element = imageElements[i];
             try {
                 const response = await fetch(element.src);
                 const blob = await response.blob();
@@ -611,7 +953,6 @@
             }
         }
         
-        // Generate and download ZIP
         zip.generateAsync({ type: 'blob' }).then(function(content) {
             saveAs(content, 'ad-banner.zip');
         });
@@ -624,13 +965,14 @@
     }
     
     function generateHTML() {
-        let imagesHtml = '';
+        let elementsHtml = '';
         let animationsJs = '';
         
-        elements.forEach((element, index) => {
-            const imgSrc = `images/image_${index}.${getExtensionFromDataUrl(element.src)}`;
-            
-            imagesHtml += `
+        let imageCounter = 0;
+        elements.forEach((element) => {
+            if (element.type === 'image') {
+                const imgSrc = `images/image_${imageCounter}.${getExtensionFromDataUrl(element.src)}`;
+                elementsHtml += `
         <img id="${element.id}" src="${imgSrc}" style="
             position: absolute;
             left: ${element.x}px;
@@ -640,17 +982,49 @@
             opacity: ${element.opacity};
             transform: rotate(${element.rotation}deg);
         ">`;
+                imageCounter++;
+            } else if (element.type === 'text') {
+                elementsHtml += `
+        <div id="${element.id}" style="
+            position: absolute;
+            left: ${element.x}px;
+            top: ${element.y}px;
+            width: ${element.width}px;
+            height: ${element.height}px;
+            opacity: ${element.opacity};
+            transform: rotate(${element.rotation}deg);
+            font-size: ${element.fontSize}px;
+            font-family: ${element.fontFamily};
+            color: ${element.color};
+            font-weight: ${element.bold ? 'bold' : 'normal'};
+            font-style: ${element.italic ? 'italic' : 'normal'};
+            text-decoration: ${element.underline ? 'underline' : 'none'};
+            text-align: ${element.textAlign};
+            padding: 5px;
+            line-height: 1.2;
+            word-wrap: break-word;
+            display: flex;
+            align-items: center;
+            justify-content: ${element.textAlign === 'center' ? 'center' : element.textAlign === 'right' ? 'flex-end' : 'flex-start'};
+        ">${element.text}</div>`;
+            }
             
             // Generate animations
             element.animations.forEach(anim => {
-                const props = getAnimationPropsForExport(anim.type, element);
+                const props = getAnimationPropsForExport(anim.type, element, anim.customProps);
+                
+                if (props.startAt) {
+                    animationsJs += `
+        gsap.set('#${element.id}', ${JSON.stringify(props.startAt)});`;
+                    delete props.startAt;
+                }
+                
                 animationsJs += `
-        gsap.to('#${element.id}', {
+        tl.to('#${element.id}', {
             ${Object.entries(props).map(([key, value]) => `${key}: ${JSON.stringify(value)}`).join(',\n            ')},
             duration: ${anim.duration},
-            delay: ${anim.delay},
             ease: '${anim.ease}'
-        });`;
+        }, ${anim.start});`;
             });
         });
         
@@ -678,47 +1052,52 @@
 </head>
 <body>
     <div id="ad-container">
-        ${imagesHtml}
+        ${elementsHtml}
     </div>
     
     <script>
-        // Initialize animations
+        // Initialize timeline
+        const tl = gsap.timeline({ repeat: -1 });
         ${animationsJs}
     </script>
 </body>
 </html>`;
     }
     
-    function getAnimationPropsForExport(type, element) {
+    function getAnimationPropsForExport(type, element, customProps = {}) {
+        if (type === 'custom') {
+            return customProps;
+        }
+        
         const props = {};
         
         switch(type) {
             case 'fadeIn':
-                props.opacity = element.opacity;
                 props.startAt = { opacity: 0 };
+                props.opacity = element.opacity;
                 break;
             case 'fadeOut':
                 props.opacity = 0;
                 break;
             case 'slideLeft':
-                props.x = 0;
                 props.startAt = { x: -canvasWidth };
+                props.x = 0;
                 break;
             case 'slideRight':
-                props.x = 0;
                 props.startAt = { x: canvasWidth };
+                props.x = 0;
                 break;
             case 'slideUp':
-                props.y = 0;
                 props.startAt = { y: -canvasHeight };
+                props.y = 0;
                 break;
             case 'slideDown':
-                props.y = 0;
                 props.startAt = { y: canvasHeight };
+                props.y = 0;
                 break;
             case 'scale':
-                props.scale = 1;
                 props.startAt = { scale: 0 };
+                props.scale = 1;
                 break;
             case 'rotate':
                 props.rotation = 360;
@@ -733,7 +1112,9 @@
         return props;
     }
     
-    // Clear All
+    // ============================================
+    // CLEAR ALL
+    // ============================================
     function clearAll() {
         if (elements.length === 0) return;
         
@@ -743,8 +1124,9 @@
             $canvas.empty();
             $layersList.html('<p class="text-sm text-gray-500 text-center py-4">No layers yet</p>');
             $propertiesPanel.addClass('hidden');
-            $animationsList.empty();
+            $timelineTracks.html('<div class="text-center text-gray-500 text-sm py-8">Add elements and animations to see timeline</div>');
             timeline.clear();
+            stopTimeline();
         }
     }
     
