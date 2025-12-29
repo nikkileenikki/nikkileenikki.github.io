@@ -60,6 +60,12 @@
         $('#addTextBtn').on('click', openTextModal);
         $('#closeTextModal').on('click', closeTextModal);
         $('#saveTextBtn').on('click', saveText);
+        $('#textContent').on('keypress', function(e) {
+            if (e.which === 13) { // Enter key
+                e.preventDefault();
+                saveText();
+            }
+        });
         
         // Clickthrough
         $('#addClickthroughBtn').on('click', openClickthroughModal);
@@ -88,8 +94,7 @@
         // Layer selection and controls
         $layersList.on('click', '.layer-item', handleLayerClick);
         $layersList.on('click', '.delete-layer', handleDeleteLayer);
-        $layersList.on('click', '.move-layer-up', moveLayerUp);
-        $layersList.on('click', '.move-layer-down', moveLayerDown);
+        $layersList.on('click', '.add-layer-anim', handleAddLayerAnimation);
         
         // Common properties
         $('#propWidth').on('change', updateElementWidth);
@@ -123,7 +128,8 @@
         $('#saveAnimBtn').on('click', saveAnimation);
         $('#deleteAnimBtn').on('click', deleteEditingAnimation);
         $('#animType').on('change', toggleCustomAnimProps);
-        $timelineTracks.on('click', '.timeline-block', editAnimation);
+        // Removed: $timelineTracks.on('click', '.timeline-block', editAnimation);
+        // Timeline blocks now update automatically on drag/resize
         $timelineTracks.on('click', '.delete-anim', function(e) {
             e.stopPropagation();
             handleDeleteAnimation(e);
@@ -386,8 +392,9 @@
     // TEXT MANAGEMENT
     // ============================================
     function openTextModal() {
-        $('#textContent').val('Your Text Here');
+        $('#textContent').val('');
         $textModal.removeClass('hidden');
+        setTimeout(() => $('#textContent').focus(), 100);
     }
     
     function closeTextModal() {
@@ -395,7 +402,11 @@
     }
     
     function saveText() {
-        const text = $('#textContent').val() || 'Your Text Here';
+        const text = $('#textContent').val().trim();
+        if (!text) {
+            alert('Please enter some text');
+            return;
+        }
         addTextToCanvas(text);
         closeTextModal();
     }
@@ -464,7 +475,7 @@
     // CLICKTHROUGH MANAGEMENT
     // ============================================
     function openClickthroughModal() {
-        $('#clickthroughUrl').val('https://example.com');
+        $('#clickthroughUrl').val('https://kult.my');
         $('#clickthroughTarget').val('_blank');
         $clickthroughModal.removeClass('hidden');
     }
@@ -474,7 +485,7 @@
     }
     
     function saveClickthrough() {
-        const url = $('#clickthroughUrl').val() || 'https://example.com';
+        const url = $('#clickthroughUrl').val() || 'https://kult.my';
         const target = $('#clickthroughTarget').val() || '_blank';
         addClickthroughToCanvas(url, target);
         closeClickthroughModal();
@@ -850,11 +861,8 @@
                         <span class="text-sm">${label}</span>
                     </div>
                     <div class="flex items-center space-x-1">
-                        <button class="move-layer-up text-gray-400 hover:text-white px-2 py-1" data-id="${element.id}" ${index === 0 ? 'disabled' : ''}>
-                            <i class="fas fa-arrow-up text-xs"></i>
-                        </button>
-                        <button class="move-layer-down text-gray-400 hover:text-white px-2 py-1" data-id="${element.id}" ${index === sortedElements.length - 1 ? 'disabled' : ''}>
-                            <i class="fas fa-arrow-down text-xs"></i>
+                        <button class="add-layer-anim text-blue-400 hover:text-blue-300 px-2 py-1" data-id="${element.id}" title="Add Animation">
+                            <i class="fas fa-plus-circle text-xs"></i>
                         </button>
                         <button class="delete-layer text-red-400 hover:text-red-300 px-2 py-1" data-id="${element.id}">
                             <i class="fas fa-trash text-xs"></i>
@@ -897,7 +905,16 @@
         rebuildTimeline();
     }
     
-    function moveLayerUp(e) {
+    function handleAddLayerAnimation(e) {
+        e.stopPropagation();
+        const id = $(e.currentTarget).data('id');
+        selectElement(id);
+        openAnimationModal();
+    }
+    
+    // ============================================
+    // PROPERTIES PANEL
+    // ============================================
         e.stopPropagation();
         const id = $(e.currentTarget).data('id');
         const element = elements.find(el => el.id === id);
@@ -923,34 +940,6 @@
         updateLayersList();
     }
     
-    function moveLayerDown(e) {
-        e.stopPropagation();
-        const id = $(e.currentTarget).data('id');
-        const element = elements.find(el => el.id === id);
-        if (!element) return;
-        
-        // Find element with next lower zIndex
-        const lowerElements = elements.filter(el => el.zIndex < element.zIndex);
-        if (lowerElements.length === 0) return;
-        
-        const nextLower = lowerElements.reduce((prev, curr) => 
-            (curr.zIndex > prev.zIndex) ? curr : prev
-        );
-        
-        // Swap zIndexes
-        const temp = element.zIndex;
-        element.zIndex = nextLower.zIndex;
-        nextLower.zIndex = temp;
-        
-        // Update DOM
-        $(`#${element.id}`).css('z-index', element.zIndex);
-        $(`#${nextLower.id}`).css('z-index', nextLower.zIndex);
-        
-        updateLayersList();
-    }
-    
-    // Continued from part 1...
-    // ============================================
     // PROPERTIES PANEL
     // ============================================
     function updatePropertiesPanel() {
@@ -1149,7 +1138,7 @@
         const element = elements.find(el => el.id === selectedElement);
         if (element.type !== 'clickthrough') return;
         
-        element.url = $(this).val() || 'https://example.com';
+        element.url = $(this).val() || 'https://kult.my';
         updateClickthroughDisplay(element);
     }
     

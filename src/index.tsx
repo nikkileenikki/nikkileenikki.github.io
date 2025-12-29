@@ -188,7 +188,7 @@ app.get('/', (c) => {
                             <div id="clickthroughProps" class="hidden space-y-3 pb-3 border-b border-gray-700">
                                 <div>
                                     <label class="text-sm text-gray-400">Click URL</label>
-                                    <input type="text" id="propClickUrl" class="w-full bg-gray-800 rounded px-3 py-2 text-sm" placeholder="https://example.com">
+                                    <input type="text" id="propClickUrl" class="w-full bg-gray-800 rounded px-3 py-2 text-sm" placeholder="https://kult.my">
                                 </div>
                                 <div>
                                     <label class="text-sm text-gray-400">Target</label>
@@ -231,16 +231,6 @@ app.get('/', (c) => {
                                     </div>
                                 </div>
                             </div>
-                        </div>
-                    </div>
-
-                    <!-- Animation Panel -->
-                    <div class="mb-6">
-                        <h2 class="text-lg font-semibold mb-3">Timeline</h2>
-                        <div class="space-y-3 bg-gray-900 rounded-lg p-3">
-                            <button id="addAnimBtn" class="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 rounded transition-colors">
-                                <i class="fas fa-plus mr-2"></i>Add to Timeline
-                            </button>
                         </div>
                     </div>
 
@@ -468,7 +458,7 @@ app.get('/', (c) => {
                 <div class="space-y-4">
                     <div>
                         <label class="block text-sm text-gray-400 mb-2">Click URL</label>
-                        <input type="text" id="clickthroughUrl" value="https://example.com" placeholder="https://example.com" class="w-full bg-gray-700 rounded px-3 py-2">
+                        <input type="text" id="clickthroughUrl" value="https://kult.my" placeholder="https://kult.my" class="w-full bg-gray-700 rounded px-3 py-2">
                     </div>
                     
                     <div>
@@ -550,7 +540,7 @@ app.get('/', (c) => {
                 <div class="space-y-4">
                     <div>
                         <label class="block text-sm text-gray-400 mb-2">Text Content</label>
-                        <input type="text" id="textContent" value="Your Text Here" class="w-full bg-gray-700 rounded px-3 py-2">
+                        <input type="text" id="textContent" placeholder="Your Text Here" class="w-full bg-gray-700 rounded px-3 py-2">
                     </div>
                     
                     <button id="saveTextBtn" class="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 rounded transition-colors">
