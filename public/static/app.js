@@ -915,33 +915,6 @@
     // ============================================
     // PROPERTIES PANEL
     // ============================================
-        e.stopPropagation();
-        const id = $(e.currentTarget).data('id');
-        const element = elements.find(el => el.id === id);
-        if (!element) return;
-        
-        // Find element with next higher zIndex
-        const higherElements = elements.filter(el => el.zIndex > element.zIndex);
-        if (higherElements.length === 0) return;
-        
-        const nextHigher = higherElements.reduce((prev, curr) => 
-            (curr.zIndex < prev.zIndex) ? curr : prev
-        );
-        
-        // Swap zIndexes
-        const temp = element.zIndex;
-        element.zIndex = nextHigher.zIndex;
-        nextHigher.zIndex = temp;
-        
-        // Update DOM
-        $(`#${element.id}`).css('z-index', element.zIndex);
-        $(`#${nextHigher.id}`).css('z-index', nextHigher.zIndex);
-        
-        updateLayersList();
-    }
-    
-    // PROPERTIES PANEL
-    // ============================================
     function updatePropertiesPanel() {
         if (!selectedElement) {
             $propertiesPanel.addClass('hidden');
