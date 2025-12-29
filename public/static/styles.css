@@ -18,8 +18,12 @@
     cursor: move;
 }
 
-.layer-item.drag-over {
-    border-top: 2px solid rgb(59, 130, 246);
+.layer-item.drag-over-top {
+    border-top: 3px solid rgb(59, 130, 246);
+}
+
+.layer-item.drag-over-bottom {
+    border-bottom: 3px solid rgb(59, 130, 246);
 }
 
 .canvas-element {

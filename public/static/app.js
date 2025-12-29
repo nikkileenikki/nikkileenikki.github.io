@@ -90,11 +90,13 @@
         $canvas.on('mousedown', '.resize-handle', handleResizeStart);
         $(document).on('mousemove', handleMouseMove);
         $(document).on('mouseup', handleMouseUp);
+        $(document).on('keydown', handleKeyboardMove);
         
         // Layer selection and controls
         $layersList.on('click', '.layer-item', handleLayerClick);
         $layersList.on('click', '.delete-layer', handleDeleteLayer);
         $layersList.on('click', '.add-layer-anim', handleAddLayerAnimation);
+        $layersList.on('click', '.toggle-layer-visibility', toggleLayerVisibility);
         
         // Common properties
         $('#propWidth').on('change', updateElementWidth);
@@ -217,7 +219,8 @@
         const animId = $block.data('anim-id');
         const elementId = $block.data('element-id');
         
-        isTimelineBlockDragging = true;
+        // Don't set dragging flag yet - wait for actual movement
+        let hasMoved = false;
         draggedBlock = { animId, elementId, $block };
         
         const $track = $block.parent();
@@ -228,9 +231,16 @@
         const initialLeft = blockOffset - trackOffset;
         
         const moveHandler = function(moveEvent) {
-            if (!isTimelineBlockDragging) return;
-            
             const deltaX = moveEvent.pageX - startX;
+            
+            // Only start dragging if mouse moved more than 3px
+            if (!hasMoved && Math.abs(deltaX) > 3) {
+                hasMoved = true;
+                isTimelineBlockDragging = true;
+            }
+            
+            if (!hasMoved) return;
+            
             let newLeft = initialLeft + deltaX;
             newLeft = Math.max(0, Math.min(trackWidth - $block.width(), newLeft));
             
@@ -248,11 +258,18 @@
         };
         
         const upHandler = function() {
-            isTimelineBlockDragging = false;
-            draggedBlock = null;
             $(document).off('mousemove', moveHandler);
             $(document).off('mouseup', upHandler);
-            rebuildTimeline();
+            
+            if (hasMoved) {
+                rebuildTimeline();
+            }
+            
+            // Reset flags after a short delay to allow click event to check
+            setTimeout(() => {
+                isTimelineBlockDragging = false;
+                draggedBlock = null;
+            }, 50);
         };
         
         $(document).on('mousemove', moveHandler);
@@ -803,6 +820,52 @@
     }
     
     // ============================================
+    // ARROW KEY POSITIONING
+    // ============================================
+    function handleKeyDown(e) {
+        if (!selectedElement) return;
+        
+        // Arrow keys: 37=left, 38=up, 39=right, 40=down
+        const arrowKeys = [37, 38, 39, 40];
+        if (!arrowKeys.includes(e.keyCode)) return;
+        
+        e.preventDefault();
+        
+        const element = elements.find(el => el.id === selectedElement);
+        if (!element) return;
+        
+        // Shift key: move 10px; default: move 1px
+        const step = e.shiftKey ? 10 : 1;
+        
+        switch(e.keyCode) {
+            case 37: // Left
+                element.x -= step;
+                break;
+            case 38: // Up
+                element.y -= step;
+                break;
+            case 39: // Right
+                element.x += step;
+                break;
+            case 40: // Down
+                element.y += step;
+                break;
+        }
+        
+        // Update element position
+        $(`#${element.id}`).css({
+            left: element.x + 'px',
+            top: element.y + 'px'
+        });
+        
+        // Update properties panel
+        updatePropertiesPanel();
+    }
+    
+    // Bind keyboard handler
+    $(document).on('keydown', handleKeyDown);
+    
+    // ============================================
     // ELEMENT SELECTION
     // ============================================
     function selectElement(id) {
@@ -860,6 +923,9 @@
                         <span class="text-sm">${label}</span>
                     </div>
                     <div class="flex items-center space-x-1">
+                        <button class="toggle-layer-visibility text-gray-400 hover:text-white px-2 py-1" data-id="${element.id}" title="Toggle Visibility">
+                            <i class="fas ${element.visible === false ? 'fa-eye-slash' : 'fa-eye'} text-xs"></i>
+                        </button>
                         <button class="add-layer-anim text-blue-400 hover:text-blue-300 px-2 py-1" data-id="${element.id}" title="Add Animation">
                             <i class="fas fa-plus-circle text-xs"></i>
                         </button>
@@ -909,6 +975,26 @@
         const id = $(e.currentTarget).data('id');
         selectElement(id);
         openAnimationModal();
+    }
+    
+    function toggleLayerVisibility(e) {
+        e.stopPropagation();
+        const id = $(e.currentTarget).data('id');
+        const element = elements.find(el => el.id === id);
+        if (!element) return;
+        
+        // Toggle visibility
+        element.visible = element.visible === false ? true : false;
+        
+        // Update DOM
+        const $el = $(`#${element.id}`);
+        if (element.visible === false) {
+            $el.css('visibility', 'hidden');
+        } else {
+            $el.css('visibility', 'visible');
+        }
+        
+        updateLayersList();
     }
     
     // ============================================
@@ -1553,6 +1639,16 @@
                                            element.textAlign === 'right' ? 'flex-end' : 'center';
             }
             
+            // Restore shape-specific properties
+            if (element.type === 'shape') {
+                style['background-color'] = element.fillColor;
+                if (element.shapeType === 'circle') {
+                    style['border-radius'] = '50%';
+                } else if (element.shapeType === 'rounded-rectangle') {
+                    style['border-radius'] = '12px';
+                }
+            }
+            
             $(`#${element.id}`).css(style);
         });
     }
@@ -1660,6 +1756,27 @@
             z-index: ${element.zIndex};
             display: block;
         "></a>`;
+            } else if (element.type === 'shape') {
+                let borderRadius = '0';
+                if (element.shapeType === 'circle') {
+                    borderRadius = '50%';
+                } else if (element.shapeType === 'rounded-rectangle') {
+                    borderRadius = '12px';
+                }
+                
+                elementsHtml += `
+        <div id="${element.id}" style="
+            position: absolute;
+            left: ${element.x}px;
+            top: ${element.y}px;
+            width: ${element.width}px;
+            height: ${element.height}px;
+            opacity: ${element.opacity};
+            transform: rotate(${element.rotation}deg);
+            background-color: ${element.fillColor};
+            border-radius: ${borderRadius};
+            z-index: ${element.zIndex};
+        "></div>`;
             }
             
             // Generate animations
@@ -1787,14 +1904,26 @@
     function handleDragStart(e) {
         draggedLayerId = $(e.currentTarget).data('id');
         $(e.currentTarget).addClass('dragging');
+        e.originalEvent.dataTransfer.effectAllowed = 'move';
     }
     
     function handleDragOverLayer(e) {
         e.preventDefault();
+        e.originalEvent.dataTransfer.dropEffect = 'move';
+        
         const $target = $(e.currentTarget);
         if (!$target.hasClass('dragging')) {
-            $('.layer-item').removeClass('drag-over');
-            $target.addClass('drag-over');
+            $('.layer-item').removeClass('drag-over drag-over-top drag-over-bottom');
+            
+            // Determine if we're in the top or bottom half
+            const rect = e.currentTarget.getBoundingClientRect();
+            const midpoint = rect.top + rect.height / 2;
+            
+            if (e.clientY < midpoint) {
+                $target.addClass('drag-over-top');
+            } else {
+                $target.addClass('drag-over-bottom');
+            }
         }
     }
     
