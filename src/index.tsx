@@ -233,17 +233,6 @@ app.get('/', (c) => {
                             <button id="addAnimBtn" class="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 rounded transition-colors">
                                 <i class="fas fa-plus mr-2"></i>Add to Timeline
                             </button>
-                            <div>
-                                <label class="text-sm text-gray-400">Timeline Zoom</label>
-                                <div class="flex space-x-2">
-                                    <button id="zoomOut" class="flex-1 bg-gray-700 hover:bg-gray-600 rounded py-2 text-sm">
-                                        <i class="fas fa-search-minus"></i>
-                                    </button>
-                                    <button id="zoomIn" class="flex-1 bg-gray-700 hover:bg-gray-600 rounded py-2 text-sm">
-                                        <i class="fas fa-search-plus"></i>
-                                    </button>
-                                </div>
-                            </div>
                         </div>
                     </div>
 
@@ -314,7 +303,7 @@ app.get('/', (c) => {
                         </div>
                         
                         <!-- Timeline Container -->
-                        <div id="timelineContainer" class="bg-gray-900 rounded-lg overflow-x-auto">
+                        <div id="timelineContainer" class="bg-gray-900 rounded-lg overflow-x-auto relative">
                             <div class="min-w-[800px]">
                                 <!-- Timeline Header -->
                                 <div class="flex border-b border-gray-700">
@@ -325,8 +314,8 @@ app.get('/', (c) => {
                                         <div id="timelineRuler" class="absolute inset-0 flex">
                                             <!-- Time markers will be added here -->
                                         </div>
-                                        <div id="timelinePlayhead" class="absolute top-0 bottom-0 w-0.5 bg-red-500 z-10" style="left: 0;">
-                                            <div class="w-3 h-3 bg-red-500 rounded-full absolute -top-1 -left-1"></div>
+                                        <div id="timelinePlayhead" class="absolute top-0 bottom-0 w-0.5 bg-red-500 z-10 cursor-ew-resize" style="left: 0;">
+                                            <div class="w-3 h-3 bg-red-500 rounded-full absolute -top-1 -left-1 cursor-grab active:cursor-grabbing"></div>
                                         </div>
                                     </div>
                                 </div>
@@ -337,6 +326,16 @@ app.get('/', (c) => {
                                         Add elements and animations to see timeline
                                     </div>
                                 </div>
+                            </div>
+                            
+                            <!-- Timeline Zoom Controls -->
+                            <div class="absolute bottom-4 right-4 flex space-x-2 bg-gray-800 rounded-lg p-2 shadow-lg">
+                                <button id="zoomOut" class="bg-gray-700 hover:bg-gray-600 rounded px-3 py-1 text-sm">
+                                    <i class="fas fa-search-minus"></i>
+                                </button>
+                                <button id="zoomIn" class="bg-gray-700 hover:bg-gray-600 rounded px-3 py-1 text-sm">
+                                    <i class="fas fa-search-plus"></i>
+                                </button>
                             </div>
                         </div>
                     </div>

@@ -124,53 +124,10 @@
         $('#playTimeline').on('click', playTimeline);
         $('#stopTimeline').on('click', stopTimeline);
         
-        // Playhead dragging
-        $('#timelinePlayhead').on('mousedown', handlePlayheadDragStart);
-        
         // Actions
         $('#previewBtn').on('click', playTimeline);
         $('#exportBtn').on('click', exportToZip);
         $('#clearBtn').on('click', clearAll);
-    }
-    
-    // ============================================
-    // PLAYHEAD DRAGGING
-    // ============================================
-    let isPlayheadDragging = false;
-    
-    function handlePlayheadDragStart(e) {
-        e.preventDefault();
-        e.stopPropagation();
-        isPlayheadDragging = true;
-        
-        const moveHandler = function(moveEvent) {
-            if (!isPlayheadDragging) return;
-            
-            const $ruler = $('#timelineRuler');
-            const rulerOffset = $ruler.offset().left;
-            const rulerWidth = $ruler.width();
-            const mouseX = moveEvent.pageX - rulerOffset;
-            
-            let percent = (mouseX / rulerWidth) * 100;
-            percent = Math.max(0, Math.min(100, percent));
-            
-            $('#timelinePlayhead').css('left', percent + '%');
-            
-            // Update timeline position if not playing
-            if (!isPlaying && timeline) {
-                const time = (percent / 100) * totalDuration;
-                timeline.seek(time);
-            }
-        };
-        
-        const upHandler = function() {
-            isPlayheadDragging = false;
-            $(document).off('mousemove', moveHandler);
-            $(document).off('mouseup', upHandler);
-        };
-        
-        $(document).on('mousemove', moveHandler);
-        $(document).on('mouseup', upHandler);
     }
     
     // ============================================
@@ -634,10 +591,10 @@
             `);
             
             // Add drag and drop events
-            $layer.on('dragstart', window.handleDragStart);
-            $layer.on('dragover', window.handleDragOverLayer);
-            $layer.on('drop', window.handleLayerDrop);
-            $layer.on('dragend', window.handleDragEnd);
+            $layer.on('dragstart', handleDragStart);
+            $layer.on('dragover', handleDragOver);
+            $layer.on('drop', handleLayerDrop);
+            $layer.on('dragend', handleDragEnd);
             
             $layersList.append($layer);
         });
@@ -895,12 +852,7 @@
         $('.text-align-btn').removeClass('active');
         $(e.currentTarget).addClass('active');
         
-        // Update both text-align and justify-content
-        const $el = $(`#${selectedElement}`);
-        $el.css({
-            'text-align': align,
-            'justify-content': align === 'left' ? 'flex-start' : align === 'right' ? 'flex-end' : 'center'
-        });
+        $(`#${selectedElement}`).css('text-align', align);
     }
     
     // Clickthrough property updates
@@ -1182,7 +1134,6 @@
     
     function rebuildTimeline() {
         timeline.clear();
-        timeline.repeat(0); // Reset repeat, will be set in playTimeline
         
         elements.forEach(element => {
             element.animations.forEach(anim => {
@@ -1260,33 +1211,13 @@
         
         rebuildTimeline();
         isPlaying = true;
-        
-        // Calculate actual playback time based on loop setting
-        let playbackTime;
-        if (animLoop === -1) {
-            // Infinite loop - play for 3 iterations then stop
-            playbackTime = totalDuration * 3 * 1000;
-            timeline.repeat(2); // repeat 2 times = play 3 times total (1 initial + 2 repeats)
-        } else if (animLoop === 0) {
-            // Play once
-            playbackTime = totalDuration * 1000;
-            timeline.repeat(0); // no repeat
-        } else {
-            // Play N times: animLoop = 1 means play twice, etc.
-            playbackTime = totalDuration * (animLoop + 1) * 1000;
-            timeline.repeat(animLoop); // repeat N times = play (N+1) times
-        }
-        
         timeline.duration(totalDuration);
         timeline.play(0);
         
         setTimeout(() => {
-            if (animLoop !== -1) {
-                isPlaying = false;
-                $('#timelinePlayhead').css('left', '0');
-                stopTimeline();
-            }
-        }, playbackTime);
+            isPlaying = false;
+            $('#timelinePlayhead').css('left', '0');
+        }, totalDuration * 1000);
     }
     
     function stopTimeline() {
@@ -1531,17 +1462,17 @@
         }
     }
     
-    // ============================================
-    // DRAG AND DROP HANDLERS FOR LAYER REORDERING
-    // ============================================
-    let draggedLayerId = null;
+})();
+    
+    // Drag and drop handlers for layer reordering
+    let draggedElement = null;
     
     function handleDragStart(e) {
-        draggedLayerId = $(e.currentTarget).data('id');
+        draggedElement = $(e.currentTarget).data('id');
         $(e.currentTarget).addClass('dragging');
     }
     
-    function handleDragOverLayer(e) {
+    function handleDragOver(e) {
         e.preventDefault();
         const $target = $(e.currentTarget);
         if (!$target.hasClass('dragging')) {
@@ -1555,9 +1486,9 @@
         e.stopPropagation();
         
         const targetId = $(e.currentTarget).data('id');
-        if (!draggedLayerId || draggedLayerId === targetId) return;
+        if (!draggedElement || draggedElement === targetId) return;
         
-        const draggedEl = elements.find(el => el.id === draggedLayerId);
+        const draggedEl = elements.find(el => el.id === draggedElement);
         const targetEl = elements.find(el => el.id === targetId);
         
         if (draggedEl && targetEl) {
@@ -1576,14 +1507,5 @@
     
     function handleDragEnd(e) {
         $('.layer-item').removeClass('dragging drag-over');
-        draggedLayerId = null;
+        draggedElement = null;
     }
-    
-    // Make functions available globally for event handlers
-    window.handleDragStart = handleDragStart;
-    window.handleDragOverLayer = handleDragOverLayer;
-    window.handleLayerDrop = handleLayerDrop;
-    window.handleDragEnd = handleDragEnd;
-    
-})();
-    

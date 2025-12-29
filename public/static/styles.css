@@ -25,23 +25,21 @@
 .canvas-element {
     position: absolute;
     cursor: move;
-    border: 2px solid transparent;
-    transition: border-color 0.2s;
-}
-
-.canvas-element:hover {
-    border-color: rgba(59, 130, 246, 0.5);
+    border: none;
 }
 
 .canvas-element.selected {
-    border-color: rgb(59, 130, 246);
+    border: 2px solid rgb(59, 130, 246);
 }
 
 .canvas-element.text-element {
-    border: 2px dashed transparent;
+    border: none;
     display: flex;
     align-items: center;
-    justify-content: center;
+}
+
+.canvas-element.text-element.selected {
+    border: 2px dashed rgb(59, 130, 246);
 }
 
 .canvas-element.clickthrough-element {
