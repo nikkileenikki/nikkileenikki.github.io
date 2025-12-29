@@ -1,4 +1,4 @@
-// HTML5 Ad Builder - Full Featured Version
+// HTML5 Ad Builder - Enhanced with Text and Timeline
 (function() {
     'use strict';
     
@@ -15,8 +15,6 @@
     let timeline = gsap.timeline({ paused: true });
     let totalDuration = 5;
     let isPlaying = false;
-    let zoomLevel = 1; // 1 = 100%, 0.5 = 50%, 2 = 200%
-    let editingAnimation = null; // For editing existing animations
     
     // Canvas dimensions
     let canvasWidth = 300;
@@ -32,7 +30,6 @@
     const $textProps = $('#textProps');
     const $animModal = $('#animModal');
     const $textModal = $('#textModal');
-    const $clickthroughModal = $('#clickthroughModal');
     const $timelineTracks = $('#timelineTracks');
     const $timelineRuler = $('#timelineRuler');
     
@@ -60,11 +57,6 @@
         $('#closeTextModal').on('click', closeTextModal);
         $('#saveTextBtn').on('click', saveText);
         
-        // Clickthrough
-        $('#addClickthroughBtn').on('click', openClickthroughModal);
-        $('#closeClickthroughModal').on('click', closeClickthroughModal);
-        $('#saveClickthroughBtn').on('click', saveClickthrough);
-        
         // Canvas size
         $('#canvasSize').on('change', handleCanvasSizeChange);
         $('#customWidth, #customHeight').on('change', updateCustomCanvasSize);
@@ -75,11 +67,9 @@
         $(document).on('mousemove', handleMouseMove);
         $(document).on('mouseup', handleMouseUp);
         
-        // Layer selection and controls
+        // Layer selection
         $layersList.on('click', '.layer-item', handleLayerClick);
         $layersList.on('click', '.delete-layer', handleDeleteLayer);
-        $layersList.on('click', '.move-layer-up', moveLayerUp);
-        $layersList.on('click', '.move-layer-down', moveLayerDown);
         
         // Common properties
         $('#propWidth').on('change', updateElementWidth);
@@ -103,18 +93,11 @@
         $('#addAnimBtn').on('click', openAnimationModal);
         $('#closeModal').on('click', closeAnimationModal);
         $('#saveAnimBtn').on('click', saveAnimation);
-        $('#deleteAnimBtn').on('click', deleteEditingAnimation);
         $('#animType').on('change', toggleCustomAnimProps);
-        $timelineTracks.on('click', '.timeline-block', editAnimation);
-        $timelineTracks.on('click', '.delete-anim', function(e) {
-            e.stopPropagation();
-            handleDeleteAnimation(e);
-        });
+        $timelineTracks.on('click', '.delete-anim', handleDeleteAnimation);
         
-        // Timeline controls
-        $('#timelineDuration').on('change', updateTotalDuration);
-        $('#zoomIn').on('click', zoomIn);
-        $('#zoomOut').on('click', zoomOut);
+        // Timeline
+        $('#totalDuration').on('change', updateTotalDuration);
         $('#playTimeline').on('click', playTimeline);
         $('#stopTimeline').on('click', stopTimeline);
         
@@ -219,7 +202,6 @@
             italic: false,
             underline: false,
             textAlign: 'left',
-            zIndex: elements.length,
             animations: []
         };
         
@@ -243,77 +225,8 @@
                 padding: 5px;
                 line-height: 1.2;
                 word-wrap: break-word;
-                z-index: ${element.zIndex};
             ">
                 ${text}
-                <div class="resize-handle nw"></div>
-                <div class="resize-handle ne"></div>
-                <div class="resize-handle sw"></div>
-                <div class="resize-handle se"></div>
-            </div>
-        `);
-        
-        $canvas.append($element);
-        updateLayersList();
-        selectElement(id);
-    }
-    
-    // ============================================
-    // CLICKTHROUGH MANAGEMENT
-    // ============================================
-    function openClickthroughModal() {
-        $('#clickthroughUrl').val('https://example.com');
-        $('#clickthroughTarget').val('_blank');
-        $clickthroughModal.removeClass('hidden');
-    }
-    
-    function closeClickthroughModal() {
-        $clickthroughModal.addClass('hidden');
-    }
-    
-    function saveClickthrough() {
-        const url = $('#clickthroughUrl').val() || 'https://example.com';
-        const target = $('#clickthroughTarget').val() || '_blank';
-        addClickthroughToCanvas(url, target);
-        closeClickthroughModal();
-    }
-    
-    function addClickthroughToCanvas(url, target) {
-        elementCounter++;
-        const id = `element_${elementCounter}`;
-        
-        const element = {
-            id: id,
-            type: 'clickthrough',
-            url: url,
-            target: target,
-            x: 0,
-            y: 0,
-            width: canvasWidth,
-            height: canvasHeight,
-            rotation: 0,
-            opacity: 0.3,
-            zIndex: 9999,
-            animations: []
-        };
-        
-        elements.push(element);
-        
-        const $element = $(`
-            <div class="canvas-element clickthrough-element" id="${id}" style="
-                left: ${element.x}px;
-                top: ${element.y}px;
-                width: ${element.width}px;
-                height: ${element.height}px;
-                opacity: ${element.opacity};
-                transform: rotate(${element.rotation}deg);
-                z-index: ${element.zIndex};
-            ">
-                <div style="text-align: center; color: rgba(168, 85, 247, 0.8); pointer-events: none;">
-                    <i class="fas fa-mouse-pointer text-2xl mb-2"></i>
-                    <div class="text-xs">Clickthrough</div>
-                    <div class="text-xs font-bold">${url}</div>
-                </div>
                 <div class="resize-handle nw"></div>
                 <div class="resize-handle ne"></div>
                 <div class="resize-handle sw"></div>
@@ -344,7 +257,6 @@
             height: 100,
             rotation: 0,
             opacity: 1,
-            zIndex: elements.length,
             animations: []
         };
         
@@ -358,7 +270,6 @@
                 height: ${element.height}px;
                 opacity: ${element.opacity};
                 transform: rotate(${element.rotation}deg);
-                z-index: ${element.zIndex};
             ">
                 <img src="${url}" style="width: 100%; height: 100%; object-fit: contain; pointer-events: none;">
                 <div class="resize-handle nw"></div>
@@ -532,7 +443,7 @@
     }
     
     // ============================================
-    // LAYER MANAGEMENT
+    // LAYERS PANEL
     // ============================================
     function updateLayersList() {
         if (elements.length === 0) {
@@ -543,40 +454,19 @@
         
         $layersList.empty();
         
-        // Sort by zIndex (highest first)
-        const sortedElements = [...elements].sort((a, b) => b.zIndex - a.zIndex);
-        
-        sortedElements.forEach((element, index) => {
-            let icon, label;
-            
-            if (element.type === 'text') {
-                icon = 'fa-font';
-                label = element.text.substring(0, 20);
-            } else if (element.type === 'clickthrough') {
-                icon = 'fa-mouse-pointer';
-                label = 'Clickthrough';
-            } else {
-                icon = 'fa-image';
-                label = (element.filename || 'Image').substring(0, 20);
-            }
+        [...elements].reverse().forEach((element, index) => {
+            const icon = element.type === 'text' ? 'fa-font' : 'fa-image';
+            const label = element.type === 'text' ? element.text.substring(0, 20) : (element.filename || 'Image');
             
             const $layer = $(`
                 <div class="layer-item p-2 rounded border border-gray-700 flex items-center justify-between" data-id="${element.id}">
-                    <div class="flex items-center flex-1">
+                    <div class="flex items-center">
                         <i class="fas ${icon} text-blue-400 mr-2"></i>
                         <span class="text-sm">${label}</span>
                     </div>
-                    <div class="flex items-center space-x-1">
-                        <button class="move-layer-up text-gray-400 hover:text-white px-2 py-1" data-id="${element.id}" ${index === 0 ? 'disabled' : ''}>
-                            <i class="fas fa-arrow-up text-xs"></i>
-                        </button>
-                        <button class="move-layer-down text-gray-400 hover:text-white px-2 py-1" data-id="${element.id}" ${index === sortedElements.length - 1 ? 'disabled' : ''}>
-                            <i class="fas fa-arrow-down text-xs"></i>
-                        </button>
-                        <button class="delete-layer text-red-400 hover:text-red-300 px-2 py-1" data-id="${element.id}">
-                            <i class="fas fa-trash text-xs"></i>
-                        </button>
-                    </div>
+                    <button class="delete-layer text-red-400 hover:text-red-300" data-id="${element.id}">
+                        <i class="fas fa-trash text-xs"></i>
+                    </button>
                 </div>
             `);
             $layersList.append($layer);
@@ -586,7 +476,7 @@
     }
     
     function handleLayerClick(e) {
-        if ($(e.target).closest('button').length) return;
+        if ($(e.target).closest('.delete-layer').length) return;
         const id = $(e.currentTarget).data('id');
         selectElement(id);
     }
@@ -607,59 +497,6 @@
         rebuildTimeline();
     }
     
-    function moveLayerUp(e) {
-        e.stopPropagation();
-        const id = $(e.currentTarget).data('id');
-        const element = elements.find(el => el.id === id);
-        if (!element) return;
-        
-        // Find element with next higher zIndex
-        const higherElements = elements.filter(el => el.zIndex > element.zIndex);
-        if (higherElements.length === 0) return;
-        
-        const nextHigher = higherElements.reduce((prev, curr) => 
-            (curr.zIndex < prev.zIndex) ? curr : prev
-        );
-        
-        // Swap zIndexes
-        const temp = element.zIndex;
-        element.zIndex = nextHigher.zIndex;
-        nextHigher.zIndex = temp;
-        
-        // Update DOM
-        $(`#${element.id}`).css('z-index', element.zIndex);
-        $(`#${nextHigher.id}`).css('z-index', nextHigher.zIndex);
-        
-        updateLayersList();
-    }
-    
-    function moveLayerDown(e) {
-        e.stopPropagation();
-        const id = $(e.currentTarget).data('id');
-        const element = elements.find(el => el.id === id);
-        if (!element) return;
-        
-        // Find element with next lower zIndex
-        const lowerElements = elements.filter(el => el.zIndex < element.zIndex);
-        if (lowerElements.length === 0) return;
-        
-        const nextLower = lowerElements.reduce((prev, curr) => 
-            (curr.zIndex > prev.zIndex) ? curr : prev
-        );
-        
-        // Swap zIndexes
-        const temp = element.zIndex;
-        element.zIndex = nextLower.zIndex;
-        nextLower.zIndex = temp;
-        
-        // Update DOM
-        $(`#${element.id}`).css('z-index', element.zIndex);
-        $(`#${nextLower.id}`).css('z-index', nextLower.zIndex);
-        
-        updateLayersList();
-    }
-    
-    // Continued from part 1...
     // ============================================
     // PROPERTIES PANEL
     // ============================================
@@ -836,22 +673,13 @@
             alert('Please select an element first');
             return;
         }
-        
-        // Reset for new animation
-        editingAnimation = null;
-        $('#animBtnText').text('Add to Timeline');
-        $('#deleteAnimBtn').addClass('hidden');
         $('#animStart').val(0);
         $('#animDuration').val(1);
-        $('#animType').val('fadeIn');
-        $('#customAnimProps').addClass('hidden');
-        
         $animModal.removeClass('hidden');
     }
     
     function closeAnimationModal() {
         $animModal.addClass('hidden');
-        editingAnimation = null;
     }
     
     function toggleCustomAnimProps() {
@@ -863,42 +691,6 @@
         }
     }
     
-    function editAnimation(e) {
-        const animId = $(e.currentTarget).data('anim-id');
-        const elementId = $(e.currentTarget).data('element-id');
-        
-        const element = elements.find(el => el.id === elementId);
-        if (!element) return;
-        
-        const anim = element.animations.find(a => a.id === animId);
-        if (!anim) return;
-        
-        // Populate modal with animation data
-        editingAnimation = { elementId, animId };
-        selectElement(elementId);
-        
-        $('#animType').val(anim.type);
-        $('#animStart').val(anim.start);
-        $('#animDuration').val(anim.duration);
-        $('#animEase').val(anim.ease);
-        $('#timelineDuration').val(totalDuration);
-        
-        // Show custom props if custom type
-        if (anim.type === 'custom') {
-            $('#customAnimProps').removeClass('hidden');
-            if (anim.customProps.x !== undefined) $('#animCustomX').val(anim.customProps.x);
-            if (anim.customProps.y !== undefined) $('#animCustomY').val(anim.customProps.y);
-            if (anim.customProps.scale !== undefined) $('#animCustomScale').val(anim.customProps.scale);
-            if (anim.customProps.rotation !== undefined) $('#animCustomRotation').val(anim.customProps.rotation);
-            if (anim.customProps.opacity !== undefined) $('#animCustomOpacity').val(anim.customProps.opacity);
-        }
-        
-        $('#animBtnText').text('Update Animation');
-        $('#deleteAnimBtn').removeClass('hidden');
-        
-        $animModal.removeClass('hidden');
-    }
-    
     function saveAnimation() {
         if (!selectedElement) return;
         
@@ -908,18 +700,12 @@
         const duration = parseFloat($('#animDuration').val());
         const ease = $('#animEase').val();
         
-        // Update total duration if needed
-        const newTotalDuration = parseFloat($('#timelineDuration').val());
-        if (newTotalDuration !== totalDuration) {
-            totalDuration = newTotalDuration;
-            updateTimelineRuler();
-        }
-        
         const animation = {
             type,
             start,
             duration,
             ease,
+            id: `anim_${Date.now()}`,
             customProps: {}
         };
         
@@ -938,37 +724,15 @@
             if (opacity !== '') animation.customProps.opacity = parseFloat(opacity);
         }
         
-        if (editingAnimation) {
-            // Update existing animation
-            const anim = element.animations.find(a => a.id === editingAnimation.animId);
-            if (anim) {
-                Object.assign(anim, animation);
-            }
-        } else {
-            // Add new animation
-            animation.id = `anim_${Date.now()}`;
-            element.animations.push(animation);
-        }
-        
+        element.animations.push(animation);
         rebuildTimeline();
         updateTimelineTracks();
         closeAnimationModal();
     }
     
-    function deleteEditingAnimation() {
-        if (!editingAnimation) return;
-        
-        const element = elements.find(el => el.id === editingAnimation.elementId);
-        if (element) {
-            element.animations = element.animations.filter(a => a.id !== editingAnimation.animId);
-            rebuildTimeline();
-            updateTimelineTracks();
-        }
-        
-        closeAnimationModal();
-    }
-    
     function handleDeleteAnimation(e) {
+        e.stopPropagation();
+        
         const animId = $(e.currentTarget).data('anim-id');
         const elementId = $(e.currentTarget).data('element-id');
         
@@ -981,18 +745,8 @@
     }
     
     function updateTotalDuration() {
-        totalDuration = parseFloat($('#timelineDuration').val()) || 5;
+        totalDuration = parseFloat($('#totalDuration').val()) || 5;
         updateTimelineRuler();
-        updateTimelineTracks();
-    }
-    
-    function zoomIn() {
-        zoomLevel = Math.min(zoomLevel * 1.5, 4);
-        updateTimelineTracks();
-    }
-    
-    function zoomOut() {
-        zoomLevel = Math.max(zoomLevel / 1.5, 0.25);
         updateTimelineTracks();
     }
     
@@ -1021,18 +775,8 @@
         $timelineTracks.empty();
         
         elements.forEach(element => {
-            let icon, label;
-            
-            if (element.type === 'text') {
-                icon = 'fa-font';
-                label = element.text.substring(0, 15);
-            } else if (element.type === 'clickthrough') {
-                icon = 'fa-mouse-pointer';
-                label = 'Click';
-            } else {
-                icon = 'fa-image';
-                label = (element.filename || 'Image').substring(0, 15);
-            }
+            const icon = element.type === 'text' ? 'fa-font' : 'fa-image';
+            const label = element.type === 'text' ? element.text.substring(0, 15) : (element.filename || 'Image').substring(0, 15);
             
             const $track = $(`
                 <div class="timeline-track">
@@ -1040,7 +784,7 @@
                         <i class="fas ${icon} text-blue-400 mr-2"></i>
                         <span class="truncate">${label}</span>
                     </div>
-                    <div class="timeline-track-content" id="track_${element.id}" style="min-width: ${1000 * zoomLevel}px;">
+                    <div class="timeline-track-content" id="track_${element.id}">
                     </div>
                 </div>
             `);
@@ -1074,6 +818,7 @@
             element.animations.forEach(anim => {
                 const props = getAnimationProps(anim.type, element, anim.customProps);
                 
+                // Set initial state if needed
                 if (props.startAt) {
                     gsap.set(`#${element.id}`, props.startAt);
                     delete props.startAt;
@@ -1091,11 +836,11 @@
     }
     
     function getAnimationProps(type, element, customProps = {}) {
+        const props = {};
+        
         if (type === 'custom') {
             return customProps;
         }
-        
-        const props = {};
         
         switch(type) {
             case 'fadeIn':
@@ -1149,6 +894,7 @@
         timeline.duration(totalDuration);
         timeline.play(0);
         
+        // Reset when done
         setTimeout(() => {
             isPlaying = false;
             $('#timelinePlayhead').css('left', '0');
@@ -1160,18 +906,17 @@
         isPlaying = false;
         $('#timelinePlayhead').css('left', '0');
         
+        // Reset all elements to their initial state
         elements.forEach(element => {
             gsap.set(`#${element.id}`, { clearProps: 'all' });
-            const style = {
+            $(`#${element.id}`).css({
                 left: element.x + 'px',
                 top: element.y + 'px',
                 width: element.width + 'px',
                 height: element.height + 'px',
                 opacity: element.opacity,
-                transform: `rotate(${element.rotation}deg)`,
-                'z-index': element.zIndex
-            };
-            $(`#${element.id}`).css(style);
+                transform: `rotate(${element.rotation}deg)`
+            });
         });
     }
     
@@ -1191,6 +936,7 @@
         }
         
         const zip = new JSZip();
+        
         const html = generateHTML();
         zip.file('index.html', html);
         
@@ -1221,12 +967,9 @@
     function generateHTML() {
         let elementsHtml = '';
         let animationsJs = '';
-        let clickthroughJs = '';
         
-        const sortedElements = [...elements].sort((a, b) => a.zIndex - b.zIndex);
         let imageCounter = 0;
-        
-        sortedElements.forEach((element) => {
+        elements.forEach((element) => {
             if (element.type === 'image') {
                 const imgSrc = `images/image_${imageCounter}.${getExtensionFromDataUrl(element.src)}`;
                 elementsHtml += `
@@ -1238,7 +981,6 @@
             height: ${element.height}px;
             opacity: ${element.opacity};
             transform: rotate(${element.rotation}deg);
-            z-index: ${element.zIndex};
         ">`;
                 imageCounter++;
             } else if (element.type === 'text') {
@@ -1261,23 +1003,10 @@
             padding: 5px;
             line-height: 1.2;
             word-wrap: break-word;
-            z-index: ${element.zIndex};
             display: flex;
             align-items: center;
             justify-content: ${element.textAlign === 'center' ? 'center' : element.textAlign === 'right' ? 'flex-end' : 'flex-start'};
         ">${element.text}</div>`;
-            } else if (element.type === 'clickthrough') {
-                elementsHtml += `
-        <a id="${element.id}" href="${element.url}" target="${element.target}" style="
-            position: absolute;
-            left: ${element.x}px;
-            top: ${element.y}px;
-            width: ${element.width}px;
-            height: ${element.height}px;
-            opacity: 0;
-            z-index: ${element.zIndex};
-            display: block;
-        "></a>`;
             }
             
             // Generate animations
@@ -1327,6 +1056,7 @@
     </div>
     
     <script>
+        // Initialize timeline
         const tl = gsap.timeline({ repeat: -1 });
         ${animationsJs}
     </script>
@@ -1382,6 +1112,9 @@
         return props;
     }
     
+    // ============================================
+    // CLEAR ALL
+    // ============================================
     function clearAll() {
         if (elements.length === 0) return;
         

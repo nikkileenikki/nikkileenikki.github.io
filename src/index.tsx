@@ -105,6 +105,10 @@ app.get('/', (c) => {
                             <button id="addTextBtn" class="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 rounded transition-colors">
                                 <i class="fas fa-font mr-2"></i>Add Text
                             </button>
+                            
+                            <button id="addClickthroughBtn" class="w-full bg-purple-600 hover:bg-purple-700 text-white py-3 rounded transition-colors">
+                                <i class="fas fa-mouse-pointer mr-2"></i>Add Clickthrough
+                            </button>
                         </div>
                     </div>
 
@@ -213,8 +217,15 @@ app.get('/', (c) => {
                                 <i class="fas fa-plus mr-2"></i>Add to Timeline
                             </button>
                             <div>
-                                <label class="text-sm text-gray-400">Total Duration (seconds)</label>
-                                <input type="number" id="totalDuration" value="5" step="0.5" min="1" max="60" class="w-full bg-gray-800 rounded px-3 py-2 text-sm">
+                                <label class="text-sm text-gray-400">Timeline Zoom</label>
+                                <div class="flex space-x-2">
+                                    <button id="zoomOut" class="flex-1 bg-gray-700 hover:bg-gray-600 rounded py-2 text-sm">
+                                        <i class="fas fa-search-minus"></i>
+                                    </button>
+                                    <button id="zoomIn" class="flex-1 bg-gray-700 hover:bg-gray-600 rounded py-2 text-sm">
+                                        <i class="fas fa-search-plus"></i>
+                                    </button>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -367,14 +378,20 @@ app.get('/', (c) => {
                         </div>
                     </div>
                     
-                    <div>
-                        <label class="block text-sm text-gray-400 mb-2">Start Time (seconds)</label>
-                        <input type="number" id="animStart" value="0" step="0.1" min="0" class="w-full bg-gray-700 rounded px-3 py-2">
+                    <div class="grid grid-cols-2 gap-3">
+                        <div>
+                            <label class="block text-sm text-gray-400 mb-2">Start Time (s)</label>
+                            <input type="number" id="animStart" value="0" step="0.1" min="0" class="w-full bg-gray-700 rounded px-3 py-2">
+                        </div>
+                        <div>
+                            <label class="block text-sm text-gray-400 mb-2">Duration (s)</label>
+                            <input type="number" id="animDuration" value="1" step="0.1" min="0.1" class="w-full bg-gray-700 rounded px-3 py-2">
+                        </div>
                     </div>
                     
                     <div>
-                        <label class="block text-sm text-gray-400 mb-2">Duration (seconds)</label>
-                        <input type="number" id="animDuration" value="1" step="0.1" min="0.1" class="w-full bg-gray-700 rounded px-3 py-2">
+                        <label class="block text-sm text-gray-400 mb-2">Total Timeline Duration</label>
+                        <input type="number" id="timelineDuration" value="5" step="0.5" min="1" max="60" class="w-full bg-gray-700 rounded px-3 py-2">
                     </div>
                     
                     <div>
@@ -391,8 +408,46 @@ app.get('/', (c) => {
                         </select>
                     </div>
                     
-                    <button id="saveAnimBtn" class="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 rounded transition-colors">
-                        Add to Timeline
+                    <div class="flex space-x-2">
+                        <button id="saveAnimBtn" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-2 rounded transition-colors">
+                            <span id="animBtnText">Add to Timeline</span>
+                        </button>
+                        <button id="deleteAnimBtn" class="hidden bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded transition-colors">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Clickthrough Modal -->
+        <div id="clickthroughModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div class="bg-gray-800 rounded-lg p-6 w-[500px]">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-xl font-bold">Add Clickthrough Layer</h3>
+                    <button id="closeClickthroughModal" class="text-gray-400 hover:text-white">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-sm text-gray-400 mb-2">Click URL</label>
+                        <input type="text" id="clickthroughUrl" value="https://example.com" placeholder="https://example.com" class="w-full bg-gray-700 rounded px-3 py-2">
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm text-gray-400 mb-2">Target</label>
+                        <select id="clickthroughTarget" class="w-full bg-gray-700 rounded px-3 py-2">
+                            <option value="_blank">New Window (_blank)</option>
+                            <option value="_self">Same Window (_self)</option>
+                            <option value="_parent">Parent Frame (_parent)</option>
+                            <option value="_top">Top Frame (_top)</option>
+                        </select>
+                    </div>
+                    
+                    <button id="saveClickthroughBtn" class="w-full bg-purple-600 hover:bg-purple-700 text-white py-2 rounded transition-colors">
+                        Add Clickthrough Layer
                     </button>
                 </div>
             </div>
