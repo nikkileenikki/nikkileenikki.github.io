@@ -1,4 +1,16 @@
 /* Custom Styles */
+
+/* Hide scrollbar but keep scrollable in left sidebar */
+.overflow-y-auto::-webkit-scrollbar {
+    width: 0px;
+    background: transparent;
+}
+
+.overflow-y-auto {
+    scrollbar-width: none; /* Firefox */
+    -ms-overflow-style: none; /* IE and Edge */
+}
+
 .layer-item {
     cursor: pointer;
     transition: all 0.2s;
@@ -116,6 +128,20 @@
     border-bottom: 1px solid rgb(55, 65, 81);
     min-height: 48px;
     user-select: none; /* Disable text selection */
+    cursor: move; /* Show move cursor on track */
+}
+
+.timeline-track.dragging {
+    opacity: 0.5;
+    background: rgba(59, 130, 246, 0.1);
+}
+
+.timeline-track.drag-over-top {
+    border-top: 3px solid rgb(59, 130, 246);
+}
+
+.timeline-track.drag-over-bottom {
+    border-bottom: 3px solid rgb(59, 130, 246);
 }
 
 .timeline-track-label {
@@ -235,6 +261,7 @@
     bottom: 0;
     width: 1px;
     background: rgba(156, 163, 175, 0.3);
+    cursor: pointer;
 }
 
 .timeline-time-label {
@@ -243,6 +270,17 @@
     font-size: 10px;
     color: rgb(156, 163, 175);
     transform: translateX(-50%);
+    user-select: none;
+    cursor: pointer;
+    transition: color 0.2s;
+}
+
+.timeline-time-label:hover {
+    color: rgb(255, 255, 255);
+}
+
+#timelineRuler {
+    user-select: none;
 }
 
 .text-align-btn.active {
@@ -262,13 +300,19 @@
     height: 28px;
     border-radius: 4px;
     cursor: pointer;
-    transition: transform 0.2s, box-shadow 0.2s;
-    border: 2px solid transparent;
+    transition: transform 0.2s, box-shadow 0.2s, border-color 0.2s;
+    border: 2px solid #444;
 }
 
 .color-swatch:hover {
     transform: scale(1.1);
     box-shadow: 0 0 8px rgba(255, 255, 255, 0.3);
+}
+
+.color-swatch.selected {
+    border-color: rgb(59, 130, 246) !important;
+    border-width: 3px;
+    box-shadow: 0 0 8px rgba(59, 130, 246, 0.5);
 }
 
 .color-swatch-rainbow,

@@ -116,13 +116,6 @@ app.get('/', (c) => {
                         </div>
                     </div>
 
-                    <!-- Layers Panel -->
-                    <div class="mb-2">
-                        <h2 class="text-lg font-semibold mb-3">Layers</h2>
-                        <div id="layersList" class="space-y-2 bg-gray-900 rounded-lg p-3 min-h-[100px]">
-                            <p class="text-sm text-gray-500 text-center py-2">No layers yet</p>
-                        </div>
-                    </div>
 
                     <!-- Properties Panel -->
                     <div id="propertiesPanel" class="mb-2 hidden">
@@ -155,19 +148,19 @@ app.get('/', (c) => {
                                 </div>
                                 <div>
                                     <label class="text-sm text-gray-400">Color</label>
-                                    <div class="flex gap-1 mb-1">
-                                        <button class="color-swatch" data-color="#FFFFFF" style="background: #FFFFFF; border: 1px solid #444;" title="White"></button>
-                                        <button class="color-swatch" data-color="#000000" style="background: #000000;" title="Black"></button>
-                                        <button class="color-swatch" data-color="#6B7280" style="background: #6B7280;" title="Gray"></button>
-                                        <button class="color-swatch" data-color="#EF4444" style="background: #EF4444;" title="Red"></button>
-                                        <button class="color-swatch" data-color="#3B82F6" style="background: #3B82F6;" title="Blue"></button>
-                                        <button class="color-swatch" data-color="#10B981" style="background: #10B981;" title="Green"></button>
-                                        <button class="color-swatch" data-color="#F59E0B" style="background: #F59E0B;" title="Yellow"></button>
+                                    <div class="flex gap-1">
+                                        <button class="color-swatch text-color-swatch" data-color="#FFFFFF" style="background: #FFFFFF; border: 2px solid #444;" title="White"></button>
+                                        <button class="color-swatch text-color-swatch" data-color="#000000" style="background: #000000; border: 2px solid #444;" title="Black"></button>
+                                        <button class="color-swatch text-color-swatch" data-color="#6B7280" style="background: #6B7280; border: 2px solid #444;" title="Gray"></button>
+                                        <button class="color-swatch text-color-swatch" data-color="#EF4444" style="background: #EF4444; border: 2px solid #444;" title="Red"></button>
+                                        <button class="color-swatch text-color-swatch" data-color="#3B82F6" style="background: #3B82F6; border: 2px solid #444;" title="Blue"></button>
+                                        <button class="color-swatch text-color-swatch" data-color="#10B981" style="background: #10B981; border: 2px solid #444;" title="Green"></button>
+                                        <button class="color-swatch text-color-swatch" data-color="#F59E0B" style="background: #F59E0B; border: 2px solid #444;" title="Yellow"></button>
                                         <button class="color-swatch-rainbow" title="Custom color">
                                             <i class="fas fa-palette"></i>
                                         </button>
                                     </div>
-                                    <input type="color" id="propColor" class="w-full bg-gray-800 rounded px-3 py-2 h-10 hidden">
+                                    <input type="color" id="propColor" class="hidden">
                                 </div>
                                 <div class="flex space-x-2">
                                     <button id="propBold" class="flex-1 bg-gray-700 hover:bg-gray-600 rounded py-2 text-sm">
@@ -331,11 +324,11 @@ app.get('/', (c) => {
                             <div class="min-w-[800px]">
                                 <!-- Timeline Header -->
                                 <div class="flex border-b border-gray-700">
-                                    <div class="w-40 p-2 bg-gray-800 border-r border-gray-700">
+                                    <div class="w-[200px] p-2 bg-gray-800 border-r border-gray-700">
                                         <span class="text-xs text-gray-400 font-semibold">LAYER</span>
                                     </div>
                                     <div class="flex-1 relative h-8">
-                                        <div id="timelineRuler" class="absolute inset-0 flex">
+                                        <div id="timelineRuler" class="absolute inset-0 flex user-select-none">
                                             <!-- Time markers will be added here -->
                                         </div>
                                         <div id="timelinePlayhead" class="absolute top-0 bottom-0 w-1 bg-red-500 z-10 cursor-ew-resize" style="left: 0;">
@@ -552,19 +545,19 @@ app.get('/', (c) => {
                     
                     <div>
                         <label class="block text-sm text-gray-400 mb-2">Fill Color</label>
-                        <div class="flex gap-1 mb-1">
-                            <button class="color-swatch" data-color="#FFFFFF" style="background: #FFFFFF; border: 1px solid #444;" title="White"></button>
-                            <button class="color-swatch" data-color="#000000" style="background: #000000;" title="Black"></button>
-                            <button class="color-swatch" data-color="#6B7280" style="background: #6B7280;" title="Gray"></button>
-                            <button class="color-swatch" data-color="#EF4444" style="background: #EF4444;" title="Red"></button>
-                            <button class="color-swatch" data-color="#3B82F6" style="background: #3B82F6;" title="Blue"></button>
-                            <button class="color-swatch" data-color="#10B981" style="background: #10B981;" title="Green"></button>
-                            <button class="color-swatch" data-color="#F59E0B" style="background: #F59E0B;" title="Yellow"></button>
+                        <div class="flex gap-1">
+                            <button class="color-swatch shape-color-swatch" data-color="#FFFFFF" style="background: #FFFFFF; border: 2px solid #444;" title="White"></button>
+                            <button class="color-swatch shape-color-swatch" data-color="#000000" style="background: #000000; border: 2px solid #444;" title="Black"></button>
+                            <button class="color-swatch shape-color-swatch" data-color="#6B7280" style="background: #6B7280; border: 2px solid #444;" title="Gray"></button>
+                            <button class="color-swatch shape-color-swatch" data-color="#EF4444" style="background: #EF4444; border: 2px solid #444;" title="Red"></button>
+                            <button class="color-swatch shape-color-swatch" data-color="#3B82F6" style="background: #3B82F6; border: 2px solid #444;" title="Blue"></button>
+                            <button class="color-swatch shape-color-swatch" data-color="#10B981" style="background: #10B981; border: 2px solid #444;" title="Green"></button>
+                            <button class="color-swatch shape-color-swatch" data-color="#F59E0B" style="background: #F59E0B; border: 2px solid #444;" title="Yellow"></button>
                             <button class="color-swatch-rainbow-shape" title="Custom color">
                                 <i class="fas fa-palette"></i>
                             </button>
                         </div>
-                        <input type="color" id="shapeFillColor" value="#3b82f6" class="w-full bg-gray-700 rounded px-3 py-2 h-10 hidden">
+                        <input type="color" id="shapeFillColor" value="#3b82f6" class="hidden">
                     </div>
                     
                     <div>

@@ -115,14 +115,24 @@
         $(document).on('click', '.color-swatch', function() {
             const color = $(this).data('color');
             const $colorInput = $(this).closest('div').parent().find('input[type="color"]');
+            
+            // Remove selected from siblings
+            $(this).siblings('.color-swatch').removeClass('selected');
+            // Add selected to this
+            $(this).addClass('selected');
+            
             $colorInput.val(color).trigger('change');
         });
         
         $(document).on('click', '.color-swatch-rainbow', function() {
+            // Remove selected from color swatches
+            $('.text-color-swatch').removeClass('selected');
             $('#propColor').removeClass('hidden').click();
         });
         
         $(document).on('click', '.color-swatch-rainbow-shape', function() {
+            // Remove selected from shape color swatches
+            $('.shape-color-swatch').removeClass('selected');
             $('#shapeFillColor').removeClass('hidden').click();
         });
         $('#propBold').on('click', toggleBold);
@@ -182,6 +192,12 @@
         
         // Click on timeline to jump to position
         $timelineTracks.on('click', '.timeline-track-content', handleTimelineClick);
+        
+        // Timeline track drag and drop
+        $timelineTracks.on('dragstart', '.timeline-track', handleTimelineTrackDragStart);
+        $timelineTracks.on('dragover', '.timeline-track', handleTimelineTrackDragOver);
+        $timelineTracks.on('drop', '.timeline-track', handleTimelineTrackDrop);
+        $timelineTracks.on('dragend', '.timeline-track', handleTimelineTrackDragEnd);
         
         // Actions
         $('#previewBtn').on('click', playTimeline);
@@ -249,6 +265,83 @@
             const time = (percent / 100) * totalDuration;
             timeline.seek(time);
         }
+    }
+    
+    // Timeline track drag and drop
+    let draggedTrackId = null;
+    
+    function handleTimelineTrackDragStart(e) {
+        draggedTrackId = $(e.currentTarget).data('element-id');
+        $(e.currentTarget).addClass('dragging');
+    }
+    
+    function handleTimelineTrackDragOver(e) {
+        e.preventDefault();
+        
+        const $target = $(e.currentTarget);
+        if ($target.data('element-id') === draggedTrackId) return;
+        
+        // Remove all drag-over classes first
+        $('.timeline-track').removeClass('drag-over-top drag-over-bottom');
+        
+        // Determine if dragging over top or bottom half
+        const rect = e.currentTarget.getBoundingClientRect();
+        const mouseY = e.originalEvent.clientY;
+        const targetMidY = rect.top + rect.height / 2;
+        const isBottom = mouseY > targetMidY;
+        
+        $target.addClass(isBottom ? 'drag-over-bottom' : 'drag-over-top');
+    }
+    
+    function handleTimelineTrackDrop(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        
+        const targetId = $(e.currentTarget).data('element-id');
+        if (!draggedTrackId || draggedTrackId === targetId) {
+            handleTimelineTrackDragEnd();
+            return;
+        }
+        
+        const draggedEl = elements.find(el => el.id === draggedTrackId);
+        const targetEl = elements.find(el => el.id === targetId);
+        
+        if (draggedEl && targetEl) {
+            const draggedIndex = elements.indexOf(draggedEl);
+            const targetIndex = elements.indexOf(targetEl);
+            
+            // Determine if dropping above or below target
+            const rect = e.currentTarget.getBoundingClientRect();
+            const mouseY = e.originalEvent.clientY;
+            const targetMidY = rect.top + rect.height / 2;
+            const dropBelow = mouseY > targetMidY;
+            
+            // Remove dragged element
+            elements.splice(draggedIndex, 1);
+            
+            // Calculate new insertion index
+            let newIndex = elements.indexOf(targetEl);
+            if (dropBelow) newIndex += 1;
+            
+            // Insert at new position
+            elements.splice(newIndex, 0, draggedEl);
+            
+            // Reassign z-indexes
+            elements.forEach((el, idx) => {
+                el.zIndex = idx;
+                $(`#${el.id}`).css('z-index', el.zIndex);
+            });
+            
+            updateTimelineTracks();
+            rebuildTimeline();
+        }
+        
+        handleTimelineTrackDragEnd();
+    }
+    
+    function handleTimelineTrackDragEnd() {
+        $('.timeline-track').removeClass('dragging drag-over-top drag-over-bottom');
+        draggedTrackId = null;
     }
     
     // ============================================
@@ -1514,11 +1607,24 @@
         for (let i = 0; i <= steps; i++) {
             const left = (i / steps) * 100;
             $timelineRuler.append(`
-                <div class="timeline-time-marker" style="left: ${left}%">
-                    <div class="timeline-time-label">${i}s</div>
+                <div class="timeline-time-marker" style="left: ${left}%" data-time="${i}">
+                    <div class="timeline-time-label" data-time="${i}">${i}s</div>
                 </div>
             `);
         }
+        
+        // Add click handler for time markers
+        $('.timeline-time-label, .timeline-time-marker').off('click').on('click', function(e) {
+            e.stopPropagation();
+            const time = parseFloat($(this).data('time'));
+            const percent = (time / totalDuration) * 100;
+            
+            $('#timelinePlayhead').css('left', percent + '%');
+            
+            if (!isPlaying && timeline) {
+                timeline.seek(time);
+            }
+        });
     }
     
     function updateTimelineTracks() {
@@ -1544,7 +1650,7 @@
             }
             
             const $track = $(`
-                <div class="timeline-track">
+                <div class="timeline-track" draggable="true" data-element-id="${element.id}">
                     <div class="timeline-track-label">
                         <div class="flex items-center flex-1">
                             <i class="fas ${icon} text-blue-400 mr-2"></i>
