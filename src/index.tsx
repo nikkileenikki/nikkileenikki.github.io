@@ -182,6 +182,20 @@ app.get('/', (c) => {
                                         </button>
                                     </div>
                                 </div>
+                                <div>
+                                    <label class="text-sm text-gray-400">Vertical Align</label>
+                                    <div class="flex space-x-2">
+                                        <button class="vertical-align-btn flex-1 bg-gray-700 hover:bg-gray-600 rounded py-2 text-sm" data-valign="top">
+                                            <i class="fas fa-arrow-up"></i> Top
+                                        </button>
+                                        <button class="vertical-align-btn flex-1 bg-gray-700 hover:bg-gray-600 rounded py-2 text-sm" data-valign="middle">
+                                            <i class="fas fa-grip-lines"></i> Mid
+                                        </button>
+                                        <button class="vertical-align-btn flex-1 bg-gray-700 hover:bg-gray-600 rounded py-2 text-sm" data-valign="bottom">
+                                            <i class="fas fa-arrow-down"></i> Bot
+                                        </button>
+                                    </div>
+                                </div>
                             </div>
                             
                             <!-- Clickthrough Properties -->
@@ -355,17 +369,42 @@ app.get('/', (c) => {
                     <div>
                         <label class="block text-sm text-gray-400 mb-2">Animation Type</label>
                         <select id="animType" class="w-full bg-gray-700 rounded px-3 py-2">
-                            <option value="fadeIn">Fade In</option>
-                            <option value="fadeOut">Fade Out</option>
-                            <option value="slideLeft">Slide from Left</option>
-                            <option value="slideRight">Slide from Right</option>
-                            <option value="slideUp">Slide from Top</option>
-                            <option value="slideDown">Slide from Bottom</option>
-                            <option value="scale">Scale</option>
-                            <option value="rotate">Rotate</option>
-                            <option value="bounce">Bounce</option>
-                            <option value="custom">Custom Properties</option>
+                            <optgroup label="🌅 Fade">
+                                <option value="fadeIn">Fade In</option>
+                                <option value="fadeOut">Fade Out</option>
+                            </optgroup>
+                            <optgroup label="➡️ Slide">
+                                <option value="slideLeft">Slide from Left</option>
+                                <option value="slideRight">Slide from Right</option>
+                                <option value="slideUp">Slide from Top</option>
+                                <option value="slideDown">Slide from Bottom</option>
+                            </optgroup>
+                            <optgroup label="🔍 Scale">
+                                <option value="scaleIn">Scale In (from small)</option>
+                                <option value="scaleOut">Scale Out (to large)</option>
+                                <option value="scaleFrom">Scale From (custom start)</option>
+                            </optgroup>
+                            <optgroup label="🔄 Rotate">
+                                <option value="rotate">Rotate (360°)</option>
+                                <option value="rotateFrom">Rotate From (custom start)</option>
+                            </optgroup>
+                            <optgroup label="🎪 Special">
+                                <option value="bounce">Bounce</option>
+                                <option value="custom">Custom Properties</option>
+                            </optgroup>
                         </select>
+                    </div>
+                    
+                    <!-- Scale From Properties -->
+                    <div id="scaleFromProps" class="hidden space-y-2 p-3 bg-gray-700 rounded">
+                        <label class="block text-xs text-gray-400">Scale From Value</label>
+                        <input type="number" id="animScaleFrom" step="0.1" value="0" class="w-full bg-gray-800 rounded px-2 py-1 text-sm" placeholder="e.g. 0 or 2">
+                    </div>
+                    
+                    <!-- Rotate From Properties -->
+                    <div id="rotateFromProps" class="hidden space-y-2 p-3 bg-gray-700 rounded">
+                        <label class="block text-xs text-gray-400">Rotate From Angle (deg)</label>
+                        <input type="number" id="animRotateFrom" value="0" class="w-full bg-gray-800 rounded px-2 py-1 text-sm" placeholder="e.g. -180 or 90">
                     </div>
                     
                     <!-- Custom Animation Properties -->

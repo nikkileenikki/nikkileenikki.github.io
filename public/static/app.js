@@ -114,6 +114,7 @@
         $('#propItalic').on('click', toggleItalic);
         $('#propUnderline').on('click', toggleUnderline);
         $('.text-align-btn').on('click', updateTextAlign);
+        $('.vertical-align-btn').on('click', updateVerticalAlign);
         
         // Clickthrough properties
         $('#propClickUrl').on('change', updateClickUrl);
@@ -447,6 +448,7 @@
             italic: false,
             underline: false,
             textAlign: 'left',
+            verticalAlign: 'top',
             zIndex: elements.length,
             animations: []
         };
@@ -1024,6 +1026,9 @@
             
             $('.text-align-btn').removeClass('active');
             $(`.text-align-btn[data-align="${element.textAlign}"]`).addClass('active');
+            
+            $('.vertical-align-btn').removeClass('active');
+            $(`.vertical-align-btn[data-valign="${element.verticalAlign || 'top'}"]`).addClass('active');
         } else {
             $textProps.addClass('hidden');
         }
@@ -1189,6 +1194,27 @@
         });
     }
     
+    function updateVerticalAlign(e) {
+        if (!selectedElement) return;
+        const element = elements.find(el => el.id === selectedElement);
+        if (element.type !== 'text') return;
+        
+        const valign = $(e.currentTarget).data('valign');
+        element.verticalAlign = valign;
+        
+        $('.vertical-align-btn').removeClass('active');
+        $(e.currentTarget).addClass('active');
+        
+        // Update element with flexbox for vertical alignment
+        const $el = $(`#${selectedElement}`);
+        $el.css({
+            'display': 'flex',
+            'flex-direction': 'column',
+            'align-items': element.textAlign === 'center' ? 'center' : element.textAlign === 'right' ? 'flex-end' : 'flex-start',
+            'justify-content': valign === 'top' ? 'flex-start' : valign === 'bottom' ? 'flex-end' : 'center'
+        });
+    }
+    
     // Clickthrough property updates
     function updateClickUrl() {
         if (!selectedElement) return;
@@ -1271,10 +1297,19 @@
     
     function toggleCustomAnimProps() {
         const type = $('#animType').val();
+        
+        // Hide all custom panels first
+        $('#customAnimProps').addClass('hidden');
+        $('#scaleFromProps').addClass('hidden');
+        $('#rotateFromProps').addClass('hidden');
+        
+        // Show appropriate panel based on type
         if (type === 'custom') {
             $('#customAnimProps').removeClass('hidden');
-        } else {
-            $('#customAnimProps').addClass('hidden');
+        } else if (type === 'scaleFrom') {
+            $('#scaleFromProps').removeClass('hidden');
+        } else if (type === 'rotateFrom') {
+            $('#rotateFromProps').removeClass('hidden');
         }
     }
     
@@ -1354,6 +1389,12 @@
             if (scale !== '') animation.customProps.scale = parseFloat(scale);
             if (rotation !== '') animation.customProps.rotation = parseFloat(rotation);
             if (opacity !== '') animation.customProps.opacity = parseFloat(opacity);
+        } else if (type === 'scaleFrom') {
+            const scaleFrom = $('#animScaleFrom').val();
+            if (scaleFrom !== '') animation.customProps.scaleFrom = parseFloat(scaleFrom);
+        } else if (type === 'rotateFrom') {
+            const rotateFrom = $('#animRotateFrom').val();
+            if (rotateFrom !== '') animation.customProps.rotateFrom = parseFloat(rotateFrom);
         }
         
         if (editingAnimation) {
@@ -1554,11 +1595,26 @@
                 props.y = 0;
                 break;
             case 'scale':
+            case 'scaleIn':
                 props.startAt = { scale: 0 };
                 props.scale = 1;
                 break;
+            case 'scaleOut':
+                props.startAt = { scale: 1 };
+                props.scale = 2;
+                break;
+            case 'scaleFrom':
+                const scaleFrom = customProps.scaleFrom !== undefined ? customProps.scaleFrom : 0;
+                props.startAt = { scale: scaleFrom };
+                props.scale = 1;
+                break;
             case 'rotate':
-                props.rotation = 360;
+                props.rotation = '+=360';
+                break;
+            case 'rotateFrom':
+                const rotateFrom = customProps.rotateFrom !== undefined ? customProps.rotateFrom : 0;
+                props.startAt = { rotation: rotateFrom };
+                props.rotation = element.rotation;
                 break;
             case 'bounce':
                 props.y = '+=50';
@@ -1627,6 +1683,7 @@
             
             // Restore text-specific properties
             if (element.type === 'text') {
+                const vAlign = element.verticalAlign || 'top';
                 style['font-size'] = element.fontSize + 'px';
                 style['font-family'] = element.fontFamily;
                 style['color'] = element.color;
@@ -1634,8 +1691,12 @@
                 style['font-style'] = element.italic ? 'italic' : 'normal';
                 style['text-decoration'] = element.underline ? 'underline' : 'none';
                 style['text-align'] = element.textAlign;
-                style['justify-content'] = element.textAlign === 'left' ? 'flex-start' : 
-                                           element.textAlign === 'right' ? 'flex-end' : 'center';
+                style['display'] = 'flex';
+                style['flex-direction'] = 'column';
+                style['align-items'] = element.textAlign === 'left' ? 'flex-start' : 
+                                       element.textAlign === 'right' ? 'flex-end' : 'center';
+                style['justify-content'] = vAlign === 'top' ? 'flex-start' : 
+                                           vAlign === 'bottom' ? 'flex-end' : 'center';
             }
             
             // Restore shape-specific properties
@@ -1719,6 +1780,7 @@
         ">`;
                 imageCounter++;
             } else if (element.type === 'text') {
+                const vAlign = element.verticalAlign || 'top';
                 elementsHtml += `
         <div id="${element.id}" style="
             position: absolute;
@@ -1735,6 +1797,10 @@
             font-style: ${element.italic ? 'italic' : 'normal'};
             text-decoration: ${element.underline ? 'underline' : 'none'};
             text-align: ${element.textAlign};
+            display: flex;
+            flex-direction: column;
+            align-items: ${element.textAlign === 'center' ? 'center' : element.textAlign === 'right' ? 'flex-end' : 'flex-start'};
+            justify-content: ${vAlign === 'top' ? 'flex-start' : vAlign === 'bottom' ? 'flex-end' : 'center'};
             padding: 5px;
             line-height: 1.2;
             word-wrap: break-word;
@@ -1861,11 +1927,26 @@
                 props.y = 0;
                 break;
             case 'scale':
+            case 'scaleIn':
                 props.startAt = { scale: 0 };
                 props.scale = 1;
                 break;
+            case 'scaleOut':
+                props.startAt = { scale: 1 };
+                props.scale = 2;
+                break;
+            case 'scaleFrom':
+                const scaleFrom = customProps.scaleFrom !== undefined ? customProps.scaleFrom : 0;
+                props.startAt = { scale: scaleFrom };
+                props.scale = 1;
+                break;
             case 'rotate':
-                props.rotation = 360;
+                props.rotation = '+=360';
+                break;
+            case 'rotateFrom':
+                const rotateFrom = customProps.rotateFrom !== undefined ? customProps.rotateFrom : 0;
+                props.startAt = { rotation: rotateFrom };
+                props.rotation = element.rotation;
                 break;
             case 'bounce':
                 props.y = '+=50';

@@ -228,6 +228,10 @@
     background-color: rgb(59, 130, 246);
 }
 
+.vertical-align-btn.active {
+    background-color: rgb(59, 130, 246);
+}
+
 #propBold.active, #propItalic.active, #propUnderline.active {
     background-color: rgb(59, 130, 246);
 }
