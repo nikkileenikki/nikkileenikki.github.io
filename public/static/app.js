@@ -91,24 +91,17 @@
         $(document).on('mousemove', handleMouseMove);
         $(document).on('mouseup', handleMouseUp);
         
-        // Deselect element when clicking outside canvas
-        $(document).on('mousedown', function(e) {
-            const $target = $(e.target);
-            // Don't deselect if clicking on canvas, elements, properties panel, or timeline
-            if ($target.closest('#canvas').length > 0 || 
-                $target.closest('#propertiesPanel').length > 0 ||
-                $target.closest('#timelineTracks').length > 0 ||
-                $target.closest('.timeline-track').length > 0) {
-                return;
-            }
-            
-            // Deselect element
-            if (selectedElement) {
-                selectedElement = null;
-                $('.canvas-element').removeClass('selected');
-                $('.layer-item').removeClass('selected');
-                $('.timeline-track').removeClass('selected');
-                $propertiesPanel.addClass('hidden');
+        // Deselect element when clicking on canvasWrapper background only
+        $(document).on('mousedown', '#canvasWrapper', function(e) {
+            // Only deselect if clicked directly on canvasWrapper, not on canvas or its children
+            if (e.target.id === 'canvasWrapper') {
+                if (selectedElement) {
+                    selectedElement = null;
+                    $('.canvas-element').removeClass('selected');
+                    $('.layer-item').removeClass('selected');
+                    $('.timeline-track').removeClass('selected');
+                    $propertiesPanel.addClass('hidden');
+                }
             }
         });
         
