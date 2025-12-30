@@ -1,0 +1,7 @@
+# Changes needed:
+1. Add animLoop variable after totalDuration
+2. Fix zoom to change totalDuration instead of visual zoom
+3. Add clickthrough properties handlers
+4. Add drag-and-drop for layers
+5. Update properties panel to show clickthrough fields
+6. Add loop control to export

@@ -1,0 +1,527 @@
+
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>HTML5 Ad Builder</title>
+        <script src="https://cdn.tailwindcss.com"></script>
+        <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/gsap.min.js"></script>
+        <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+        <link href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css" rel="stylesheet">
+        <link href="/static/styles.css" rel="stylesheet">
+    </head>
+    <body class="bg-gray-900 text-gray-100">
+        <div class="flex h-screen">
+            <!-- Left Sidebar - Tools -->
+            <div class="w-80 bg-gray-800 border-r border-gray-700 overflow-y-auto flex flex-col max-h-screen">
+                <div class="p-3 flex-1 overflow-y-auto"
+                    <h1 class="text-xl font-bold mb-3 flex items-center">
+                        <i class="fas fa-ad mr-2 text-blue-400"></i>
+                        Ad Builder
+                    </h1>
+                    
+                    <!-- Add Elements -->
+                    <div class="mb-2">
+                        <h2 class="text-lg font-semibold mb-3">Add Elements</h2>
+                        <div class="space-y-2">
+                            <div id="dropzone" class="border-2 border-dashed border-gray-600 rounded-lg p-4 text-center cursor-pointer hover:border-blue-400 transition-colors">
+                                <i class="fas fa-cloud-upload-alt text-3xl text-gray-500 mb-1"></i>
+                                <p class="text-sm text-gray-400">Upload Image</p>
+                                <p class="text-xs text-gray-500 mt-1">JPG, PNG, GIF</p>
+                            </div>
+                            <input type="file" id="fileInput" accept="image/jpeg,image/png,image/gif" class="hidden">
+                            
+                            <div class="grid grid-cols-2 gap-2">
+                                <button id="addTextBtn" class="bg-blue-600 hover:bg-blue-700 text-white py-2 rounded transition-colors">
+                                    <i class="fas fa-font mr-1"></i>Text
+                                </button>
+                                
+                                <button id="addShapeBtn" class="bg-teal-600 hover:bg-teal-700 text-white py-2 rounded transition-colors">
+                                    <i class="fas fa-shapes mr-1"></i>Shape
+                                </button>
+                            </div>
+                            
+                            <button id="addClickthroughBtn" class="w-full bg-purple-600 hover:bg-purple-700 text-white py-2 rounded transition-colors">
+                                <i class="fas fa-mouse-pointer mr-2"></i>Add Clickthrough
+                            </button>
+                        </div>
+                    </div>
+
+
+                    <!-- Properties Panel -->
+                    <div id="propertiesPanel" class="mb-2 hidden">
+                        <h2 class="text-lg font-semibold mb-3">Properties</h2>
+                        <div class="space-y-2 bg-gray-900 rounded-lg p-3">
+                            <!-- Text Properties -->
+                            <div id="textProps" class="hidden space-y-2 pb-3 border-b border-gray-700">
+                                <div>
+                                    <label class="text-sm text-gray-400">Text Content</label>
+                                    <input type="text" id="propText" class="w-full bg-gray-800 rounded px-3 py-2 text-sm">
+                                </div>
+                                <div>
+                                    <label class="text-sm text-gray-400">Font Family</label>
+                                    <select id="propFontFamily" class="w-full bg-gray-800 rounded px-3 py-2 text-sm">
+                                        <option value="Arial">Arial</option>
+                                        <option value="Helvetica">Helvetica</option>
+                                        <option value="Times New Roman">Times New Roman</option>
+                                        <option value="Georgia">Georgia</option>
+                                        <option value="Courier New">Courier New</option>
+                                        <option value="Verdana">Verdana</option>
+                                        <option value="Impact">Impact</option>
+                                        <option value="Comic Sans MS">Comic Sans MS</option>
+                                        <option value="Trebuchet MS">Trebuchet MS</option>
+                                        <option value="Arial Black">Arial Black</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="text-sm text-gray-400">Font Size</label>
+                                    <input type="number" id="propFontSize" class="w-full bg-gray-800 rounded px-3 py-2 text-sm" min="8" max="200">
+                                </div>
+                                <div>
+                                    <label class="text-sm text-gray-400">Color</label>
+                                    <div class="flex gap-1">
+                                        <button class="color-swatch text-color-swatch" data-color="#FFFFFF" style="background: #FFFFFF; border: 2px solid #444;" title="White"></button>
+                                        <button class="color-swatch text-color-swatch" data-color="#000000" style="background: #000000; border: 2px solid #444;" title="Black"></button>
+                                        <button class="color-swatch text-color-swatch" data-color="#6B7280" style="background: #6B7280; border: 2px solid #444;" title="Gray"></button>
+                                        <button class="color-swatch text-color-swatch" data-color="#EF4444" style="background: #EF4444; border: 2px solid #444;" title="Red"></button>
+                                        <button class="color-swatch text-color-swatch" data-color="#3B82F6" style="background: #3B82F6; border: 2px solid #444;" title="Blue"></button>
+                                        <button class="color-swatch text-color-swatch" data-color="#10B981" style="background: #10B981; border: 2px solid #444;" title="Green"></button>
+                                        <button class="color-swatch text-color-swatch" data-color="#F59E0B" style="background: #F59E0B; border: 2px solid #444;" title="Yellow"></button>
+                                        <button class="color-swatch-rainbow" title="Custom color">
+                                            <i class="fas fa-palette"></i>
+                                        </button>
+                                    </div>
+                                    <input type="color" id="propColor" class="hidden">
+                                </div>
+                                <div class="flex space-x-2">
+                                    <button id="propBold" class="flex-1 bg-gray-700 hover:bg-gray-600 rounded py-2 text-sm">
+                                        <i class="fas fa-bold"></i>
+                                    </button>
+                                    <button id="propItalic" class="flex-1 bg-gray-700 hover:bg-gray-600 rounded py-2 text-sm">
+                                        <i class="fas fa-italic"></i>
+                                    </button>
+                                    <button id="propUnderline" class="flex-1 bg-gray-700 hover:bg-gray-600 rounded py-2 text-sm">
+                                        <i class="fas fa-underline"></i>
+                                    </button>
+                                </div>
+                                <div>
+                                    <label class="text-sm text-gray-400">Text Align</label>
+                                    <div class="flex space-x-2">
+                                        <button class="text-align-btn flex-1 bg-gray-700 hover:bg-gray-600 rounded py-2 text-sm" data-align="left">
+                                            <i class="fas fa-align-left"></i>
+                                        </button>
+                                        <button class="text-align-btn flex-1 bg-gray-700 hover:bg-gray-600 rounded py-2 text-sm" data-align="center">
+                                            <i class="fas fa-align-center"></i>
+                                        </button>
+                                        <button class="text-align-btn flex-1 bg-gray-700 hover:bg-gray-600 rounded py-2 text-sm" data-align="right">
+                                            <i class="fas fa-align-right"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Clickthrough Properties -->
+                            <div id="clickthroughProps" class="hidden space-y-2 pb-3 border-b border-gray-700">
+                                <div>
+                                    <label class="text-sm text-gray-400">Click URL</label>
+                                    <input type="text" id="propClickUrl" class="w-full bg-gray-800 rounded px-3 py-2 text-sm" placeholder="https://kult.my">
+                                </div>
+                                <div>
+                                    <label class="text-sm text-gray-400">Target</label>
+                                    <select id="propClickTarget" class="w-full bg-gray-800 rounded px-3 py-2 text-sm">
+                                        <option value="_blank">New Window (_blank)</option>
+                                        <option value="_self">Same Window (_self)</option>
+                                        <option value="_parent">Parent Frame (_parent)</option>
+                                        <option value="_top">Top Frame (_top)</option>
+                                    </select>
+                                </div>
+                            </div>
+                            
+                            <!-- Common Properties -->
+                            <div class="grid grid-cols-2 gap-2">
+                                <div>
+                                    <label class="text-sm text-gray-400">Width</label>
+                                    <input type="number" id="propWidth" class="w-full bg-gray-800 rounded px-3 py-2 text-sm">
+                                </div>
+                                <div>
+                                    <label class="text-sm text-gray-400">Height</label>
+                                    <input type="number" id="propHeight" class="w-full bg-gray-800 rounded px-3 py-2 text-sm">
+                                </div>
+                                <div>
+                                    <label class="text-sm text-gray-400">X Position</label>
+                                    <input type="number" id="propX" class="w-full bg-gray-800 rounded px-3 py-2 text-sm">
+                                </div>
+                                <div>
+                                    <label class="text-sm text-gray-400">Y Position</label>
+                                    <input type="number" id="propY" class="w-full bg-gray-800 rounded px-3 py-2 text-sm">
+                                </div>
+                                <div>
+                                    <label class="text-sm text-gray-400">Rotation</label>
+                                    <input type="number" id="propRotation" class="w-full bg-gray-800 rounded px-3 py-2 text-sm" placeholder="degrees">
+                                </div>
+                                <div>
+                                    <label class="text-sm text-gray-400">Opacity</label>
+                                    <div>
+                                        <input type="range" id="propOpacity" class="w-full" min="0" max="1" step="0.1" value="1">
+                                        <span id="opacityValue" class="text-xs text-gray-500">100%</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Export Section -->
+                    <div class="mb-2">
+                        <h2 class="text-lg font-semibold mb-3">Export</h2>
+                        <div class="space-y-2">
+                            <button id="exportBtn" class="w-full bg-green-600 hover:bg-green-700 text-white py-2 rounded transition-colors">
+                                <i class="fas fa-file-archive mr-2"></i>Export as ZIP
+                            </button>
+                            <button id="previewBtn" class="w-full bg-purple-600 hover:bg-purple-700 text-white py-2 rounded transition-colors">
+                                <i class="fas fa-play mr-2"></i>Preview Animation
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Main Canvas Area -->
+            <div class="flex-1 flex flex-col">
+                <!-- Toolbar -->
+                <div class="bg-gray-800 border-b border-gray-700 p-4 flex items-center justify-between">
+                    <div class="flex items-center space-x-4">
+                        <label class="text-sm text-gray-400">Canvas Size:</label>
+                        <select id="canvasSize" class="bg-gray-700 rounded px-3 py-1 text-sm">
+                            <option value="300x250">300x250 (Medium Rectangle)</option>
+                            <option value="728x90">728x90 (Leaderboard)</option>
+                            <option value="160x600">160x600 (Wide Skyscraper)</option>
+                            <option value="300x600">300x600 (Half Page)</option>
+                            <option value="320x50">320x50 (Mobile Banner)</option>
+                            <option value="custom">Custom Size</option>
+                        </select>
+                        <input type="number" id="customWidth" class="bg-gray-700 rounded px-3 py-1 text-sm w-20 hidden" placeholder="Width">
+                        <input type="number" id="customHeight" class="bg-gray-700 rounded px-3 py-1 text-sm w-20 hidden" placeholder="Height">
+                    </div>
+                    <div class="flex items-center space-x-2">
+                        <button id="clearBtn" class="bg-red-600 hover:bg-red-700 text-white px-4 py-1 rounded text-sm transition-colors">
+                            <i class="fas fa-trash mr-2"></i>Clear All
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Canvas -->
+                <div class="flex-1 flex flex-col p-8 overflow-auto bg-gray-900">
+                    <div id="canvasContainer" class="flex items-center justify-center flex-1">
+                        <div id="canvasWrapper" class="relative shadow-2xl" style="width: 300px; height: 250px;">
+                            <div id="canvas" class="w-full h-full relative overflow-hidden">
+                                <!-- Elements will be added here -->
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Timeline Editor -->
+                    <div class="mt-6 bg-gray-800 rounded-lg p-4 border border-gray-700">
+                        <div class="flex items-center justify-between mb-3">
+                            <h3 class="text-lg font-semibold flex items-center">
+                                <i class="fas fa-film mr-2 text-purple-400"></i>
+                                Animation Timeline
+                            </h3>
+                            <div class="flex space-x-2">
+                                <button id="playTimeline" class="bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded text-sm transition-colors">
+                                    <i class="fas fa-play mr-1"></i>Play
+                                </button>
+                                <button id="stopTimeline" class="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded text-sm transition-colors">
+                                    <i class="fas fa-stop mr-1"></i>Stop
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <!-- Timeline Container -->
+                        <div id="timelineContainer" class="bg-gray-900 rounded-lg overflow-x-auto relative">
+                            <div class="min-w-[800px]">
+                                <!-- Timeline Header -->
+                                <div class="flex border-b border-gray-700">
+                                    <div class="w-[200px] p-2 bg-gray-800 border-r border-gray-700">
+                                        <span class="text-xs text-gray-400 font-semibold">LAYER</span>
+                                    </div>
+                                    <div class="flex-1 relative h-8">
+                                        <div id="timelineRuler" class="absolute inset-0 flex user-select-none">
+                                            <!-- Time markers will be added here -->
+                                        </div>
+                                        <div id="timelinePlayhead" class="absolute top-0 bottom-0 w-1 bg-red-500 z-10 cursor-ew-resize" style="left: 0;">
+                                            <div class="w-4 h-4 bg-red-500 rounded-full absolute -top-1.5 -left-1.5 cursor-grab active:cursor-grabbing shadow-lg border-2 border-white"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <!-- Timeline Tracks -->
+                                <div id="timelineTracks">
+                                    <div class="text-center text-gray-500 text-sm py-8">
+                                        Add elements and animations to see timeline
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Timeline Zoom Controls -->
+                            <div class="absolute bottom-4 right-4 flex space-x-2 bg-gray-800 rounded-lg p-2 shadow-lg">
+                                <button id="zoomOut" class="bg-gray-700 hover:bg-gray-600 rounded px-3 py-1 text-sm">
+                                    <i class="fas fa-search-minus"></i>
+                                </button>
+                                <button id="zoomIn" class="bg-gray-700 hover:bg-gray-600 rounded px-3 py-1 text-sm">
+                                    <i class="fas fa-search-plus"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Animation Modal -->
+        <div id="animModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div class="bg-gray-800 rounded-lg p-3 w-[600px] max-h-[90vh] overflow-y-auto">
+                <div class="flex justify-between items-center mb-2">
+                    <h3 class="text-xl font-bold">Add Animation</h3>
+                    <button id="closeModal" class="text-gray-400 hover:text-white">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                
+                <div class="space-y-2">
+                    <div>
+                        <label class="block text-sm text-gray-400 mb-2">Select Animation Effects (Multiple)</label>
+                        <div class="grid grid-cols-2 gap-2 p-2 bg-gray-700 rounded max-h-64 overflow-y-auto">
+                            <!-- Fade -->
+                            <label class="flex items-center space-x-2 p-2 bg-gray-800 rounded hover:bg-gray-750 cursor-pointer">
+                                <input type="checkbox" class="anim-checkbox" value="fadeIn">
+                                <span class="text-sm">Fade In</span>
+                            </label>
+                            <label class="flex items-center space-x-2 p-2 bg-gray-800 rounded hover:bg-gray-750 cursor-pointer">
+                                <input type="checkbox" class="anim-checkbox" value="fadeOut">
+                                <span class="text-sm">Fade Out</span>
+                            </label>
+                            
+                            <!-- Slide -->
+                            <label class="flex items-center space-x-2 p-2 bg-gray-800 rounded hover:bg-gray-750 cursor-pointer">
+                                <input type="checkbox" class="anim-checkbox" value="slideLeft">
+                                <span class="text-sm">Slide Left</span>
+                            </label>
+                            <label class="flex items-center space-x-2 p-2 bg-gray-800 rounded hover:bg-gray-750 cursor-pointer">
+                                <input type="checkbox" class="anim-checkbox" value="slideRight">
+                                <span class="text-sm">Slide Right</span>
+                            </label>
+                            <label class="flex items-center space-x-2 p-2 bg-gray-800 rounded hover:bg-gray-750 cursor-pointer">
+                                <input type="checkbox" class="anim-checkbox" value="slideUp">
+                                <span class="text-sm">Slide Up</span>
+                            </label>
+                            <label class="flex items-center space-x-2 p-2 bg-gray-800 rounded hover:bg-gray-750 cursor-pointer">
+                                <input type="checkbox" class="anim-checkbox" value="slideDown">
+                                <span class="text-sm">Slide Down</span>
+                            </label>
+                            
+                            <!-- Scale -->
+                            <label class="flex items-center space-x-2 p-2 bg-gray-800 rounded hover:bg-gray-750 cursor-pointer">
+                                <input type="checkbox" class="anim-checkbox" value="scaleIn">
+                                <span class="text-sm">Scale In</span>
+                            </label>
+                            <label class="flex items-center space-x-2 p-2 bg-gray-800 rounded hover:bg-gray-750 cursor-pointer">
+                                <input type="checkbox" class="anim-checkbox" value="scaleOut">
+                                <span class="text-sm">Scale Out</span>
+                            </label>
+                            
+                            <!-- Rotate -->
+                            <label class="flex items-center space-x-2 p-2 bg-gray-800 rounded hover:bg-gray-750 cursor-pointer">
+                                <input type="checkbox" class="anim-checkbox" value="rotate">
+                                <span class="text-sm">Rotate 360°</span>
+                            </label>
+                            
+                            <!-- Special -->
+                            <label class="flex items-center space-x-2 p-2 bg-gray-800 rounded hover:bg-gray-750 cursor-pointer">
+                                <input type="checkbox" class="anim-checkbox" value="bounce">
+                                <span class="text-sm">Bounce</span>
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <div class="grid grid-cols-2 gap-2">
+                        <div>
+                            <label class="block text-sm text-gray-400 mb-2">Start Time (s)</label>
+                            <input type="number" id="animStart" value="0" step="0.1" min="0" class="w-full bg-gray-700 rounded px-3 py-2">
+                        </div>
+                        <div>
+                            <label class="block text-sm text-gray-400 mb-2">Duration (s)</label>
+                            <input type="number" id="animDuration" value="1" step="0.1" min="0.1" class="w-full bg-gray-700 rounded px-3 py-2">
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm text-gray-400 mb-2">Total Timeline Duration</label>
+                        <input type="number" id="timelineDuration" value="5" step="0.5" min="1" max="60" class="w-full bg-gray-700 rounded px-3 py-2">
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm text-gray-400 mb-2">Animation Loop</label>
+                        <select id="animLoop" class="w-full bg-gray-700 rounded px-3 py-2">
+                            <option value="0" selected>Play Once</option>
+                            <option value="infinite">Loop Forever</option>
+                            <option value="1">Play Twice</option>
+                            <option value="2">Play 3 Times</option>
+                            <option value="4">Play 5 Times</option>
+                        </select>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm text-gray-400 mb-2">Easing</label>
+                        <select id="animEase" class="w-full bg-gray-700 rounded px-3 py-2">
+                            <option value="power1.out">Power1 Out</option>
+                            <option value="power2.out">Power2 Out</option>
+                            <option value="power3.out">Power3 Out</option>
+                            <option value="power1.inOut">Power1 InOut</option>
+                            <option value="back.out">Back Out</option>
+                            <option value="elastic.out">Elastic Out</option>
+                            <option value="bounce.out">Bounce Out</option>
+                            <option value="linear">Linear</option>
+                        </select>
+                    </div>
+                    
+                    <div class="flex space-x-2">
+                        <button type="button" id="saveAnimBtn" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-2 rounded transition-colors">
+                            <span id="animBtnText">Add Animation</span>
+                        </button>
+                        <button type="button" id="deleteAnimBtn" class="hidden bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded transition-colors">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Clickthrough Modal -->
+        <div id="clickthroughModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div class="bg-gray-800 rounded-lg p-3 w-[500px]">
+                <div class="flex justify-between items-center mb-2">
+                    <h3 class="text-xl font-bold">Add Clickthrough Layer</h3>
+                    <button id="closeClickthroughModal" class="text-gray-400 hover:text-white">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                
+                <div class="space-y-2">
+                    <div>
+                        <label class="block text-sm text-gray-400 mb-2">Click URL</label>
+                        <input type="text" id="clickthroughUrl" value="https://kult.my" placeholder="https://kult.my" class="w-full bg-gray-700 rounded px-3 py-2">
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm text-gray-400 mb-2">Target</label>
+                        <select id="clickthroughTarget" class="w-full bg-gray-700 rounded px-3 py-2">
+                            <option value="_blank">New Window (_blank)</option>
+                            <option value="_self">Same Window (_self)</option>
+                            <option value="_parent">Parent Frame (_parent)</option>
+                            <option value="_top">Top Frame (_top)</option>
+                        </select>
+                    </div>
+                    
+                    <button id="saveClickthroughBtn" class="w-full bg-purple-600 hover:bg-purple-700 text-white py-2 rounded transition-colors">
+                        Add Clickthrough Layer
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Shape Modal -->
+        <div id="shapeModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div class="bg-gray-800 rounded-lg p-3 w-[500px]">
+                <div class="flex justify-between items-center mb-2">
+                    <h3 class="text-xl font-bold">Add Shape</h3>
+                    <button id="closeShapeModal" class="text-gray-400 hover:text-white">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                
+                <div class="space-y-2">
+                    <div>
+                        <label class="block text-sm text-gray-400 mb-2">Shape Type</label>
+                        <select id="shapeType" class="w-full bg-gray-700 rounded px-3 py-2">
+                            <option value="rectangle">Rectangle</option>
+                            <option value="circle">Circle</option>
+                            <option value="rounded-rectangle">Rounded Rectangle</option>
+                        </select>
+                    </div>
+                    
+                    <div class="grid grid-cols-2 gap-2">
+                        <div>
+                            <label class="block text-sm text-gray-400 mb-2">Width</label>
+                            <input type="number" id="shapeWidth" value="200" class="w-full bg-gray-700 rounded px-3 py-2">
+                        </div>
+                        <div>
+                            <label class="block text-sm text-gray-400 mb-2">Height</label>
+                            <input type="number" id="shapeHeight" value="150" class="w-full bg-gray-700 rounded px-3 py-2">
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm text-gray-400 mb-2">Fill Color</label>
+                        <div class="flex gap-1">
+                            <button class="color-swatch shape-color-swatch" data-color="#FFFFFF" style="background: #FFFFFF; border: 2px solid #444;" title="White"></button>
+                            <button class="color-swatch shape-color-swatch" data-color="#000000" style="background: #000000; border: 2px solid #444;" title="Black"></button>
+                            <button class="color-swatch shape-color-swatch" data-color="#6B7280" style="background: #6B7280; border: 2px solid #444;" title="Gray"></button>
+                            <button class="color-swatch shape-color-swatch" data-color="#EF4444" style="background: #EF4444; border: 2px solid #444;" title="Red"></button>
+                            <button class="color-swatch shape-color-swatch" data-color="#3B82F6" style="background: #3B82F6; border: 2px solid #444;" title="Blue"></button>
+                            <button class="color-swatch shape-color-swatch" data-color="#10B981" style="background: #10B981; border: 2px solid #444;" title="Green"></button>
+                            <button class="color-swatch shape-color-swatch" data-color="#F59E0B" style="background: #F59E0B; border: 2px solid #444;" title="Yellow"></button>
+                            <button class="color-swatch-rainbow-shape" title="Custom color">
+                                <i class="fas fa-palette"></i>
+                            </button>
+                        </div>
+                        <input type="color" id="shapeFillColor" value="#3b82f6" class="hidden">
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm text-gray-400 mb-2">Border Radius (px)</label>
+                        <input type="number" id="shapeBorderRadius" value="0" min="0" max="200" class="w-full bg-gray-700 rounded px-3 py-2">
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm text-gray-400 mb-2">Opacity</label>
+                        <input type="range" id="shapeOpacity" class="w-full" min="0" max="1" step="0.1" value="1">
+                        <span id="shapeOpacityValue" class="text-xs text-gray-500">100%</span>
+                    </div>
+                    
+                    <button id="saveShapeBtn" class="w-full bg-teal-600 hover:bg-teal-700 text-white py-2 rounded transition-colors">
+                        Add Shape
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Text Modal -->
+        <div id="textModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div class="bg-gray-800 rounded-lg p-3 w-[500px]">
+                <div class="flex justify-between items-center mb-2">
+                    <h3 class="text-xl font-bold">Add Text</h3>
+                    <button id="closeTextModal" class="text-gray-400 hover:text-white">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                
+                <div class="space-y-2">
+                    <div>
+                        <label class="block text-sm text-gray-400 mb-2">Text Content</label>
+                        <input type="text" id="textContent" placeholder="Your Text Here" class="w-full bg-gray-700 rounded px-3 py-2">
+                    </div>
+                    
+                    <button id="saveTextBtn" class="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 rounded transition-colors">
+                        Add Text
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <script src="/static/app.js"></script>
+    </body>
+    </html>
+  
