@@ -527,26 +527,21 @@
             return;
         }
         
-        const formData = new FormData();
-        formData.append('image', file);
+        // Client-side file reading (no server required)
+        const reader = new FileReader();
         
-        try {
-            const response = await fetch('/api/upload', {
-                method: 'POST',
-                body: formData
-            });
-            
-            const result = await response.json();
-            
-            if (result.success) {
-                addImageToCanvas(result.url, result.filename);
-            } else {
-                alert('Upload failed: ' + result.error);
-            }
-        } catch (error) {
-            console.error('Upload error:', error);
-            alert('Upload failed. Please try again.');
-        }
+        reader.onload = function(e) {
+            const dataUrl = e.target.result;
+            addImageToCanvas(dataUrl, file.name);
+        };
+        
+        reader.onerror = function(error) {
+            console.error('File read error:', error);
+            alert('Failed to read file. Please try again.');
+        };
+        
+        // Read file as data URL (base64)
+        reader.readAsDataURL(file);
     }
     
     // ============================================
