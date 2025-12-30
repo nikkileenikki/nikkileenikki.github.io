@@ -1,0 +1,348 @@
+/* Custom Styles */
+
+/* Hide scrollbar but keep scrollable in left sidebar */
+.overflow-y-auto::-webkit-scrollbar {
+    width: 0px;
+    background: transparent;
+}
+
+.overflow-y-auto {
+    scrollbar-width: none; /* Firefox */
+    -ms-overflow-style: none; /* IE and Edge */
+}
+
+.layer-item {
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.layer-item:hover {
+    background-color: rgba(59, 130, 246, 0.1);
+}
+
+.layer-item.selected {
+    background-color: rgba(59, 130, 246, 0.2);
+    border-color: rgb(59, 130, 246);
+}
+
+.layer-item.dragging {
+    opacity: 0.5;
+    cursor: move;
+}
+
+.layer-item.drag-over-top {
+    border-top: 3px solid rgb(59, 130, 246);
+}
+
+.layer-item.drag-over-bottom {
+    border-bottom: 3px solid rgb(59, 130, 246);
+}
+
+.canvas-element {
+    position: absolute;
+    cursor: move;
+    border: none;
+}
+
+.canvas-element.selected {
+    border: 2px solid rgb(59, 130, 246);
+}
+
+.canvas-element.text-element {
+    border: none;
+}
+
+.canvas-element.text-element.selected {
+    border: 2px dashed rgb(59, 130, 246);
+}
+
+.canvas-element.clickthrough-element {
+    border: 2px dashed rgba(168, 85, 247, 0.5);
+    background: rgba(168, 85, 247, 0.1);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+}
+
+.canvas-element.clickthrough-element:hover {
+    background: rgba(168, 85, 247, 0.2);
+    border-color: rgba(168, 85, 247, 0.8);
+}
+
+.layer-controls {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.resize-handle {
+    position: absolute;
+    width: 10px;
+    height: 10px;
+    background: rgb(59, 130, 246);
+    border: 1px solid white;
+    border-radius: 50%;
+    display: none;
+}
+
+.canvas-element.selected .resize-handle {
+    display: block;
+}
+
+.resize-handle.nw { top: -5px; left: -5px; cursor: nw-resize; }
+.resize-handle.ne { top: -5px; right: -5px; cursor: ne-resize; }
+.resize-handle.sw { bottom: -5px; left: -5px; cursor: sw-resize; }
+.resize-handle.se { bottom: -5px; right: -5px; cursor: se-resize; }
+
+#canvasWrapper {
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+}
+
+#canvas {
+    background: 
+        linear-gradient(45deg, #f0f0f0 25%, transparent 25%),
+        linear-gradient(-45deg, #f0f0f0 25%, transparent 25%),
+        linear-gradient(45deg, transparent 75%, #f0f0f0 75%),
+        linear-gradient(-45deg, transparent 75%, #f0f0f0 75%);
+    background-size: 20px 20px;
+    background-position: 0 0, 0 10px, 10px -10px, -10px 0px;
+    background-color: white;
+}
+
+.anim-item {
+    background: rgba(139, 92, 246, 0.1);
+    border: 1px solid rgba(139, 92, 246, 0.3);
+    padding: 8px;
+    border-radius: 4px;
+    font-size: 12px;
+}
+
+.anim-item:hover {
+    background: rgba(139, 92, 246, 0.2);
+}
+
+/* Timeline Styles */
+.timeline-track {
+    display: flex;
+    border-bottom: 1px solid rgb(55, 65, 81);
+    min-height: 48px;
+    user-select: none; /* Disable text selection */
+    cursor: move; /* Show move cursor on track */
+}
+
+.timeline-track.dragging {
+    opacity: 0.5;
+    background: rgba(59, 130, 246, 0.1);
+}
+
+.timeline-track.drag-over-top {
+    border-top: 3px solid rgb(59, 130, 246);
+}
+
+.timeline-track.drag-over-bottom {
+    border-bottom: 3px solid rgb(59, 130, 246);
+}
+
+.timeline-track-label {
+    width: 200px;
+    padding: 6px 8px;
+    background: rgb(31, 41, 55);
+    border-right: 1px solid rgb(55, 65, 81);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: 12px;
+    user-select: none; /* Disable text selection */
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.timeline-track-label:hover {
+    background: rgba(59, 130, 246, 0.1);
+}
+
+.timeline-track.selected .timeline-track-label {
+    background: rgba(59, 130, 246, 0.2);
+    border-right-color: rgb(59, 130, 246);
+}
+
+.timeline-layer-btn {
+    background: rgba(59, 130, 246, 0.2);
+    border: none;
+    border-radius: 4px;
+    padding: 4px 6px;
+    color: rgb(96, 165, 250);
+    cursor: pointer;
+    font-size: 11px;
+    transition: all 0.2s;
+}
+
+.timeline-layer-btn:hover {
+    background: rgba(59, 130, 246, 0.4);
+    color: white;
+}
+
+.timeline-track-content {
+    flex: 1;
+    position: relative;
+    background: rgb(17, 24, 39);
+    user-select: none; /* Disable text selection */
+    cursor: pointer; /* Show clickable cursor */
+}
+
+.timeline-block {
+    position: absolute;
+    height: 32px;
+    top: 8px;
+    background: linear-gradient(135deg, rgba(139, 92, 246, 0.8), rgba(168, 85, 247, 0.8));
+    border: 1px solid rgba(139, 92, 246, 1);
+    border-radius: 4px;
+    cursor: move;
+    transition: all 0.2s;
+    overflow: visible;
+    display: flex;
+    align-items: center;
+    padding: 0 8px;
+    user-select: none;
+}
+
+.timeline-block:hover {
+    background: linear-gradient(135deg, rgba(139, 92, 246, 1), rgba(168, 85, 247, 1));
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(139, 92, 246, 0.4);
+}
+
+.timeline-block-resize-handle {
+    position: absolute;
+    width: 8px;
+    height: 100%;
+    top: 0;
+    cursor: ew-resize;
+    background: rgba(255, 255, 255, 0.1);
+    opacity: 0;
+    transition: opacity 0.2s;
+}
+
+.timeline-block:hover .timeline-block-resize-handle {
+    opacity: 1;
+}
+
+.timeline-block-resize-handle.left {
+    left: 0;
+    border-left: 2px solid rgba(255, 255, 255, 0.5);
+}
+
+.timeline-block-resize-handle.right {
+    right: 0;
+    border-right: 2px solid rgba(255, 255, 255, 0.5);
+}
+
+.timeline-block-label {
+    font-size: 10px;
+    font-weight: 600;
+    color: white;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.timeline-block .delete-anim {
+    position: absolute;
+    right: 4px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: rgba(239, 68, 68, 0.9);
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    font-size: 10px;
+}
+
+.timeline-block:hover .delete-anim {
+    display: flex;
+}
+
+.timeline-time-marker {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    width: 1px;
+    background: rgba(156, 163, 175, 0.3);
+    cursor: pointer;
+}
+
+.timeline-time-label {
+    position: absolute;
+    top: 2px;
+    font-size: 10px;
+    color: rgb(156, 163, 175);
+    transform: translateX(-50%);
+    user-select: none;
+    cursor: pointer;
+    transition: color 0.2s;
+}
+
+.timeline-time-label:hover {
+    color: rgb(255, 255, 255);
+}
+
+#timelineRuler {
+    user-select: none;
+}
+
+.text-align-btn.active {
+    background-color: rgb(59, 130, 246);
+}
+
+#propBold.active, #propItalic.active, #propUnderline.active {
+    background-color: rgb(59, 130, 246);
+}
+
+.color-swatch {
+    width: 28px;
+    height: 28px;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: transform 0.2s, box-shadow 0.2s, border-color 0.2s;
+    border: 2px solid #444;
+}
+
+.color-swatch:hover {
+    transform: scale(1.1);
+    box-shadow: 0 0 8px rgba(255, 255, 255, 0.3);
+}
+
+.color-swatch.selected {
+    border-color: rgb(59, 130, 246) !important;
+    border-width: 3px;
+    box-shadow: 0 0 8px rgba(59, 130, 246, 0.5);
+}
+
+.color-swatch-rainbow,
+.color-swatch-rainbow-shape {
+    width: 28px;
+    height: 28px;
+    border-radius: 4px;
+    cursor: pointer;
+    background: linear-gradient(135deg, 
+        #ff0000 0%, #ff7f00 17%, #ffff00 33%, 
+        #00ff00 50%, #0000ff 67%, #4b0082 83%, #9400d3 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 14px;
+    transition: transform 0.2s, box-shadow 0.2s;
+    text-shadow: 0 0 2px rgba(0,0,0,0.5);
+}
+
+.color-swatch-rainbow:hover,
+.color-swatch-rainbow-shape:hover {
+    transform: scale(1.1);
+    box-shadow: 0 0 12px rgba(255, 255, 255, 0.5);
+}
+

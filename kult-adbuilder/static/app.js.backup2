@@ -1,0 +1,1400 @@
+// HTML5 Ad Builder - Full Featured Version
+(function() {
+    'use strict';
+    
+    // ============================================
+    // STATE MANAGEMENT
+    // ============================================
+    let elements = [];
+    let selectedElement = null;
+    let dragOffset = { x: 0, y: 0 };
+    let isDragging = false;
+    let isResizing = false;
+    let resizeHandle = null;
+    let elementCounter = 0;
+    let timeline = gsap.timeline({ paused: true });
+    let totalDuration = 5;
+    let isPlaying = false;
+    let zoomLevel = 1; // 1 = 100%, 0.5 = 50%, 2 = 200%
+    let editingAnimation = null; // For editing existing animations
+    
+    // Canvas dimensions
+    let canvasWidth = 300;
+    let canvasHeight = 250;
+    
+    // DOM elements
+    const $canvas = $('#canvas');
+    const $canvasWrapper = $('#canvasWrapper');
+    const $layersList = $('#layersList');
+    const $dropzone = $('#dropzone');
+    const $fileInput = $('#fileInput');
+    const $propertiesPanel = $('#propertiesPanel');
+    const $textProps = $('#textProps');
+    const $animModal = $('#animModal');
+    const $textModal = $('#textModal');
+    const $clickthroughModal = $('#clickthroughModal');
+    const $timelineTracks = $('#timelineTracks');
+    const $timelineRuler = $('#timelineRuler');
+    
+    // ============================================
+    // INITIALIZATION
+    // ============================================
+    $(document).ready(function() {
+        initEventListeners();
+        updateCanvasSize();
+        updateTimelineRuler();
+    });
+    
+    // ============================================
+    // EVENT LISTENERS
+    // ============================================
+    function initEventListeners() {
+        // File upload
+        $dropzone.on('click', () => $fileInput.click());
+        $dropzone.on('dragover', handleDragOver);
+        $dropzone.on('drop', handleDrop);
+        $fileInput.on('change', handleFileSelect);
+        
+        // Text
+        $('#addTextBtn').on('click', openTextModal);
+        $('#closeTextModal').on('click', closeTextModal);
+        $('#saveTextBtn').on('click', saveText);
+        
+        // Clickthrough
+        $('#addClickthroughBtn').on('click', openClickthroughModal);
+        $('#closeClickthroughModal').on('click', closeClickthroughModal);
+        $('#saveClickthroughBtn').on('click', saveClickthrough);
+        
+        // Canvas size
+        $('#canvasSize').on('change', handleCanvasSizeChange);
+        $('#customWidth, #customHeight').on('change', updateCustomCanvasSize);
+        
+        // Canvas interactions
+        $canvas.on('mousedown', '.canvas-element', handleElementMouseDown);
+        $canvas.on('mousedown', '.resize-handle', handleResizeStart);
+        $(document).on('mousemove', handleMouseMove);
+        $(document).on('mouseup', handleMouseUp);
+        
+        // Layer selection and controls
+        $layersList.on('click', '.layer-item', handleLayerClick);
+        $layersList.on('click', '.delete-layer', handleDeleteLayer);
+        $layersList.on('click', '.move-layer-up', moveLayerUp);
+        $layersList.on('click', '.move-layer-down', moveLayerDown);
+        
+        // Common properties
+        $('#propWidth').on('change', updateElementWidth);
+        $('#propHeight').on('change', updateElementHeight);
+        $('#propX').on('change', updateElementX);
+        $('#propY').on('change', updateElementY);
+        $('#propRotation').on('change', updateElementRotation);
+        $('#propOpacity').on('input', updateElementOpacity);
+        
+        // Text properties
+        $('#propText').on('input', updateTextContent);
+        $('#propFontFamily').on('change', updateFontFamily);
+        $('#propFontSize').on('change', updateFontSize);
+        $('#propColor').on('change', updateColor);
+        $('#propBold').on('click', toggleBold);
+        $('#propItalic').on('click', toggleItalic);
+        $('#propUnderline').on('click', toggleUnderline);
+        $('.text-align-btn').on('click', updateTextAlign);
+        
+        // Animation
+        $('#addAnimBtn').on('click', openAnimationModal);
+        $('#closeModal').on('click', closeAnimationModal);
+        $('#saveAnimBtn').on('click', saveAnimation);
+        $('#deleteAnimBtn').on('click', deleteEditingAnimation);
+        $('#animType').on('change', toggleCustomAnimProps);
+        $timelineTracks.on('click', '.timeline-block', editAnimation);
+        $timelineTracks.on('click', '.delete-anim', function(e) {
+            e.stopPropagation();
+            handleDeleteAnimation(e);
+        });
+        
+        // Timeline controls
+        $('#timelineDuration').on('change', updateTotalDuration);
+        $('#zoomIn').on('click', zoomIn);
+        $('#zoomOut').on('click', zoomOut);
+        $('#playTimeline').on('click', playTimeline);
+        $('#stopTimeline').on('click', stopTimeline);
+        
+        // Actions
+        $('#previewBtn').on('click', playTimeline);
+        $('#exportBtn').on('click', exportToZip);
+        $('#clearBtn').on('click', clearAll);
+    }
+    
+    // ============================================
+    // FILE UPLOAD
+    // ============================================
+    function handleDragOver(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        $(this).addClass('border-blue-400');
+    }
+    
+    function handleDrop(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        $(this).removeClass('border-blue-400');
+        
+        const files = e.originalEvent.dataTransfer.files;
+        if (files.length > 0) {
+            uploadFile(files[0]);
+        }
+    }
+    
+    function handleFileSelect(e) {
+        const files = e.target.files;
+        if (files.length > 0) {
+            uploadFile(files[0]);
+        }
+    }
+    
+    async function uploadFile(file) {
+        const validTypes = ['image/jpeg', 'image/png', 'image/gif'];
+        if (!validTypes.includes(file.type)) {
+            alert('Please upload a JPG, PNG, or GIF file.');
+            return;
+        }
+        
+        const formData = new FormData();
+        formData.append('image', file);
+        
+        try {
+            const response = await fetch('/api/upload', {
+                method: 'POST',
+                body: formData
+            });
+            
+            const result = await response.json();
+            
+            if (result.success) {
+                addImageToCanvas(result.url, result.filename);
+            } else {
+                alert('Upload failed: ' + result.error);
+            }
+        } catch (error) {
+            console.error('Upload error:', error);
+            alert('Upload failed. Please try again.');
+        }
+    }
+    
+    // ============================================
+    // TEXT MANAGEMENT
+    // ============================================
+    function openTextModal() {
+        $('#textContent').val('Your Text Here');
+        $textModal.removeClass('hidden');
+    }
+    
+    function closeTextModal() {
+        $textModal.addClass('hidden');
+    }
+    
+    function saveText() {
+        const text = $('#textContent').val() || 'Your Text Here';
+        addTextToCanvas(text);
+        closeTextModal();
+    }
+    
+    function addTextToCanvas(text) {
+        elementCounter++;
+        const id = `element_${elementCounter}`;
+        
+        const element = {
+            id: id,
+            type: 'text',
+            text: text,
+            x: 50,
+            y: 50,
+            width: 200,
+            height: 50,
+            rotation: 0,
+            opacity: 1,
+            fontSize: 24,
+            fontFamily: 'Arial',
+            color: '#000000',
+            bold: false,
+            italic: false,
+            underline: false,
+            textAlign: 'left',
+            zIndex: elements.length,
+            animations: []
+        };
+        
+        elements.push(element);
+        
+        const $element = $(`
+            <div class="canvas-element text-element" id="${id}" style="
+                left: ${element.x}px;
+                top: ${element.y}px;
+                width: ${element.width}px;
+                height: ${element.height}px;
+                opacity: ${element.opacity};
+                transform: rotate(${element.rotation}deg);
+                font-size: ${element.fontSize}px;
+                font-family: ${element.fontFamily};
+                color: ${element.color};
+                font-weight: ${element.bold ? 'bold' : 'normal'};
+                font-style: ${element.italic ? 'italic' : 'normal'};
+                text-decoration: ${element.underline ? 'underline' : 'none'};
+                text-align: ${element.textAlign};
+                padding: 5px;
+                line-height: 1.2;
+                word-wrap: break-word;
+                z-index: ${element.zIndex};
+            ">
+                ${text}
+                <div class="resize-handle nw"></div>
+                <div class="resize-handle ne"></div>
+                <div class="resize-handle sw"></div>
+                <div class="resize-handle se"></div>
+            </div>
+        `);
+        
+        $canvas.append($element);
+        updateLayersList();
+        selectElement(id);
+    }
+    
+    // ============================================
+    // CLICKTHROUGH MANAGEMENT
+    // ============================================
+    function openClickthroughModal() {
+        $('#clickthroughUrl').val('https://example.com');
+        $('#clickthroughTarget').val('_blank');
+        $clickthroughModal.removeClass('hidden');
+    }
+    
+    function closeClickthroughModal() {
+        $clickthroughModal.addClass('hidden');
+    }
+    
+    function saveClickthrough() {
+        const url = $('#clickthroughUrl').val() || 'https://example.com';
+        const target = $('#clickthroughTarget').val() || '_blank';
+        addClickthroughToCanvas(url, target);
+        closeClickthroughModal();
+    }
+    
+    function addClickthroughToCanvas(url, target) {
+        elementCounter++;
+        const id = `element_${elementCounter}`;
+        
+        const element = {
+            id: id,
+            type: 'clickthrough',
+            url: url,
+            target: target,
+            x: 0,
+            y: 0,
+            width: canvasWidth,
+            height: canvasHeight,
+            rotation: 0,
+            opacity: 0.3,
+            zIndex: 9999,
+            animations: []
+        };
+        
+        elements.push(element);
+        
+        const $element = $(`
+            <div class="canvas-element clickthrough-element" id="${id}" style="
+                left: ${element.x}px;
+                top: ${element.y}px;
+                width: ${element.width}px;
+                height: ${element.height}px;
+                opacity: ${element.opacity};
+                transform: rotate(${element.rotation}deg);
+                z-index: ${element.zIndex};
+            ">
+                <div style="text-align: center; color: rgba(168, 85, 247, 0.8); pointer-events: none;">
+                    <i class="fas fa-mouse-pointer text-2xl mb-2"></i>
+                    <div class="text-xs">Clickthrough</div>
+                    <div class="text-xs font-bold">${url}</div>
+                </div>
+                <div class="resize-handle nw"></div>
+                <div class="resize-handle ne"></div>
+                <div class="resize-handle sw"></div>
+                <div class="resize-handle se"></div>
+            </div>
+        `);
+        
+        $canvas.append($element);
+        updateLayersList();
+        selectElement(id);
+    }
+    
+    // ============================================
+    // CANVAS MANAGEMENT
+    // ============================================
+    function addImageToCanvas(url, filename) {
+        elementCounter++;
+        const id = `element_${elementCounter}`;
+        
+        const element = {
+            id: id,
+            type: 'image',
+            src: url,
+            filename: filename,
+            x: 50,
+            y: 50,
+            width: 100,
+            height: 100,
+            rotation: 0,
+            opacity: 1,
+            zIndex: elements.length,
+            animations: []
+        };
+        
+        elements.push(element);
+        
+        const $element = $(`
+            <div class="canvas-element" id="${id}" style="
+                left: ${element.x}px;
+                top: ${element.y}px;
+                width: ${element.width}px;
+                height: ${element.height}px;
+                opacity: ${element.opacity};
+                transform: rotate(${element.rotation}deg);
+                z-index: ${element.zIndex};
+            ">
+                <img src="${url}" style="width: 100%; height: 100%; object-fit: contain; pointer-events: none;">
+                <div class="resize-handle nw"></div>
+                <div class="resize-handle ne"></div>
+                <div class="resize-handle sw"></div>
+                <div class="resize-handle se"></div>
+            </div>
+        `);
+        
+        $canvas.append($element);
+        updateLayersList();
+        selectElement(id);
+    }
+    
+    function updateCanvasSize() {
+        $canvasWrapper.css({
+            width: canvasWidth + 'px',
+            height: canvasHeight + 'px'
+        });
+        updateTimelineRuler();
+    }
+    
+    function handleCanvasSizeChange(e) {
+        const value = $(e.target).val();
+        
+        if (value === 'custom') {
+            $('#customWidth, #customHeight').removeClass('hidden');
+        } else {
+            $('#customWidth, #customHeight').addClass('hidden');
+            const [width, height] = value.split('x').map(Number);
+            canvasWidth = width;
+            canvasHeight = height;
+            updateCanvasSize();
+        }
+    }
+    
+    function updateCustomCanvasSize() {
+        const width = parseInt($('#customWidth').val()) || 300;
+        const height = parseInt($('#customHeight').val()) || 250;
+        canvasWidth = width;
+        canvasHeight = height;
+        updateCanvasSize();
+    }
+    
+    // ============================================
+    // ELEMENT INTERACTION
+    // ============================================
+    function handleElementMouseDown(e) {
+        if ($(e.target).hasClass('resize-handle')) return;
+        
+        e.preventDefault();
+        e.stopPropagation();
+        
+        const $element = $(e.currentTarget);
+        const id = $element.attr('id');
+        selectElement(id);
+        
+        isDragging = true;
+        const offset = $element.offset();
+        const canvasOffset = $canvas.offset();
+        
+        dragOffset = {
+            x: e.pageX - offset.left,
+            y: e.pageY - offset.top
+        };
+    }
+    
+    function handleResizeStart(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        
+        isResizing = true;
+        resizeHandle = $(e.target).attr('class').split(' ')[1];
+        
+        const $element = $(e.target).closest('.canvas-element');
+        selectElement($element.attr('id'));
+    }
+    
+    function handleMouseMove(e) {
+        if (!selectedElement) return;
+        
+        const element = elements.find(el => el.id === selectedElement);
+        if (!element) return;
+        
+        const $element = $(`#${selectedElement}`);
+        const canvasOffset = $canvas.offset();
+        
+        if (isDragging) {
+            let newX = e.pageX - canvasOffset.left - dragOffset.x;
+            let newY = e.pageY - canvasOffset.top - dragOffset.y;
+            
+            newX = Math.max(0, Math.min(newX, canvasWidth - element.width));
+            newY = Math.max(0, Math.min(newY, canvasHeight - element.height));
+            
+            element.x = newX;
+            element.y = newY;
+            
+            $element.css({
+                left: newX + 'px',
+                top: newY + 'px'
+            });
+            
+            updatePropertiesPanel();
+        } else if (isResizing) {
+            const mouseX = e.pageX - canvasOffset.left;
+            const mouseY = e.pageY - canvasOffset.top;
+            
+            let newWidth = element.width;
+            let newHeight = element.height;
+            let newX = element.x;
+            let newY = element.y;
+            
+            switch(resizeHandle) {
+                case 'se':
+                    newWidth = Math.max(20, mouseX - element.x);
+                    newHeight = Math.max(20, mouseY - element.y);
+                    break;
+                case 'sw':
+                    newWidth = Math.max(20, element.x + element.width - mouseX);
+                    newHeight = Math.max(20, mouseY - element.y);
+                    newX = mouseX;
+                    break;
+                case 'ne':
+                    newWidth = Math.max(20, mouseX - element.x);
+                    newHeight = Math.max(20, element.y + element.height - mouseY);
+                    newY = mouseY;
+                    break;
+                case 'nw':
+                    newWidth = Math.max(20, element.x + element.width - mouseX);
+                    newHeight = Math.max(20, element.y + element.height - mouseY);
+                    newX = mouseX;
+                    newY = mouseY;
+                    break;
+            }
+            
+            element.width = newWidth;
+            element.height = newHeight;
+            element.x = newX;
+            element.y = newY;
+            
+            $element.css({
+                width: newWidth + 'px',
+                height: newHeight + 'px',
+                left: newX + 'px',
+                top: newY + 'px'
+            });
+            
+            updatePropertiesPanel();
+        }
+    }
+    
+    function handleMouseUp() {
+        isDragging = false;
+        isResizing = false;
+        resizeHandle = null;
+    }
+    
+    // ============================================
+    // ELEMENT SELECTION
+    // ============================================
+    function selectElement(id) {
+        selectedElement = id;
+        
+        $('.canvas-element').removeClass('selected');
+        $(`#${id}`).addClass('selected');
+        
+        $('.layer-item').removeClass('selected');
+        $(`.layer-item[data-id="${id}"]`).addClass('selected');
+        
+        updatePropertiesPanel();
+    }
+    
+    // ============================================
+    // LAYER MANAGEMENT
+    // ============================================
+    function updateLayersList() {
+        if (elements.length === 0) {
+            $layersList.html('<p class="text-sm text-gray-500 text-center py-4">No layers yet</p>');
+            updateTimelineTracks();
+            return;
+        }
+        
+        $layersList.empty();
+        
+        // Sort by zIndex (highest first)
+        const sortedElements = [...elements].sort((a, b) => b.zIndex - a.zIndex);
+        
+        sortedElements.forEach((element, index) => {
+            let icon, label;
+            
+            if (element.type === 'text') {
+                icon = 'fa-font';
+                label = element.text.substring(0, 20);
+            } else if (element.type === 'clickthrough') {
+                icon = 'fa-mouse-pointer';
+                label = 'Clickthrough';
+            } else {
+                icon = 'fa-image';
+                label = (element.filename || 'Image').substring(0, 20);
+            }
+            
+            const $layer = $(`
+                <div class="layer-item p-2 rounded border border-gray-700 flex items-center justify-between" data-id="${element.id}">
+                    <div class="flex items-center flex-1">
+                        <i class="fas ${icon} text-blue-400 mr-2"></i>
+                        <span class="text-sm">${label}</span>
+                    </div>
+                    <div class="flex items-center space-x-1">
+                        <button class="move-layer-up text-gray-400 hover:text-white px-2 py-1" data-id="${element.id}" ${index === 0 ? 'disabled' : ''}>
+                            <i class="fas fa-arrow-up text-xs"></i>
+                        </button>
+                        <button class="move-layer-down text-gray-400 hover:text-white px-2 py-1" data-id="${element.id}" ${index === sortedElements.length - 1 ? 'disabled' : ''}>
+                            <i class="fas fa-arrow-down text-xs"></i>
+                        </button>
+                        <button class="delete-layer text-red-400 hover:text-red-300 px-2 py-1" data-id="${element.id}">
+                            <i class="fas fa-trash text-xs"></i>
+                        </button>
+                    </div>
+                </div>
+            `);
+            $layersList.append($layer);
+        });
+        
+        updateTimelineTracks();
+    }
+    
+    function handleLayerClick(e) {
+        if ($(e.target).closest('button').length) return;
+        const id = $(e.currentTarget).data('id');
+        selectElement(id);
+    }
+    
+    function handleDeleteLayer(e) {
+        e.stopPropagation();
+        const id = $(e.currentTarget).data('id');
+        
+        elements = elements.filter(el => el.id !== id);
+        $(`#${id}`).remove();
+        
+        if (selectedElement === id) {
+            selectedElement = null;
+            $propertiesPanel.addClass('hidden');
+        }
+        
+        updateLayersList();
+        rebuildTimeline();
+    }
+    
+    function moveLayerUp(e) {
+        e.stopPropagation();
+        const id = $(e.currentTarget).data('id');
+        const element = elements.find(el => el.id === id);
+        if (!element) return;
+        
+        // Find element with next higher zIndex
+        const higherElements = elements.filter(el => el.zIndex > element.zIndex);
+        if (higherElements.length === 0) return;
+        
+        const nextHigher = higherElements.reduce((prev, curr) => 
+            (curr.zIndex < prev.zIndex) ? curr : prev
+        );
+        
+        // Swap zIndexes
+        const temp = element.zIndex;
+        element.zIndex = nextHigher.zIndex;
+        nextHigher.zIndex = temp;
+        
+        // Update DOM
+        $(`#${element.id}`).css('z-index', element.zIndex);
+        $(`#${nextHigher.id}`).css('z-index', nextHigher.zIndex);
+        
+        updateLayersList();
+    }
+    
+    function moveLayerDown(e) {
+        e.stopPropagation();
+        const id = $(e.currentTarget).data('id');
+        const element = elements.find(el => el.id === id);
+        if (!element) return;
+        
+        // Find element with next lower zIndex
+        const lowerElements = elements.filter(el => el.zIndex < element.zIndex);
+        if (lowerElements.length === 0) return;
+        
+        const nextLower = lowerElements.reduce((prev, curr) => 
+            (curr.zIndex > prev.zIndex) ? curr : prev
+        );
+        
+        // Swap zIndexes
+        const temp = element.zIndex;
+        element.zIndex = nextLower.zIndex;
+        nextLower.zIndex = temp;
+        
+        // Update DOM
+        $(`#${element.id}`).css('z-index', element.zIndex);
+        $(`#${nextLower.id}`).css('z-index', nextLower.zIndex);
+        
+        updateLayersList();
+    }
+    
+    // Continued from part 1...
+    // ============================================
+    // PROPERTIES PANEL
+    // ============================================
+    function updatePropertiesPanel() {
+        if (!selectedElement) {
+            $propertiesPanel.addClass('hidden');
+            return;
+        }
+        
+        const element = elements.find(el => el.id === selectedElement);
+        if (!element) return;
+        
+        $propertiesPanel.removeClass('hidden');
+        
+        // Show/hide text properties
+        if (element.type === 'text') {
+            $textProps.removeClass('hidden');
+            $('#propText').val(element.text);
+            $('#propFontFamily').val(element.fontFamily);
+            $('#propFontSize').val(element.fontSize);
+            $('#propColor').val(element.color);
+            
+            $('#propBold').toggleClass('active', element.bold);
+            $('#propItalic').toggleClass('active', element.italic);
+            $('#propUnderline').toggleClass('active', element.underline);
+            
+            $('.text-align-btn').removeClass('active');
+            $(`.text-align-btn[data-align="${element.textAlign}"]`).addClass('active');
+        } else {
+            $textProps.addClass('hidden');
+        }
+        
+        // Common properties
+        $('#propWidth').val(Math.round(element.width));
+        $('#propHeight').val(Math.round(element.height));
+        $('#propX').val(Math.round(element.x));
+        $('#propY').val(Math.round(element.y));
+        $('#propRotation').val(element.rotation);
+        $('#propOpacity').val(element.opacity);
+        $('#opacityValue').text(Math.round(element.opacity * 100) + '%');
+    }
+    
+    // Common property updates
+    function updateElementWidth() {
+        if (!selectedElement) return;
+        const element = elements.find(el => el.id === selectedElement);
+        element.width = parseInt($(this).val()) || 100;
+        $(`#${selectedElement}`).css('width', element.width + 'px');
+    }
+    
+    function updateElementHeight() {
+        if (!selectedElement) return;
+        const element = elements.find(el => el.id === selectedElement);
+        element.height = parseInt($(this).val()) || 100;
+        $(`#${selectedElement}`).css('height', element.height + 'px');
+    }
+    
+    function updateElementX() {
+        if (!selectedElement) return;
+        const element = elements.find(el => el.id === selectedElement);
+        element.x = parseInt($(this).val()) || 0;
+        $(`#${selectedElement}`).css('left', element.x + 'px');
+    }
+    
+    function updateElementY() {
+        if (!selectedElement) return;
+        const element = elements.find(el => el.id === selectedElement);
+        element.y = parseInt($(this).val()) || 0;
+        $(`#${selectedElement}`).css('top', element.y + 'px');
+    }
+    
+    function updateElementRotation() {
+        if (!selectedElement) return;
+        const element = elements.find(el => el.id === selectedElement);
+        element.rotation = parseInt($(this).val()) || 0;
+        $(`#${selectedElement}`).css('transform', `rotate(${element.rotation}deg)`);
+    }
+    
+    function updateElementOpacity() {
+        if (!selectedElement) return;
+        const element = elements.find(el => el.id === selectedElement);
+        element.opacity = parseFloat($(this).val());
+        $(`#${selectedElement}`).css('opacity', element.opacity);
+        $('#opacityValue').text(Math.round(element.opacity * 100) + '%');
+    }
+    
+    // Text property updates
+    function updateTextContent() {
+        if (!selectedElement) return;
+        const element = elements.find(el => el.id === selectedElement);
+        if (element.type !== 'text') return;
+        
+        element.text = $(this).val();
+        $(`#${selectedElement}`).text(element.text);
+        updateLayersList();
+    }
+    
+    function updateFontFamily() {
+        if (!selectedElement) return;
+        const element = elements.find(el => el.id === selectedElement);
+        if (element.type !== 'text') return;
+        
+        element.fontFamily = $(this).val();
+        $(`#${selectedElement}`).css('font-family', element.fontFamily);
+    }
+    
+    function updateFontSize() {
+        if (!selectedElement) return;
+        const element = elements.find(el => el.id === selectedElement);
+        if (element.type !== 'text') return;
+        
+        element.fontSize = parseInt($(this).val()) || 24;
+        $(`#${selectedElement}`).css('font-size', element.fontSize + 'px');
+    }
+    
+    function updateColor() {
+        if (!selectedElement) return;
+        const element = elements.find(el => el.id === selectedElement);
+        if (element.type !== 'text') return;
+        
+        element.color = $(this).val();
+        $(`#${selectedElement}`).css('color', element.color);
+    }
+    
+    function toggleBold() {
+        if (!selectedElement) return;
+        const element = elements.find(el => el.id === selectedElement);
+        if (element.type !== 'text') return;
+        
+        element.bold = !element.bold;
+        $(this).toggleClass('active', element.bold);
+        $(`#${selectedElement}`).css('font-weight', element.bold ? 'bold' : 'normal');
+    }
+    
+    function toggleItalic() {
+        if (!selectedElement) return;
+        const element = elements.find(el => el.id === selectedElement);
+        if (element.type !== 'text') return;
+        
+        element.italic = !element.italic;
+        $(this).toggleClass('active', element.italic);
+        $(`#${selectedElement}`).css('font-style', element.italic ? 'italic' : 'normal');
+    }
+    
+    function toggleUnderline() {
+        if (!selectedElement) return;
+        const element = elements.find(el => el.id === selectedElement);
+        if (element.type !== 'text') return;
+        
+        element.underline = !element.underline;
+        $(this).toggleClass('active', element.underline);
+        $(`#${selectedElement}`).css('text-decoration', element.underline ? 'underline' : 'none');
+    }
+    
+    function updateTextAlign(e) {
+        if (!selectedElement) return;
+        const element = elements.find(el => el.id === selectedElement);
+        if (element.type !== 'text') return;
+        
+        const align = $(e.currentTarget).data('align');
+        element.textAlign = align;
+        
+        $('.text-align-btn').removeClass('active');
+        $(e.currentTarget).addClass('active');
+        
+        $(`#${selectedElement}`).css('text-align', align);
+    }
+    
+    // ============================================
+    // ANIMATION & TIMELINE
+    // ============================================
+    function openAnimationModal() {
+        if (!selectedElement) {
+            alert('Please select an element first');
+            return;
+        }
+        
+        // Reset for new animation
+        editingAnimation = null;
+        $('#animBtnText').text('Add to Timeline');
+        $('#deleteAnimBtn').addClass('hidden');
+        $('#animStart').val(0);
+        $('#animDuration').val(1);
+        $('#animType').val('fadeIn');
+        $('#customAnimProps').addClass('hidden');
+        
+        $animModal.removeClass('hidden');
+    }
+    
+    function closeAnimationModal() {
+        $animModal.addClass('hidden');
+        editingAnimation = null;
+    }
+    
+    function toggleCustomAnimProps() {
+        const type = $('#animType').val();
+        if (type === 'custom') {
+            $('#customAnimProps').removeClass('hidden');
+        } else {
+            $('#customAnimProps').addClass('hidden');
+        }
+    }
+    
+    function editAnimation(e) {
+        const animId = $(e.currentTarget).data('anim-id');
+        const elementId = $(e.currentTarget).data('element-id');
+        
+        const element = elements.find(el => el.id === elementId);
+        if (!element) return;
+        
+        const anim = element.animations.find(a => a.id === animId);
+        if (!anim) return;
+        
+        // Populate modal with animation data
+        editingAnimation = { elementId, animId };
+        selectElement(elementId);
+        
+        $('#animType').val(anim.type);
+        $('#animStart').val(anim.start);
+        $('#animDuration').val(anim.duration);
+        $('#animEase').val(anim.ease);
+        $('#timelineDuration').val(totalDuration);
+        
+        // Show custom props if custom type
+        if (anim.type === 'custom') {
+            $('#customAnimProps').removeClass('hidden');
+            if (anim.customProps.x !== undefined) $('#animCustomX').val(anim.customProps.x);
+            if (anim.customProps.y !== undefined) $('#animCustomY').val(anim.customProps.y);
+            if (anim.customProps.scale !== undefined) $('#animCustomScale').val(anim.customProps.scale);
+            if (anim.customProps.rotation !== undefined) $('#animCustomRotation').val(anim.customProps.rotation);
+            if (anim.customProps.opacity !== undefined) $('#animCustomOpacity').val(anim.customProps.opacity);
+        }
+        
+        $('#animBtnText').text('Update Animation');
+        $('#deleteAnimBtn').removeClass('hidden');
+        
+        $animModal.removeClass('hidden');
+    }
+    
+    function saveAnimation() {
+        if (!selectedElement) return;
+        
+        const element = elements.find(el => el.id === selectedElement);
+        const type = $('#animType').val();
+        const start = parseFloat($('#animStart').val());
+        const duration = parseFloat($('#animDuration').val());
+        const ease = $('#animEase').val();
+        
+        // Update total duration if needed
+        const newTotalDuration = parseFloat($('#timelineDuration').val());
+        if (newTotalDuration !== totalDuration) {
+            totalDuration = newTotalDuration;
+            updateTimelineRuler();
+        }
+        
+        const animation = {
+            type,
+            start,
+            duration,
+            ease,
+            customProps: {}
+        };
+        
+        // Get custom properties if custom type
+        if (type === 'custom') {
+            const x = $('#animCustomX').val();
+            const y = $('#animCustomY').val();
+            const scale = $('#animCustomScale').val();
+            const rotation = $('#animCustomRotation').val();
+            const opacity = $('#animCustomOpacity').val();
+            
+            if (x !== '') animation.customProps.x = parseFloat(x);
+            if (y !== '') animation.customProps.y = parseFloat(y);
+            if (scale !== '') animation.customProps.scale = parseFloat(scale);
+            if (rotation !== '') animation.customProps.rotation = parseFloat(rotation);
+            if (opacity !== '') animation.customProps.opacity = parseFloat(opacity);
+        }
+        
+        if (editingAnimation) {
+            // Update existing animation
+            const anim = element.animations.find(a => a.id === editingAnimation.animId);
+            if (anim) {
+                Object.assign(anim, animation);
+            }
+        } else {
+            // Add new animation
+            animation.id = `anim_${Date.now()}`;
+            element.animations.push(animation);
+        }
+        
+        rebuildTimeline();
+        updateTimelineTracks();
+        closeAnimationModal();
+    }
+    
+    function deleteEditingAnimation() {
+        if (!editingAnimation) return;
+        
+        const element = elements.find(el => el.id === editingAnimation.elementId);
+        if (element) {
+            element.animations = element.animations.filter(a => a.id !== editingAnimation.animId);
+            rebuildTimeline();
+            updateTimelineTracks();
+        }
+        
+        closeAnimationModal();
+    }
+    
+    function handleDeleteAnimation(e) {
+        const animId = $(e.currentTarget).data('anim-id');
+        const elementId = $(e.currentTarget).data('element-id');
+        
+        const element = elements.find(el => el.id === elementId);
+        if (element) {
+            element.animations = element.animations.filter(a => a.id !== animId);
+            rebuildTimeline();
+            updateTimelineTracks();
+        }
+    }
+    
+    function updateTotalDuration() {
+        totalDuration = parseFloat($('#timelineDuration').val()) || 5;
+        updateTimelineRuler();
+        updateTimelineTracks();
+    }
+    
+    function zoomIn() {
+        zoomLevel = Math.min(zoomLevel * 1.5, 4);
+        updateTimelineTracks();
+    }
+    
+    function zoomOut() {
+        zoomLevel = Math.max(zoomLevel / 1.5, 0.25);
+        updateTimelineTracks();
+    }
+    
+    function updateTimelineRuler() {
+        $timelineRuler.empty();
+        
+        const steps = Math.ceil(totalDuration);
+        const stepWidth = 100 / steps;
+        
+        for (let i = 0; i <= steps; i++) {
+            const left = (i / steps) * 100;
+            $timelineRuler.append(`
+                <div class="timeline-time-marker" style="left: ${left}%">
+                    <div class="timeline-time-label">${i}s</div>
+                </div>
+            `);
+        }
+    }
+    
+    function updateTimelineTracks() {
+        if (elements.length === 0) {
+            $timelineTracks.html('<div class="text-center text-gray-500 text-sm py-8">Add elements and animations to see timeline</div>');
+            return;
+        }
+        
+        $timelineTracks.empty();
+        
+        elements.forEach(element => {
+            let icon, label;
+            
+            if (element.type === 'text') {
+                icon = 'fa-font';
+                label = element.text.substring(0, 15);
+            } else if (element.type === 'clickthrough') {
+                icon = 'fa-mouse-pointer';
+                label = 'Click';
+            } else {
+                icon = 'fa-image';
+                label = (element.filename || 'Image').substring(0, 15);
+            }
+            
+            const $track = $(`
+                <div class="timeline-track">
+                    <div class="timeline-track-label">
+                        <i class="fas ${icon} text-blue-400 mr-2"></i>
+                        <span class="truncate">${label}</span>
+                    </div>
+                    <div class="timeline-track-content" id="track_${element.id}" style="min-width: ${1000 * zoomLevel}px;">
+                    </div>
+                </div>
+            `);
+            
+            $timelineTracks.append($track);
+            
+            // Add animation blocks
+            element.animations.forEach(anim => {
+                const leftPercent = (anim.start / totalDuration) * 100;
+                const widthPercent = (anim.duration / totalDuration) * 100;
+                
+                const $block = $(`
+                    <div class="timeline-block" style="left: ${leftPercent}%; width: ${widthPercent}%;" 
+                         data-anim-id="${anim.id}" data-element-id="${element.id}">
+                        <div class="timeline-block-label">${anim.type}</div>
+                        <button class="delete-anim" data-anim-id="${anim.id}" data-element-id="${element.id}">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                `);
+                
+                $(`#track_${element.id}`).append($block);
+            });
+        });
+    }
+    
+    function rebuildTimeline() {
+        timeline.clear();
+        
+        elements.forEach(element => {
+            element.animations.forEach(anim => {
+                const props = getAnimationProps(anim.type, element, anim.customProps);
+                
+                if (props.startAt) {
+                    gsap.set(`#${element.id}`, props.startAt);
+                    delete props.startAt;
+                }
+                
+                timeline.to(`#${element.id}`, {
+                    ...props,
+                    duration: anim.duration,
+                    ease: anim.ease
+                }, anim.start);
+            });
+        });
+        
+        timeline.eventCallback('onUpdate', updatePlayhead);
+    }
+    
+    function getAnimationProps(type, element, customProps = {}) {
+        if (type === 'custom') {
+            return customProps;
+        }
+        
+        const props = {};
+        
+        switch(type) {
+            case 'fadeIn':
+                props.startAt = { opacity: 0 };
+                props.opacity = element.opacity;
+                break;
+            case 'fadeOut':
+                props.opacity = 0;
+                break;
+            case 'slideLeft':
+                props.startAt = { x: -canvasWidth };
+                props.x = 0;
+                break;
+            case 'slideRight':
+                props.startAt = { x: canvasWidth };
+                props.x = 0;
+                break;
+            case 'slideUp':
+                props.startAt = { y: -canvasHeight };
+                props.y = 0;
+                break;
+            case 'slideDown':
+                props.startAt = { y: canvasHeight };
+                props.y = 0;
+                break;
+            case 'scale':
+                props.startAt = { scale: 0 };
+                props.scale = 1;
+                break;
+            case 'rotate':
+                props.rotation = 360;
+                break;
+            case 'bounce':
+                props.y = '+=50';
+                props.repeat = 3;
+                props.yoyo = true;
+                break;
+        }
+        
+        return props;
+    }
+    
+    function playTimeline() {
+        if (elements.length === 0 || !elements.some(el => el.animations.length > 0)) {
+            alert('Please add some animations first');
+            return;
+        }
+        
+        rebuildTimeline();
+        isPlaying = true;
+        timeline.duration(totalDuration);
+        timeline.play(0);
+        
+        setTimeout(() => {
+            isPlaying = false;
+            $('#timelinePlayhead').css('left', '0');
+        }, totalDuration * 1000);
+    }
+    
+    function stopTimeline() {
+        timeline.pause(0);
+        isPlaying = false;
+        $('#timelinePlayhead').css('left', '0');
+        
+        elements.forEach(element => {
+            gsap.set(`#${element.id}`, { clearProps: 'all' });
+            const style = {
+                left: element.x + 'px',
+                top: element.y + 'px',
+                width: element.width + 'px',
+                height: element.height + 'px',
+                opacity: element.opacity,
+                transform: `rotate(${element.rotation}deg)`,
+                'z-index': element.zIndex
+            };
+            $(`#${element.id}`).css(style);
+        });
+    }
+    
+    function updatePlayhead() {
+        if (!isPlaying) return;
+        const progress = timeline.progress();
+        $('#timelinePlayhead').css('left', (progress * 100) + '%');
+    }
+    
+    // ============================================
+    // EXPORT
+    // ============================================
+    async function exportToZip() {
+        if (elements.length === 0) {
+            alert('Please add at least one element to export');
+            return;
+        }
+        
+        const zip = new JSZip();
+        const html = generateHTML();
+        zip.file('index.html', html);
+        
+        // Add images
+        const imageElements = elements.filter(el => el.type === 'image');
+        for (let i = 0; i < imageElements.length; i++) {
+            const element = imageElements[i];
+            try {
+                const response = await fetch(element.src);
+                const blob = await response.blob();
+                zip.file(`images/image_${i}.${getExtensionFromDataUrl(element.src)}`, blob);
+            } catch (error) {
+                console.error('Error adding image to zip:', error);
+            }
+        }
+        
+        zip.generateAsync({ type: 'blob' }).then(function(content) {
+            saveAs(content, 'ad-banner.zip');
+        });
+    }
+    
+    function getExtensionFromDataUrl(dataUrl) {
+        if (dataUrl.includes('image/png')) return 'png';
+        if (dataUrl.includes('image/gif')) return 'gif';
+        return 'jpg';
+    }
+    
+    function generateHTML() {
+        let elementsHtml = '';
+        let animationsJs = '';
+        let clickthroughJs = '';
+        
+        const sortedElements = [...elements].sort((a, b) => a.zIndex - b.zIndex);
+        let imageCounter = 0;
+        
+        sortedElements.forEach((element) => {
+            if (element.type === 'image') {
+                const imgSrc = `images/image_${imageCounter}.${getExtensionFromDataUrl(element.src)}`;
+                elementsHtml += `
+        <img id="${element.id}" src="${imgSrc}" style="
+            position: absolute;
+            left: ${element.x}px;
+            top: ${element.y}px;
+            width: ${element.width}px;
+            height: ${element.height}px;
+            opacity: ${element.opacity};
+            transform: rotate(${element.rotation}deg);
+            z-index: ${element.zIndex};
+        ">`;
+                imageCounter++;
+            } else if (element.type === 'text') {
+                elementsHtml += `
+        <div id="${element.id}" style="
+            position: absolute;
+            left: ${element.x}px;
+            top: ${element.y}px;
+            width: ${element.width}px;
+            height: ${element.height}px;
+            opacity: ${element.opacity};
+            transform: rotate(${element.rotation}deg);
+            font-size: ${element.fontSize}px;
+            font-family: ${element.fontFamily};
+            color: ${element.color};
+            font-weight: ${element.bold ? 'bold' : 'normal'};
+            font-style: ${element.italic ? 'italic' : 'normal'};
+            text-decoration: ${element.underline ? 'underline' : 'none'};
+            text-align: ${element.textAlign};
+            padding: 5px;
+            line-height: 1.2;
+            word-wrap: break-word;
+            z-index: ${element.zIndex};
+            display: flex;
+            align-items: center;
+            justify-content: ${element.textAlign === 'center' ? 'center' : element.textAlign === 'right' ? 'flex-end' : 'flex-start'};
+        ">${element.text}</div>`;
+            } else if (element.type === 'clickthrough') {
+                elementsHtml += `
+        <a id="${element.id}" href="${element.url}" target="${element.target}" style="
+            position: absolute;
+            left: ${element.x}px;
+            top: ${element.y}px;
+            width: ${element.width}px;
+            height: ${element.height}px;
+            opacity: 0;
+            z-index: ${element.zIndex};
+            display: block;
+        "></a>`;
+            }
+            
+            // Generate animations
+            element.animations.forEach(anim => {
+                const props = getAnimationPropsForExport(anim.type, element, anim.customProps);
+                
+                if (props.startAt) {
+                    animationsJs += `
+        gsap.set('#${element.id}', ${JSON.stringify(props.startAt)});`;
+                    delete props.startAt;
+                }
+                
+                animationsJs += `
+        tl.to('#${element.id}', {
+            ${Object.entries(props).map(([key, value]) => `${key}: ${JSON.stringify(value)}`).join(',\n            ')},
+            duration: ${anim.duration},
+            ease: '${anim.ease}'
+        }, ${anim.start});`;
+            });
+        });
+        
+        return `<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ad Banner</title>
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/gsap.min.js"></script>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+        }
+        #ad-container {
+            position: relative;
+            width: ${canvasWidth}px;
+            height: ${canvasHeight}px;
+            background: white;
+            overflow: hidden;
+        }
+    </style>
+</head>
+<body>
+    <div id="ad-container">
+        ${elementsHtml}
+    </div>
+    
+    <script>
+        const tl = gsap.timeline({ repeat: -1 });
+        ${animationsJs}
+    </script>
+</body>
+</html>`;
+    }
+    
+    function getAnimationPropsForExport(type, element, customProps = {}) {
+        if (type === 'custom') {
+            return customProps;
+        }
+        
+        const props = {};
+        
+        switch(type) {
+            case 'fadeIn':
+                props.startAt = { opacity: 0 };
+                props.opacity = element.opacity;
+                break;
+            case 'fadeOut':
+                props.opacity = 0;
+                break;
+            case 'slideLeft':
+                props.startAt = { x: -canvasWidth };
+                props.x = 0;
+                break;
+            case 'slideRight':
+                props.startAt = { x: canvasWidth };
+                props.x = 0;
+                break;
+            case 'slideUp':
+                props.startAt = { y: -canvasHeight };
+                props.y = 0;
+                break;
+            case 'slideDown':
+                props.startAt = { y: canvasHeight };
+                props.y = 0;
+                break;
+            case 'scale':
+                props.startAt = { scale: 0 };
+                props.scale = 1;
+                break;
+            case 'rotate':
+                props.rotation = 360;
+                break;
+            case 'bounce':
+                props.y = '+=50';
+                props.repeat = 3;
+                props.yoyo = true;
+                break;
+        }
+        
+        return props;
+    }
+    
+    function clearAll() {
+        if (elements.length === 0) return;
+        
+        if (confirm('Are you sure you want to clear all elements?')) {
+            elements = [];
+            selectedElement = null;
+            $canvas.empty();
+            $layersList.html('<p class="text-sm text-gray-500 text-center py-4">No layers yet</p>');
+            $propertiesPanel.addClass('hidden');
+            $timelineTracks.html('<div class="text-center text-gray-500 text-sm py-8">Add elements and animations to see timeline</div>');
+            timeline.clear();
+            stopTimeline();
+        }
+    }
+    
+})();
