@@ -7,6 +7,7 @@
 - **Tech Stack**: Hono + TypeScript + GSAP 3.12.5 + jQuery 3.7.1 + TailwindCSS
 
 ## URLs
+- **GitHub Pages**: https://nikkileenikki.github.io/kult-adbuilder/
 - **GitHub**: https://github.com/nikkileenikki/kult-adbuilder
 - **Sandbox**: https://3000-igiwf52tzmwf7vatrnamo-82b888ba.sandbox.novita.ai
 - **Local**: http://localhost:3000
@@ -236,12 +237,41 @@ webapp/
 ## Deployment
 
 ### Status
+- **GitHub Pages**: ✅ Active - https://nikkileenikki.github.io/kult-adbuilder/
 - **GitHub**: ✅ Active - https://github.com/nikkileenikki/kult-adbuilder
 - **Sandbox**: ✅ Active
-- **Production**: ❌ Pending Cloudflare Pages deployment
+- **Production (Cloudflare)**: ❌ Pending
+
+### GitHub Pages Setup
+
+The application is deployed to GitHub Pages from the `docs/` folder:
+
+**To Enable GitHub Pages (if not already enabled):**
+1. Go to repository settings: https://github.com/nikkileenikki/kult-adbuilder/settings/pages
+2. Under "Build and deployment":
+   - Source: Deploy from a branch
+   - Branch: main
+   - Folder: /docs
+3. Click "Save"
+4. GitHub Pages URL will be: https://nikkileenikki.github.io/kult-adbuilder/
+
+**To Update GitHub Pages:**
+```bash
+# Build the project
+npm run build
+
+# Regenerate docs folder
+curl http://localhost:3000 > docs/index.html
+cp -r public/static docs/
+
+# Commit and push
+git add docs/
+git commit -m "Update GitHub Pages deployment"
+git push origin main
+```
 
 ### Last Updated
-2025-12-30 - Pushed to GitHub
+2025-12-30 - Deployed to GitHub Pages
 
 ## Next Steps
 
