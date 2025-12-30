@@ -8,7 +8,7 @@
 
 ## URLs
 - **GitHub Pages**: https://nikkileenikki.github.io/kult-adbuilder/
-- **GitHub**: https://github.com/nikkileenikki/kult-adbuilder
+- **GitHub Repo**: https://github.com/nikkileenikki/kult-adbuilder
 - **Sandbox**: https://3000-igiwf52tzmwf7vatrnamo-82b888ba.sandbox.novita.ai
 - **Local**: http://localhost:3000
 
@@ -237,37 +237,37 @@ webapp/
 ## Deployment
 
 ### Status
-- **GitHub Pages**: ✅ Active - https://nikkileenikki.github.io/kult-adbuilder/
-- **GitHub**: ✅ Active - https://github.com/nikkileenikki/kult-adbuilder
+- **GitHub Pages**: ✅ Live at https://nikkileenikki.github.io/kult-adbuilder/
+- **GitHub Repo**: ✅ Active - https://github.com/nikkileenikki/kult-adbuilder
 - **Sandbox**: ✅ Active
 - **Production (Cloudflare)**: ❌ Pending
 
-### GitHub Pages Setup
+### GitHub Pages Deployment
 
-The application is deployed to GitHub Pages from the `docs/` folder:
+The application is deployed at: **https://nikkileenikki.github.io/kult-adbuilder/**
 
-**To Enable GitHub Pages (if not already enabled):**
-1. Go to repository settings: https://github.com/nikkileenikki/kult-adbuilder/settings/pages
-2. Under "Build and deployment":
-   - Source: Deploy from a branch
-   - Branch: main
-   - Folder: /docs
-3. Click "Save"
-4. GitHub Pages URL will be: https://nikkileenikki.github.io/kult-adbuilder/
+**Deployment Location:**
+- Repository: `nikkileenikki/nikkileenikki.github.io`
+- Folder: `kult-adbuilder/`
+- Branch: `main`
 
 **To Update GitHub Pages:**
 ```bash
-# Build the project
+# 1. Make changes and build
 npm run build
 
-# Regenerate docs folder
-curl http://localhost:3000 > docs/index.html
-cp -r public/static docs/
+# 2. Copy to GitHub Pages repo
+cd /home/user/nikkileenikki.github.io/kult-adbuilder
+curl http://localhost:3000 > index.html
+cp -r /home/user/webapp/public/static .
 
-# Commit and push
-git add docs/
-git commit -m "Update GitHub Pages deployment"
+# 3. Commit and push
+cd /home/user/nikkileenikki.github.io
+git add kult-adbuilder/
+git commit -m "Update HTML5 Ad Builder"
 git push origin main
+
+# Live in 1-2 minutes at https://nikkileenikki.github.io/kult-adbuilder/
 ```
 
 ### Last Updated
