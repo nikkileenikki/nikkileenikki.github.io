@@ -155,7 +155,19 @@ app.get('/', (c) => {
                                 </div>
                                 <div>
                                     <label class="text-sm text-gray-400">Color</label>
-                                    <input type="color" id="propColor" class="w-full bg-gray-800 rounded px-3 py-2 h-10">
+                                    <div class="flex gap-1 mb-1">
+                                        <button class="color-swatch" data-color="#FFFFFF" style="background: #FFFFFF; border: 1px solid #444;" title="White"></button>
+                                        <button class="color-swatch" data-color="#000000" style="background: #000000;" title="Black"></button>
+                                        <button class="color-swatch" data-color="#6B7280" style="background: #6B7280;" title="Gray"></button>
+                                        <button class="color-swatch" data-color="#EF4444" style="background: #EF4444;" title="Red"></button>
+                                        <button class="color-swatch" data-color="#3B82F6" style="background: #3B82F6;" title="Blue"></button>
+                                        <button class="color-swatch" data-color="#10B981" style="background: #10B981;" title="Green"></button>
+                                        <button class="color-swatch" data-color="#F59E0B" style="background: #F59E0B;" title="Yellow"></button>
+                                        <button class="color-swatch-rainbow" title="Custom color">
+                                            <i class="fas fa-palette"></i>
+                                        </button>
+                                    </div>
+                                    <input type="color" id="propColor" class="w-full bg-gray-800 rounded px-3 py-2 h-10 hidden">
                                 </div>
                                 <div class="flex space-x-2">
                                     <button id="propBold" class="flex-1 bg-gray-700 hover:bg-gray-600 rounded py-2 text-sm">
@@ -540,7 +552,24 @@ app.get('/', (c) => {
                     
                     <div>
                         <label class="block text-sm text-gray-400 mb-2">Fill Color</label>
-                        <input type="color" id="shapeFillColor" value="#3b82f6" class="w-full bg-gray-700 rounded px-3 py-2 h-10">
+                        <div class="flex gap-1 mb-1">
+                            <button class="color-swatch" data-color="#FFFFFF" style="background: #FFFFFF; border: 1px solid #444;" title="White"></button>
+                            <button class="color-swatch" data-color="#000000" style="background: #000000;" title="Black"></button>
+                            <button class="color-swatch" data-color="#6B7280" style="background: #6B7280;" title="Gray"></button>
+                            <button class="color-swatch" data-color="#EF4444" style="background: #EF4444;" title="Red"></button>
+                            <button class="color-swatch" data-color="#3B82F6" style="background: #3B82F6;" title="Blue"></button>
+                            <button class="color-swatch" data-color="#10B981" style="background: #10B981;" title="Green"></button>
+                            <button class="color-swatch" data-color="#F59E0B" style="background: #F59E0B;" title="Yellow"></button>
+                            <button class="color-swatch-rainbow-shape" title="Custom color">
+                                <i class="fas fa-palette"></i>
+                            </button>
+                        </div>
+                        <input type="color" id="shapeFillColor" value="#3b82f6" class="w-full bg-gray-700 rounded px-3 py-2 h-10 hidden">
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm text-gray-400 mb-2">Border Radius (px)</label>
+                        <input type="number" id="shapeBorderRadius" value="0" min="0" max="200" class="w-full bg-gray-700 rounded px-3 py-2">
                     </div>
                     
                     <div>

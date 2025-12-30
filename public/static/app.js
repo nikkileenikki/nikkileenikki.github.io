@@ -110,6 +110,21 @@
         $('#propFontFamily').on('change', updateFontFamily);
         $('#propFontSize').on('change', updateFontSize);
         $('#propColor').on('change', updateColor);
+        
+        // Color swatches
+        $(document).on('click', '.color-swatch', function() {
+            const color = $(this).data('color');
+            const $colorInput = $(this).closest('div').parent().find('input[type="color"]');
+            $colorInput.val(color).trigger('change');
+        });
+        
+        $(document).on('click', '.color-swatch-rainbow', function() {
+            $('#propColor').removeClass('hidden').click();
+        });
+        
+        $(document).on('click', '.color-swatch-rainbow-shape', function() {
+            $('#shapeFillColor').removeClass('hidden').click();
+        });
         $('#propBold').on('click', toggleBold);
         $('#propItalic').on('click', toggleItalic);
         $('#propUnderline').on('click', toggleUnderline);
@@ -134,6 +149,20 @@
         $timelineTracks.on('click', '.delete-anim', function(e) {
             e.stopPropagation();
             handleDeleteAnimation(e);
+        });
+        
+        // Timeline layer controls
+        $timelineTracks.on('click', '.toggle-visibility', function(e) {
+            e.stopPropagation();
+            toggleLayerVisibility(e);
+        });
+        $timelineTracks.on('click', '.add-layer-anim', function(e) {
+            e.stopPropagation();
+            handleAddLayerAnimation(e);
+        });
+        $timelineTracks.on('click', '.delete-layer', function(e) {
+            e.stopPropagation();
+            handleDeleteLayer(e);
         });
         
         // Timeline block dragging and resizing
@@ -550,12 +579,13 @@
         const height = parseInt($('#shapeHeight').val()) || 150;
         const fillColor = $('#shapeFillColor').val();
         const opacity = parseFloat($('#shapeOpacity').val()) || 1;
+        const borderRadius = parseInt($('#shapeBorderRadius').val()) || 0;
         
-        addShapeToCanvas(shapeType, width, height, fillColor, opacity);
+        addShapeToCanvas(shapeType, width, height, fillColor, opacity, borderRadius);
         closeShapeModal();
     }
     
-    function addShapeToCanvas(shapeType, width, height, fillColor, opacity) {
+    function addShapeToCanvas(shapeType, width, height, fillColor, opacity, borderRadius = 0) {
         elementCounter++;
         const id = `element_${elementCounter}`;
         
@@ -564,6 +594,7 @@
             type: 'shape',
             shapeType: shapeType,
             fillColor: fillColor,
+            borderRadius: borderRadius,
             x: 50,
             y: 50,
             width: width,
@@ -581,6 +612,8 @@
             shapeStyle += ' border-radius: 50%;';
         } else if (shapeType === 'rounded-rectangle') {
             shapeStyle += ' border-radius: 12px;';
+        } else if (borderRadius > 0) {
+            shapeStyle += ` border-radius: ${borderRadius}px;`;
         }
         
         const $element = $(`
@@ -1513,8 +1546,21 @@
             const $track = $(`
                 <div class="timeline-track">
                     <div class="timeline-track-label">
-                        <i class="fas ${icon} text-blue-400 mr-2"></i>
-                        <span class="truncate">${label}</span>
+                        <div class="flex items-center flex-1">
+                            <i class="fas ${icon} text-blue-400 mr-2"></i>
+                            <span class="truncate flex-1">${label}</span>
+                        </div>
+                        <div class="flex items-center gap-1 ml-2">
+                            <button class="timeline-layer-btn toggle-visibility" data-id="${element.id}" title="Toggle visibility">
+                                <i class="fas ${element.hidden ? 'fa-eye-slash' : 'fa-eye'}"></i>
+                            </button>
+                            <button class="timeline-layer-btn add-layer-anim" data-id="${element.id}" title="Add animation">
+                                <i class="fas fa-plus"></i>
+                            </button>
+                            <button class="timeline-layer-btn delete-layer" data-id="${element.id}" title="Delete layer">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
                     </div>
                     <div class="timeline-track-content" id="track_${element.id}">
                     </div>
@@ -1851,6 +1897,8 @@
                     borderRadius = '50%';
                 } else if (element.shapeType === 'rounded-rectangle') {
                     borderRadius = '12px';
+                } else if (element.borderRadius && element.borderRadius > 0) {
+                    borderRadius = element.borderRadius + 'px';
                 }
                 
                 elementsHtml += `
