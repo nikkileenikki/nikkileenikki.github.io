@@ -154,6 +154,17 @@
     justify-content: space-between;
     font-size: 12px;
     user-select: none; /* Disable text selection */
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.timeline-track-label:hover {
+    background: rgba(59, 130, 246, 0.1);
+}
+
+.timeline-track.selected .timeline-track-label {
+    background: rgba(59, 130, 246, 0.2);
+    border-right-color: rgb(59, 130, 246);
 }
 
 .timeline-layer-btn {

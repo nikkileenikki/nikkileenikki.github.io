@@ -102,13 +102,15 @@ app.get('/', (c) => {
                             </div>
                             <input type="file" id="fileInput" accept="image/jpeg,image/png,image/gif" class="hidden">
                             
-                            <button id="addTextBtn" class="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 rounded transition-colors">
-                                <i class="fas fa-font mr-2"></i>Add Text
-                            </button>
-                            
-                            <button id="addShapeBtn" class="w-full bg-teal-600 hover:bg-teal-700 text-white py-2 rounded transition-colors">
-                                <i class="fas fa-shapes mr-2"></i>Add Shape
-                            </button>
+                            <div class="grid grid-cols-2 gap-2">
+                                <button id="addTextBtn" class="bg-blue-600 hover:bg-blue-700 text-white py-2 rounded transition-colors">
+                                    <i class="fas fa-font mr-1"></i>Text
+                                </button>
+                                
+                                <button id="addShapeBtn" class="bg-teal-600 hover:bg-teal-700 text-white py-2 rounded transition-colors">
+                                    <i class="fas fa-shapes mr-1"></i>Shape
+                                </button>
+                            </div>
                             
                             <button id="addClickthroughBtn" class="w-full bg-purple-600 hover:bg-purple-700 text-white py-2 rounded transition-colors">
                                 <i class="fas fa-mouse-pointer mr-2"></i>Add Clickthrough
@@ -364,7 +366,7 @@ app.get('/', (c) => {
         <div id="animModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
             <div class="bg-gray-800 rounded-lg p-3 w-[600px] max-h-[90vh] overflow-y-auto">
                 <div class="flex justify-between items-center mb-2">
-                    <h3 class="text-xl font-bold">Add to Timeline</h3>
+                    <h3 class="text-xl font-bold">Add Animation</h3>
                     <button id="closeModal" class="text-gray-400 hover:text-white">
                         <i class="fas fa-times"></i>
                     </button>
@@ -445,8 +447,8 @@ app.get('/', (c) => {
                     <div>
                         <label class="block text-sm text-gray-400 mb-2">Animation Loop</label>
                         <select id="animLoop" class="w-full bg-gray-700 rounded px-3 py-2">
+                            <option value="0" selected>Play Once</option>
                             <option value="infinite">Loop Forever</option>
-                            <option value="0">Play Once</option>
                             <option value="1">Play Twice</option>
                             <option value="2">Play 3 Times</option>
                             <option value="4">Play 5 Times</option>
@@ -469,7 +471,7 @@ app.get('/', (c) => {
                     
                     <div class="flex space-x-2">
                         <button id="saveAnimBtn" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-2 rounded transition-colors">
-                            <span id="animBtnText">Add to Timeline</span>
+                            <span id="animBtnText">Add Animation</span>
                         </button>
                         <button id="deleteAnimBtn" class="hidden bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded transition-colors">
                             <i class="fas fa-trash"></i>

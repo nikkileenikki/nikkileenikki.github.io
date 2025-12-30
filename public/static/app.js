@@ -91,6 +91,27 @@
         $(document).on('mousemove', handleMouseMove);
         $(document).on('mouseup', handleMouseUp);
         
+        // Deselect element when clicking outside canvas
+        $(document).on('mousedown', function(e) {
+            const $target = $(e.target);
+            // Don't deselect if clicking on canvas, elements, properties panel, or timeline
+            if ($target.closest('#canvas').length > 0 || 
+                $target.closest('#propertiesPanel').length > 0 ||
+                $target.closest('#timelineTracks').length > 0 ||
+                $target.closest('.timeline-track').length > 0) {
+                return;
+            }
+            
+            // Deselect element
+            if (selectedElement) {
+                selectedElement = null;
+                $('.canvas-element').removeClass('selected');
+                $('.layer-item').removeClass('selected');
+                $('.timeline-track').removeClass('selected');
+                $propertiesPanel.addClass('hidden');
+            }
+        });
+        
         // Layer selection and controls
         $layersList.on('click', '.layer-item', handleLayerClick);
         $layersList.on('click', '.delete-layer', handleDeleteLayer);
@@ -162,6 +183,16 @@
         });
         
         // Timeline layer controls
+        $timelineTracks.on('click', '.timeline-track-label', function(e) {
+            // Don't select if clicking on a button
+            if ($(e.target).closest('button').length > 0) return;
+            
+            const elementId = $(e.currentTarget).closest('.timeline-track').data('element-id');
+            if (elementId) {
+                selectElement(elementId);
+            }
+        });
+        
         $timelineTracks.on('click', '.toggle-visibility', function(e) {
             e.stopPropagation();
             toggleLayerVisibility(e);
@@ -189,9 +220,6 @@
         
         // Playhead dragging
         $('#timelinePlayhead').on('mousedown', handlePlayheadDragStart);
-        
-        // Click on timeline to jump to position
-        $timelineTracks.on('click', '.timeline-track-content', handleTimelineClick);
         
         // Timeline track drag and drop
         $timelineTracks.on('dragstart', '.timeline-track', handleTimelineTrackDragStart);
@@ -243,28 +271,6 @@
         
         $(document).on('mousemove', moveHandler);
         $(document).on('mouseup', upHandler);
-    }
-    
-    function handleTimelineClick(e) {
-        // Don't interfere with dragging blocks or clicking on blocks
-        if ($(e.target).closest('.timeline-block').length > 0) return;
-        if (isTimelineBlockDragging || isTimelineBlockResizing) return;
-        
-        const $track = $(e.currentTarget);
-        const trackOffset = $track.offset().left;
-        const trackWidth = $track.width();
-        const mouseX = e.pageX - trackOffset;
-        
-        let percent = (mouseX / trackWidth) * 100;
-        percent = Math.max(0, Math.min(100, percent));
-        
-        $('#timelinePlayhead').css('left', percent + '%');
-        
-        // Jump timeline to clicked position
-        if (!isPlaying && timeline) {
-            const time = (percent / 100) * totalDuration;
-            timeline.seek(time);
-        }
     }
     
     // Timeline track drag and drop
@@ -1029,6 +1035,9 @@
         $('.layer-item').removeClass('selected');
         $(`.layer-item[data-id="${id}"]`).addClass('selected');
         
+        $('.timeline-track').removeClass('selected');
+        $(`.timeline-track[data-element-id="${id}"]`).addClass('selected');
+        
         updatePropertiesPanel();
     }
     
@@ -1431,7 +1440,7 @@
         
         // Reset for new animation
         editingAnimation = null;
-        $('#animBtnText').text('Add to Timeline');
+        $('#animBtnText').text('Add Animation');
         $('#deleteAnimBtn').addClass('hidden');
         $('#animStart').val(0);
         $('#animDuration').val(1);
@@ -1635,7 +1644,10 @@
         
         $timelineTracks.empty();
         
-        elements.forEach(element => {
+        // Sort by zIndex (lowest first, so bottom items appear at bottom)
+        const sortedElements = [...elements].sort((a, b) => a.zIndex - b.zIndex);
+        
+        sortedElements.forEach(element => {
             let icon, label;
             
             if (element.type === 'text') {
