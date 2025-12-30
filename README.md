@@ -7,9 +7,9 @@
 - **Tech Stack**: Hono + TypeScript + GSAP 3.12.5 + jQuery 3.7.1 + TailwindCSS
 
 ## URLs
+- **GitHub**: https://github.com/nikkileenikki/kult-adbuilder
 - **Sandbox**: https://3000-igiwf52tzmwf7vatrnamo-82b888ba.sandbox.novita.ai
 - **Local**: http://localhost:3000
-- **GitHub**: (To be deployed)
 
 ## ✨ Completed Features
 
@@ -236,12 +236,12 @@ webapp/
 ## Deployment
 
 ### Status
+- **GitHub**: ✅ Active - https://github.com/nikkileenikki/kult-adbuilder
 - **Sandbox**: ✅ Active
-- **Production**: ❌ Pending
-- **GitHub**: ❌ Pending
+- **Production**: ❌ Pending Cloudflare Pages deployment
 
 ### Last Updated
-2025-12-29
+2025-12-30 - Pushed to GitHub
 
 ## Next Steps
 
