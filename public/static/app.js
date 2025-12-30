@@ -91,10 +91,10 @@
         $(document).on('mousemove', handleMouseMove);
         $(document).on('mouseup', handleMouseUp);
         
-        // Deselect element when clicking on canvasWrapper background only
-        $(document).on('mousedown', '#canvasWrapper', function(e) {
-            // Only deselect if clicked directly on canvasWrapper, not on canvas or its children
-            if (e.target.id === 'canvasWrapper') {
+        // Deselect element when clicking on canvas container background only
+        $(document).on('mousedown', '#canvasContainer', function(e) {
+            // Only deselect if clicked directly on canvasContainer, not on its children
+            if (e.target.id === 'canvasContainer') {
                 if (selectedElement) {
                     selectedElement = null;
                     $('.canvas-element').removeClass('selected');
