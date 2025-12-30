@@ -189,20 +189,6 @@ app.get('/', (c) => {
                                         </button>
                                     </div>
                                 </div>
-                                <div>
-                                    <label class="text-sm text-gray-400">Vertical Align</label>
-                                    <div class="flex space-x-2">
-                                        <button class="vertical-align-btn flex-1 bg-gray-700 hover:bg-gray-600 rounded py-2 text-sm" data-valign="top">
-                                            <i class="fas fa-arrow-up"></i> Top
-                                        </button>
-                                        <button class="vertical-align-btn flex-1 bg-gray-700 hover:bg-gray-600 rounded py-2 text-sm" data-valign="middle">
-                                            <i class="fas fa-grip-lines"></i> Mid
-                                        </button>
-                                        <button class="vertical-align-btn flex-1 bg-gray-700 hover:bg-gray-600 rounded py-2 text-sm" data-valign="bottom">
-                                            <i class="fas fa-arrow-down"></i> Bot
-                                        </button>
-                                    </div>
-                                </div>
                             </div>
                             
                             <!-- Clickthrough Properties -->

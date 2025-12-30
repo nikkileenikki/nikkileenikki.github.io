@@ -160,7 +160,6 @@
         $('#propItalic').on('click', toggleItalic);
         $('#propUnderline').on('click', toggleUnderline);
         $('.text-align-btn').on('click', updateTextAlign);
-        $('.vertical-align-btn').on('click', updateVerticalAlign);
         
         // Clickthrough properties
         $('#propClickUrl').on('change', updateClickUrl);
@@ -601,7 +600,6 @@
             italic: false,
             underline: false,
             textAlign: 'left',
-            verticalAlign: 'top',
             zIndex: elements.length,
             animations: []
         };
@@ -1189,9 +1187,6 @@
             
             $('.text-align-btn').removeClass('active');
             $(`.text-align-btn[data-align="${element.textAlign}"]`).addClass('active');
-            
-            $('.vertical-align-btn').removeClass('active');
-            $(`.vertical-align-btn[data-valign="${element.verticalAlign || 'top'}"]`).addClass('active');
         } else {
             $textProps.addClass('hidden');
         }
@@ -1349,34 +1344,11 @@
         $('.text-align-btn').removeClass('active');
         $(e.currentTarget).addClass('active');
         
-        // Update both text-align and justify-content
+        // Update text-align only (no flexbox)
         const $el = $(`#${selectedElement}`);
-        $el.css({
-            'text-align': align,
-            'justify-content': align === 'left' ? 'flex-start' : align === 'right' ? 'flex-end' : 'center'
-        });
+        $el.css('text-align', align);
     }
     
-    function updateVerticalAlign(e) {
-        if (!selectedElement) return;
-        const element = elements.find(el => el.id === selectedElement);
-        if (element.type !== 'text') return;
-        
-        const valign = $(e.currentTarget).data('valign');
-        element.verticalAlign = valign;
-        
-        $('.vertical-align-btn').removeClass('active');
-        $(e.currentTarget).addClass('active');
-        
-        // Update element with flexbox for vertical alignment
-        const $el = $(`#${selectedElement}`);
-        $el.css({
-            'display': 'flex',
-            'flex-direction': 'column',
-            'align-items': element.textAlign === 'center' ? 'center' : element.textAlign === 'right' ? 'flex-end' : 'flex-start',
-            'justify-content': valign === 'top' ? 'flex-start' : valign === 'bottom' ? 'flex-end' : 'center'
-        });
-    }
     
     // Clickthrough property updates
     function updateClickUrl() {
@@ -1880,7 +1852,6 @@
             
             // Restore text-specific properties
             if (element.type === 'text') {
-                const vAlign = element.verticalAlign || 'top';
                 style['font-size'] = element.fontSize + 'px';
                 style['font-family'] = element.fontFamily;
                 style['color'] = element.color;
@@ -1888,12 +1859,6 @@
                 style['font-style'] = element.italic ? 'italic' : 'normal';
                 style['text-decoration'] = element.underline ? 'underline' : 'none';
                 style['text-align'] = element.textAlign;
-                style['display'] = 'flex';
-                style['flex-direction'] = 'column';
-                style['align-items'] = element.textAlign === 'left' ? 'flex-start' : 
-                                       element.textAlign === 'right' ? 'flex-end' : 'center';
-                style['justify-content'] = vAlign === 'top' ? 'flex-start' : 
-                                           vAlign === 'bottom' ? 'flex-end' : 'center';
             }
             
             // Restore shape-specific properties
@@ -1977,7 +1942,6 @@
         ">`;
                 imageCounter++;
             } else if (element.type === 'text') {
-                const vAlign = element.verticalAlign || 'top';
                 elementsHtml += `
         <div id="${element.id}" style="
             position: absolute;
@@ -1994,11 +1958,6 @@
             font-style: ${element.italic ? 'italic' : 'normal'};
             text-decoration: ${element.underline ? 'underline' : 'none'};
             text-align: ${element.textAlign};
-            display: flex;
-            flex-direction: column;
-            align-items: ${element.textAlign === 'center' ? 'center' : element.textAlign === 'right' ? 'flex-end' : 'flex-start'};
-            justify-content: ${vAlign === 'top' ? 'flex-start' : vAlign === 'bottom' ? 'flex-end' : 'center'};
-            padding: 5px;
             line-height: 1.2;
             word-wrap: break-word;
             z-index: ${element.zIndex};
