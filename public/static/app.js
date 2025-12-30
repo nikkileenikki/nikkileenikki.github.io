@@ -1284,8 +1284,9 @@
         $('#deleteAnimBtn').addClass('hidden');
         $('#animStart').val(0);
         $('#animDuration').val(1);
-        $('#animType').val('fadeIn');
-        $('#customAnimProps').addClass('hidden');
+        
+        // Uncheck all checkboxes
+        $('.anim-checkbox').prop('checked', false);
         
         $animModal.removeClass('hidden');
     }
@@ -1296,21 +1297,7 @@
     }
     
     function toggleCustomAnimProps() {
-        const type = $('#animType').val();
-        
-        // Hide all custom panels first
-        $('#customAnimProps').addClass('hidden');
-        $('#scaleFromProps').addClass('hidden');
-        $('#rotateFromProps').addClass('hidden');
-        
-        // Show appropriate panel based on type
-        if (type === 'custom') {
-            $('#customAnimProps').removeClass('hidden');
-        } else if (type === 'scaleFrom') {
-            $('#scaleFromProps').removeClass('hidden');
-        } else if (type === 'rotateFrom') {
-            $('#rotateFromProps').removeClass('hidden');
-        }
+        // Not needed anymore with checkbox interface
     }
     
     function editAnimation(e) {
@@ -1330,21 +1317,19 @@
         editingAnimation = { elementId, animId };
         selectElement(elementId);
         
-        $('#animType').val(anim.type);
+        // Uncheck all first
+        $('.anim-checkbox').prop('checked', false);
+        
+        // Check the animation types
+        const types = anim.types || [anim.type];
+        types.forEach(type => {
+            $(`.anim-checkbox[value="${type}"]`).prop('checked', true);
+        });
+        
         $('#animStart').val(anim.start);
         $('#animDuration').val(anim.duration);
         $('#animEase').val(anim.ease);
         $('#timelineDuration').val(totalDuration);
-        
-        // Show custom props if custom type
-        if (anim.type === 'custom') {
-            $('#customAnimProps').removeClass('hidden');
-            if (anim.customProps.x !== undefined) $('#animCustomX').val(anim.customProps.x);
-            if (anim.customProps.y !== undefined) $('#animCustomY').val(anim.customProps.y);
-            if (anim.customProps.scale !== undefined) $('#animCustomScale').val(anim.customProps.scale);
-            if (anim.customProps.rotation !== undefined) $('#animCustomRotation').val(anim.customProps.rotation);
-            if (anim.customProps.opacity !== undefined) $('#animCustomOpacity').val(anim.customProps.opacity);
-        }
         
         $('#animBtnText').text('Update Animation');
         $('#deleteAnimBtn').removeClass('hidden');
@@ -1356,56 +1341,52 @@
         if (!selectedElement) return;
         
         const element = elements.find(el => el.id === selectedElement);
-        const type = $('#animType').val();
-        const start = Math.round(parseFloat($('#animStart').val()) * 10) / 10; // Cap to 1 decimal
-        const duration = Math.round(parseFloat($('#animDuration').val()) * 10) / 10; // Cap to 1 decimal
+        
+        // Get all selected animation types
+        const selectedTypes = [];
+        $('.anim-checkbox:checked').each(function() {
+            selectedTypes.push($(this).val());
+        });
+        
+        if (selectedTypes.length === 0) {
+            alert('Please select at least one animation effect');
+            return;
+        }
+        
+        const start = Math.round(parseFloat($('#animStart').val()) * 10) / 10;
+        const duration = Math.round(parseFloat($('#animDuration').val()) * 10) / 10;
         const ease = $('#animEase').val();
         
         // Update total duration if needed
-        const newTotalDuration = Math.round(parseFloat($('#timelineDuration').val()) * 10) / 10; // Cap to 1 decimal
+        const newTotalDuration = Math.round(parseFloat($('#timelineDuration').val()) * 10) / 10;
         if (newTotalDuration !== totalDuration) {
             totalDuration = newTotalDuration;
             updateTimelineRuler();
         }
         
-        const animation = {
-            type,
-            start,
-            duration,
-            ease,
-            customProps: {}
-        };
-        
-        // Get custom properties if custom type
-        if (type === 'custom') {
-            const x = $('#animCustomX').val();
-            const y = $('#animCustomY').val();
-            const scale = $('#animCustomScale').val();
-            const rotation = $('#animCustomRotation').val();
-            const opacity = $('#animCustomOpacity').val();
-            
-            if (x !== '') animation.customProps.x = parseFloat(x);
-            if (y !== '') animation.customProps.y = parseFloat(y);
-            if (scale !== '') animation.customProps.scale = parseFloat(scale);
-            if (rotation !== '') animation.customProps.rotation = parseFloat(rotation);
-            if (opacity !== '') animation.customProps.opacity = parseFloat(opacity);
-        } else if (type === 'scaleFrom') {
-            const scaleFrom = $('#animScaleFrom').val();
-            if (scaleFrom !== '') animation.customProps.scaleFrom = parseFloat(scaleFrom);
-        } else if (type === 'rotateFrom') {
-            const rotateFrom = $('#animRotateFrom').val();
-            if (rotateFrom !== '') animation.customProps.rotateFrom = parseFloat(rotateFrom);
-        }
-        
         if (editingAnimation) {
-            // Update existing animation
+            // Update existing animation - only one type allowed when editing
             const anim = element.animations.find(a => a.id === editingAnimation.animId);
-            if (anim) {
-                Object.assign(anim, animation);
+            if (anim && selectedTypes.length > 0) {
+                anim.type = selectedTypes[0];
+                anim.start = start;
+                anim.duration = duration;
+                anim.ease = ease;
+                anim.types = selectedTypes; // Store all types for multi-animation
             }
         } else {
-            // Add new animation
-            animation.id = `anim_${Date.now()}`;
+            // Add new animations - create one timeline item with multiple types
+            const animationId = `anim_${Date.now()}`;
+            const animation = {
+                id: animationId,
+                type: selectedTypes[0], // Primary type for compatibility
+                types: selectedTypes, // All selected types
+                start,
+                duration,
+                ease,
+                customProps: {}
+            };
+            
             element.animations.push(animation);
         }
         
@@ -1522,11 +1503,15 @@
                 const leftPercent = (anim.start / totalDuration) * 100;
                 const widthPercent = (anim.duration / totalDuration) * 100;
                 
+                // Get label showing multiple types
+                const types = anim.types || [anim.type];
+                const label = types.length > 1 ? `${types.length} effects` : types[0];
+                
                 const $block = $(`
                     <div class="timeline-block" style="left: ${leftPercent}%; width: ${widthPercent}%;" 
                          data-anim-id="${anim.id}" data-element-id="${element.id}">
                         <div class="timeline-block-resize-handle left"></div>
-                        <div class="timeline-block-label">${anim.type}</div>
+                        <div class="timeline-block-label">${label}</div>
                         <button class="delete-anim" data-anim-id="${anim.id}" data-element-id="${element.id}">
                             <i class="fas fa-times"></i>
                         </button>
@@ -1545,15 +1530,32 @@
         
         elements.forEach(element => {
             element.animations.forEach(anim => {
-                const props = getAnimationProps(anim.type, element, anim.customProps);
+                const types = anim.types || [anim.type]; // Support multi-animation
                 
-                if (props.startAt) {
-                    gsap.set(`#${element.id}`, props.startAt);
-                    delete props.startAt;
+                // Merge props from all selected animation types
+                let mergedProps = {};
+                let startAt = null;
+                
+                types.forEach(type => {
+                    const props = getAnimationProps(type, element, anim.customProps);
+                    
+                    if (props.startAt) {
+                        startAt = startAt || {};
+                        Object.assign(startAt, props.startAt);
+                        delete props.startAt;
+                    }
+                    
+                    Object.assign(mergedProps, props);
+                });
+                
+                // Apply startAt if any
+                if (startAt) {
+                    gsap.set(`#${element.id}`, startAt);
                 }
                 
+                // Add merged animation to timeline
                 timeline.to(`#${element.id}`, {
-                    ...props,
+                    ...mergedProps,
                     duration: anim.duration,
                     ease: anim.ease
                 }, anim.start);
@@ -1843,17 +1845,32 @@
             
             // Generate animations
             element.animations.forEach(anim => {
-                const props = getAnimationPropsForExport(anim.type, element, anim.customProps);
+                const types = anim.types || [anim.type];
                 
-                if (props.startAt) {
+                // Merge props from all selected animation types
+                let mergedProps = {};
+                let startAt = null;
+                
+                types.forEach(type => {
+                    const props = getAnimationPropsForExport(type, element, anim.customProps);
+                    
+                    if (props.startAt) {
+                        startAt = startAt || {};
+                        Object.assign(startAt, props.startAt);
+                        delete props.startAt;
+                    }
+                    
+                    Object.assign(mergedProps, props);
+                });
+                
+                if (startAt) {
                     animationsJs += `
-        gsap.set('#${element.id}', ${JSON.stringify(props.startAt)});`;
-                    delete props.startAt;
+        gsap.set('#${element.id}', ${JSON.stringify(startAt)});`;
                 }
                 
                 animationsJs += `
         tl.to('#${element.id}', {
-            ${Object.entries(props).map(([key, value]) => `${key}: ${JSON.stringify(value)}`).join(',\n            ')},
+            ${Object.entries(mergedProps).map(([key, value]) => `${key}: ${JSON.stringify(value)}`).join(',\n            ')},
             duration: ${anim.duration},
             ease: '${anim.ease}'
         }, ${anim.start});`;
@@ -2009,31 +2026,48 @@
         e.stopPropagation();
         
         const targetId = $(e.currentTarget).data('id');
-        if (!draggedLayerId || draggedLayerId === targetId) return;
+        if (!draggedLayerId || draggedLayerId === targetId) {
+            handleDragEnd(e);
+            return;
+        }
         
         const draggedEl = elements.find(el => el.id === draggedLayerId);
         const targetEl = elements.find(el => el.id === targetId);
         
         if (draggedEl && targetEl) {
-            // Reorder by sequence instead of swap
+            // Get positions before manipulation
             const draggedIndex = elements.indexOf(draggedEl);
             const targetIndex = elements.indexOf(targetEl);
             
-            // Remove dragged element from array
+            // Determine if dropping above or below target
+            const rect = e.currentTarget.getBoundingClientRect();
+            const mouseY = e.originalEvent.clientY;
+            const targetMidY = rect.top + rect.height / 2;
+            const dropBelow = mouseY > targetMidY;
+            
+            // Remove dragged element
             elements.splice(draggedIndex, 1);
             
-            // Insert at target position
-            const newTargetIndex = elements.indexOf(targetEl);
-            elements.splice(newTargetIndex, 0, draggedEl);
+            // Calculate new insertion index
+            let newIndex = elements.indexOf(targetEl);
+            if (dropBelow) {
+                newIndex += 1;
+            }
             
-            // Reassign z-indexes based on new order (highest index = highest z-index)
+            // Insert at new position
+            elements.splice(newIndex, 0, draggedEl);
+            
+            // Reassign z-indexes based on array order
             elements.forEach((el, idx) => {
                 el.zIndex = idx;
                 $(`#${el.id}`).css('z-index', el.zIndex);
             });
             
             updateLayersList();
+            rebuildTimeline();
         }
+        
+        handleDragEnd(e);
     }
     
     function handleDragEnd(e) {

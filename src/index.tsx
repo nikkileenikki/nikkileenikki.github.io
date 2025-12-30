@@ -357,7 +357,7 @@ app.get('/', (c) => {
 
         <!-- Animation Modal -->
         <div id="animModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-            <div class="bg-gray-800 rounded-lg p-6 w-[500px] max-h-[90vh] overflow-y-auto">
+            <div class="bg-gray-800 rounded-lg p-6 w-[600px] max-h-[90vh] overflow-y-auto">
                 <div class="flex justify-between items-center mb-4">
                     <h3 class="text-xl font-bold">Add to Timeline</h3>
                     <button id="closeModal" class="text-gray-400 hover:text-white">
@@ -367,67 +367,57 @@ app.get('/', (c) => {
                 
                 <div class="space-y-4">
                     <div>
-                        <label class="block text-sm text-gray-400 mb-2">Animation Type</label>
-                        <select id="animType" class="w-full bg-gray-700 rounded px-3 py-2">
-                            <optgroup label="🌅 Fade">
-                                <option value="fadeIn">Fade In</option>
-                                <option value="fadeOut">Fade Out</option>
-                            </optgroup>
-                            <optgroup label="➡️ Slide">
-                                <option value="slideLeft">Slide from Left</option>
-                                <option value="slideRight">Slide from Right</option>
-                                <option value="slideUp">Slide from Top</option>
-                                <option value="slideDown">Slide from Bottom</option>
-                            </optgroup>
-                            <optgroup label="🔍 Scale">
-                                <option value="scaleIn">Scale In (from small)</option>
-                                <option value="scaleOut">Scale Out (to large)</option>
-                                <option value="scaleFrom">Scale From (custom start)</option>
-                            </optgroup>
-                            <optgroup label="🔄 Rotate">
-                                <option value="rotate">Rotate (360°)</option>
-                                <option value="rotateFrom">Rotate From (custom start)</option>
-                            </optgroup>
-                            <optgroup label="🎪 Special">
-                                <option value="bounce">Bounce</option>
-                                <option value="custom">Custom Properties</option>
-                            </optgroup>
-                        </select>
-                    </div>
-                    
-                    <!-- Scale From Properties -->
-                    <div id="scaleFromProps" class="hidden space-y-2 p-3 bg-gray-700 rounded">
-                        <label class="block text-xs text-gray-400">Scale From Value</label>
-                        <input type="number" id="animScaleFrom" step="0.1" value="0" class="w-full bg-gray-800 rounded px-2 py-1 text-sm" placeholder="e.g. 0 or 2">
-                    </div>
-                    
-                    <!-- Rotate From Properties -->
-                    <div id="rotateFromProps" class="hidden space-y-2 p-3 bg-gray-700 rounded">
-                        <label class="block text-xs text-gray-400">Rotate From Angle (deg)</label>
-                        <input type="number" id="animRotateFrom" value="0" class="w-full bg-gray-800 rounded px-2 py-1 text-sm" placeholder="e.g. -180 or 90">
-                    </div>
-                    
-                    <!-- Custom Animation Properties -->
-                    <div id="customAnimProps" class="hidden space-y-3 p-3 bg-gray-700 rounded">
-                        <div>
-                            <label class="block text-xs text-gray-400 mb-1">Target X</label>
-                            <input type="number" id="animCustomX" class="w-full bg-gray-800 rounded px-2 py-1 text-sm" placeholder="Leave empty to keep current">
-                        </div>
-                        <div>
-                            <label class="block text-xs text-gray-400 mb-1">Target Y</label>
-                            <input type="number" id="animCustomY" class="w-full bg-gray-800 rounded px-2 py-1 text-sm" placeholder="Leave empty to keep current">
-                        </div>
-                        <div>
-                            <label class="block text-xs text-gray-400 mb-1">Target Scale</label>
-                            <input type="number" id="animCustomScale" step="0.1" class="w-full bg-gray-800 rounded px-2 py-1 text-sm" placeholder="e.g. 1.5">
-                        </div>
-                        <div>
-                            <label class="block text-xs text-gray-400 mb-1">Target Rotation (deg)</label>
-                            <input type="number" id="animCustomRotation" class="w-full bg-gray-800 rounded px-2 py-1 text-sm" placeholder="e.g. 360">
-                        </div>
-                        <div>
-                            <label class="block text-xs text-gray-400 mb-1">Target Opacity</label>
-                            <input type="number" id="animCustomOpacity" step="0.1" min="0" max="1" class="w-full bg-gray-800 rounded px-2 py-1 text-sm" placeholder="0 to 1">
+                        <label class="block text-sm text-gray-400 mb-2">Select Animation Effects (Multiple)</label>
+                        <div class="grid grid-cols-2 gap-2 p-3 bg-gray-700 rounded max-h-64 overflow-y-auto">
+                            <!-- Fade -->
+                            <label class="flex items-center space-x-2 p-2 bg-gray-800 rounded hover:bg-gray-750 cursor-pointer">
+                                <input type="checkbox" class="anim-checkbox" value="fadeIn">
+                                <span class="text-sm">🌅 Fade In</span>
+                            </label>
+                            <label class="flex items-center space-x-2 p-2 bg-gray-800 rounded hover:bg-gray-750 cursor-pointer">
+                                <input type="checkbox" class="anim-checkbox" value="fadeOut">
+                                <span class="text-sm">🌅 Fade Out</span>
+                            </label>
+                            
+                            <!-- Slide -->
+                            <label class="flex items-center space-x-2 p-2 bg-gray-800 rounded hover:bg-gray-750 cursor-pointer">
+                                <input type="checkbox" class="anim-checkbox" value="slideLeft">
+                                <span class="text-sm">➡️ From Left</span>
+                            </label>
+                            <label class="flex items-center space-x-2 p-2 bg-gray-800 rounded hover:bg-gray-750 cursor-pointer">
+                                <input type="checkbox" class="anim-checkbox" value="slideRight">
+                                <span class="text-sm">⬅️ From Right</span>
+                            </label>
+                            <label class="flex items-center space-x-2 p-2 bg-gray-800 rounded hover:bg-gray-750 cursor-pointer">
+                                <input type="checkbox" class="anim-checkbox" value="slideUp">
+                                <span class="text-sm">⬆️ From Top</span>
+                            </label>
+                            <label class="flex items-center space-x-2 p-2 bg-gray-800 rounded hover:bg-gray-750 cursor-pointer">
+                                <input type="checkbox" class="anim-checkbox" value="slideDown">
+                                <span class="text-sm">⬇️ From Bottom</span>
+                            </label>
+                            
+                            <!-- Scale -->
+                            <label class="flex items-center space-x-2 p-2 bg-gray-800 rounded hover:bg-gray-750 cursor-pointer">
+                                <input type="checkbox" class="anim-checkbox" value="scaleIn">
+                                <span class="text-sm">🔍 Scale In</span>
+                            </label>
+                            <label class="flex items-center space-x-2 p-2 bg-gray-800 rounded hover:bg-gray-750 cursor-pointer">
+                                <input type="checkbox" class="anim-checkbox" value="scaleOut">
+                                <span class="text-sm">🔎 Scale Out</span>
+                            </label>
+                            
+                            <!-- Rotate -->
+                            <label class="flex items-center space-x-2 p-2 bg-gray-800 rounded hover:bg-gray-750 cursor-pointer">
+                                <input type="checkbox" class="anim-checkbox" value="rotate">
+                                <span class="text-sm">🔄 Rotate 360°</span>
+                            </label>
+                            
+                            <!-- Special -->
+                            <label class="flex items-center space-x-2 p-2 bg-gray-800 rounded hover:bg-gray-750 cursor-pointer">
+                                <input type="checkbox" class="anim-checkbox" value="bounce">
+                                <span class="text-sm">🎪 Bounce</span>
+                            </label>
                         </div>
                     </div>
                     
