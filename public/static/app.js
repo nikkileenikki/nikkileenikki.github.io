@@ -151,6 +151,9 @@
         // Playhead dragging
         $('#timelinePlayhead').on('mousedown', handlePlayheadDragStart);
         
+        // Click on timeline to jump to position
+        $timelineTracks.on('click', '.timeline-track-content', handleTimelineClick);
+        
         // Actions
         $('#previewBtn').on('click', playTimeline);
         $('#exportBtn').on('click', exportToZip);
@@ -195,6 +198,28 @@
         
         $(document).on('mousemove', moveHandler);
         $(document).on('mouseup', upHandler);
+    }
+    
+    function handleTimelineClick(e) {
+        // Don't interfere with dragging blocks or clicking on blocks
+        if ($(e.target).closest('.timeline-block').length > 0) return;
+        if (isTimelineBlockDragging || isTimelineBlockResizing) return;
+        
+        const $track = $(e.currentTarget);
+        const trackOffset = $track.offset().left;
+        const trackWidth = $track.width();
+        const mouseX = e.pageX - trackOffset;
+        
+        let percent = (mouseX / trackWidth) * 100;
+        percent = Math.max(0, Math.min(100, percent));
+        
+        $('#timelinePlayhead').css('left', percent + '%');
+        
+        // Jump timeline to clicked position
+        if (!isPlaying && timeline) {
+            const time = (percent / 100) * totalDuration;
+            timeline.seek(time);
+        }
     }
     
     // ============================================

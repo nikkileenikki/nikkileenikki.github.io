@@ -115,6 +115,7 @@
     display: flex;
     border-bottom: 1px solid rgb(55, 65, 81);
     min-height: 48px;
+    user-select: none; /* Disable text selection */
 }
 
 .timeline-track-label {
@@ -125,12 +126,15 @@
     display: flex;
     align-items: center;
     font-size: 12px;
+    user-select: none; /* Disable text selection */
 }
 
 .timeline-track-content {
     flex: 1;
     position: relative;
     background: rgb(17, 24, 39);
+    user-select: none; /* Disable text selection */
+    cursor: pointer; /* Show clickable cursor */
 }
 
 .timeline-block {

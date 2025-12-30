@@ -85,14 +85,14 @@ app.get('/', (c) => {
         <div class="flex h-screen">
             <!-- Left Sidebar - Tools -->
             <div class="w-80 bg-gray-800 border-r border-gray-700 overflow-y-auto flex flex-col max-h-screen">
-                <div class="p-6 flex-1 overflow-y-auto"
-                    <h1 class="text-2xl font-bold mb-6 flex items-center">
+                <div class="p-3 flex-1 overflow-y-auto"
+                    <h1 class="text-xl font-bold mb-3 flex items-center">
                         <i class="fas fa-ad mr-2 text-blue-400"></i>
                         Ad Builder
                     </h1>
                     
                     <!-- Add Elements -->
-                    <div class="mb-6">
+                    <div class="mb-2">
                         <h2 class="text-lg font-semibold mb-3">Add Elements</h2>
                         <div class="space-y-2">
                             <div id="dropzone" class="border-2 border-dashed border-gray-600 rounded-lg p-4 text-center cursor-pointer hover:border-blue-400 transition-colors">
@@ -102,34 +102,34 @@ app.get('/', (c) => {
                             </div>
                             <input type="file" id="fileInput" accept="image/jpeg,image/png,image/gif" class="hidden">
                             
-                            <button id="addTextBtn" class="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 rounded transition-colors">
+                            <button id="addTextBtn" class="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 rounded transition-colors">
                                 <i class="fas fa-font mr-2"></i>Add Text
                             </button>
                             
-                            <button id="addShapeBtn" class="w-full bg-teal-600 hover:bg-teal-700 text-white py-3 rounded transition-colors">
+                            <button id="addShapeBtn" class="w-full bg-teal-600 hover:bg-teal-700 text-white py-2 rounded transition-colors">
                                 <i class="fas fa-shapes mr-2"></i>Add Shape
                             </button>
                             
-                            <button id="addClickthroughBtn" class="w-full bg-purple-600 hover:bg-purple-700 text-white py-3 rounded transition-colors">
+                            <button id="addClickthroughBtn" class="w-full bg-purple-600 hover:bg-purple-700 text-white py-2 rounded transition-colors">
                                 <i class="fas fa-mouse-pointer mr-2"></i>Add Clickthrough
                             </button>
                         </div>
                     </div>
 
                     <!-- Layers Panel -->
-                    <div class="mb-6">
+                    <div class="mb-2">
                         <h2 class="text-lg font-semibold mb-3">Layers</h2>
                         <div id="layersList" class="space-y-2 bg-gray-900 rounded-lg p-3 min-h-[100px]">
-                            <p class="text-sm text-gray-500 text-center py-4">No layers yet</p>
+                            <p class="text-sm text-gray-500 text-center py-2">No layers yet</p>
                         </div>
                     </div>
 
                     <!-- Properties Panel -->
-                    <div id="propertiesPanel" class="mb-6 hidden">
+                    <div id="propertiesPanel" class="mb-2 hidden">
                         <h2 class="text-lg font-semibold mb-3">Properties</h2>
-                        <div class="space-y-3 bg-gray-900 rounded-lg p-3">
+                        <div class="space-y-2 bg-gray-900 rounded-lg p-3">
                             <!-- Text Properties -->
-                            <div id="textProps" class="hidden space-y-3 pb-3 border-b border-gray-700">
+                            <div id="textProps" class="hidden space-y-2 pb-3 border-b border-gray-700">
                                 <div>
                                     <label class="text-sm text-gray-400">Text Content</label>
                                     <input type="text" id="propText" class="w-full bg-gray-800 rounded px-3 py-2 text-sm">
@@ -199,7 +199,7 @@ app.get('/', (c) => {
                             </div>
                             
                             <!-- Clickthrough Properties -->
-                            <div id="clickthroughProps" class="hidden space-y-3 pb-3 border-b border-gray-700">
+                            <div id="clickthroughProps" class="hidden space-y-2 pb-3 border-b border-gray-700">
                                 <div>
                                     <label class="text-sm text-gray-400">Click URL</label>
                                     <input type="text" id="propClickUrl" class="w-full bg-gray-800 rounded px-3 py-2 text-sm" placeholder="https://kult.my">
@@ -216,7 +216,7 @@ app.get('/', (c) => {
                             </div>
                             
                             <!-- Common Properties -->
-                            <div class="grid grid-cols-2 gap-3">
+                            <div class="grid grid-cols-2 gap-2">
                                 <div>
                                     <label class="text-sm text-gray-400">Width</label>
                                     <input type="number" id="propWidth" class="w-full bg-gray-800 rounded px-3 py-2 text-sm">
@@ -249,7 +249,7 @@ app.get('/', (c) => {
                     </div>
 
                     <!-- Export Section -->
-                    <div class="mb-6">
+                    <div class="mb-2">
                         <h2 class="text-lg font-semibold mb-3">Export</h2>
                         <div class="space-y-2">
                             <button id="exportBtn" class="w-full bg-green-600 hover:bg-green-700 text-white py-2 rounded transition-colors">
@@ -326,8 +326,8 @@ app.get('/', (c) => {
                                         <div id="timelineRuler" class="absolute inset-0 flex">
                                             <!-- Time markers will be added here -->
                                         </div>
-                                        <div id="timelinePlayhead" class="absolute top-0 bottom-0 w-0.5 bg-red-500 z-10 cursor-ew-resize" style="left: 0;">
-                                            <div class="w-3 h-3 bg-red-500 rounded-full absolute -top-1 -left-1 cursor-grab active:cursor-grabbing"></div>
+                                        <div id="timelinePlayhead" class="absolute top-0 bottom-0 w-1 bg-red-500 z-10 cursor-ew-resize" style="left: 0;">
+                                            <div class="w-4 h-4 bg-red-500 rounded-full absolute -top-1.5 -left-1.5 cursor-grab active:cursor-grabbing shadow-lg border-2 border-white"></div>
                                         </div>
                                     </div>
                                 </div>
@@ -357,71 +357,71 @@ app.get('/', (c) => {
 
         <!-- Animation Modal -->
         <div id="animModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-            <div class="bg-gray-800 rounded-lg p-6 w-[600px] max-h-[90vh] overflow-y-auto">
-                <div class="flex justify-between items-center mb-4">
+            <div class="bg-gray-800 rounded-lg p-3 w-[600px] max-h-[90vh] overflow-y-auto">
+                <div class="flex justify-between items-center mb-2">
                     <h3 class="text-xl font-bold">Add to Timeline</h3>
                     <button id="closeModal" class="text-gray-400 hover:text-white">
                         <i class="fas fa-times"></i>
                     </button>
                 </div>
                 
-                <div class="space-y-4">
+                <div class="space-y-2">
                     <div>
                         <label class="block text-sm text-gray-400 mb-2">Select Animation Effects (Multiple)</label>
-                        <div class="grid grid-cols-2 gap-2 p-3 bg-gray-700 rounded max-h-64 overflow-y-auto">
+                        <div class="grid grid-cols-2 gap-2 p-2 bg-gray-700 rounded max-h-64 overflow-y-auto">
                             <!-- Fade -->
                             <label class="flex items-center space-x-2 p-2 bg-gray-800 rounded hover:bg-gray-750 cursor-pointer">
                                 <input type="checkbox" class="anim-checkbox" value="fadeIn">
-                                <span class="text-sm">🌅 Fade In</span>
+                                <span class="text-sm">Fade In</span>
                             </label>
                             <label class="flex items-center space-x-2 p-2 bg-gray-800 rounded hover:bg-gray-750 cursor-pointer">
                                 <input type="checkbox" class="anim-checkbox" value="fadeOut">
-                                <span class="text-sm">🌅 Fade Out</span>
+                                <span class="text-sm">Fade Out</span>
                             </label>
                             
                             <!-- Slide -->
                             <label class="flex items-center space-x-2 p-2 bg-gray-800 rounded hover:bg-gray-750 cursor-pointer">
                                 <input type="checkbox" class="anim-checkbox" value="slideLeft">
-                                <span class="text-sm">➡️ From Left</span>
+                                <span class="text-sm">Slide Left</span>
                             </label>
                             <label class="flex items-center space-x-2 p-2 bg-gray-800 rounded hover:bg-gray-750 cursor-pointer">
                                 <input type="checkbox" class="anim-checkbox" value="slideRight">
-                                <span class="text-sm">⬅️ From Right</span>
+                                <span class="text-sm">Slide Right</span>
                             </label>
                             <label class="flex items-center space-x-2 p-2 bg-gray-800 rounded hover:bg-gray-750 cursor-pointer">
                                 <input type="checkbox" class="anim-checkbox" value="slideUp">
-                                <span class="text-sm">⬆️ From Top</span>
+                                <span class="text-sm">Slide Up</span>
                             </label>
                             <label class="flex items-center space-x-2 p-2 bg-gray-800 rounded hover:bg-gray-750 cursor-pointer">
                                 <input type="checkbox" class="anim-checkbox" value="slideDown">
-                                <span class="text-sm">⬇️ From Bottom</span>
+                                <span class="text-sm">Slide Down</span>
                             </label>
                             
                             <!-- Scale -->
                             <label class="flex items-center space-x-2 p-2 bg-gray-800 rounded hover:bg-gray-750 cursor-pointer">
                                 <input type="checkbox" class="anim-checkbox" value="scaleIn">
-                                <span class="text-sm">🔍 Scale In</span>
+                                <span class="text-sm">Scale In</span>
                             </label>
                             <label class="flex items-center space-x-2 p-2 bg-gray-800 rounded hover:bg-gray-750 cursor-pointer">
                                 <input type="checkbox" class="anim-checkbox" value="scaleOut">
-                                <span class="text-sm">🔎 Scale Out</span>
+                                <span class="text-sm">Scale Out</span>
                             </label>
                             
                             <!-- Rotate -->
                             <label class="flex items-center space-x-2 p-2 bg-gray-800 rounded hover:bg-gray-750 cursor-pointer">
                                 <input type="checkbox" class="anim-checkbox" value="rotate">
-                                <span class="text-sm">🔄 Rotate 360°</span>
+                                <span class="text-sm">Rotate 360°</span>
                             </label>
                             
                             <!-- Special -->
                             <label class="flex items-center space-x-2 p-2 bg-gray-800 rounded hover:bg-gray-750 cursor-pointer">
                                 <input type="checkbox" class="anim-checkbox" value="bounce">
-                                <span class="text-sm">🎪 Bounce</span>
+                                <span class="text-sm">Bounce</span>
                             </label>
                         </div>
                     </div>
                     
-                    <div class="grid grid-cols-2 gap-3">
+                    <div class="grid grid-cols-2 gap-2">
                         <div>
                             <label class="block text-sm text-gray-400 mb-2">Start Time (s)</label>
                             <input type="number" id="animStart" value="0" step="0.1" min="0" class="w-full bg-gray-700 rounded px-3 py-2">
@@ -476,15 +476,15 @@ app.get('/', (c) => {
         
         <!-- Clickthrough Modal -->
         <div id="clickthroughModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-            <div class="bg-gray-800 rounded-lg p-6 w-[500px]">
-                <div class="flex justify-between items-center mb-4">
+            <div class="bg-gray-800 rounded-lg p-3 w-[500px]">
+                <div class="flex justify-between items-center mb-2">
                     <h3 class="text-xl font-bold">Add Clickthrough Layer</h3>
                     <button id="closeClickthroughModal" class="text-gray-400 hover:text-white">
                         <i class="fas fa-times"></i>
                     </button>
                 </div>
                 
-                <div class="space-y-4">
+                <div class="space-y-2">
                     <div>
                         <label class="block text-sm text-gray-400 mb-2">Click URL</label>
                         <input type="text" id="clickthroughUrl" value="https://kult.my" placeholder="https://kult.my" class="w-full bg-gray-700 rounded px-3 py-2">
@@ -509,15 +509,15 @@ app.get('/', (c) => {
         
         <!-- Shape Modal -->
         <div id="shapeModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-            <div class="bg-gray-800 rounded-lg p-6 w-[500px]">
-                <div class="flex justify-between items-center mb-4">
+            <div class="bg-gray-800 rounded-lg p-3 w-[500px]">
+                <div class="flex justify-between items-center mb-2">
                     <h3 class="text-xl font-bold">Add Shape</h3>
                     <button id="closeShapeModal" class="text-gray-400 hover:text-white">
                         <i class="fas fa-times"></i>
                     </button>
                 </div>
                 
-                <div class="space-y-4">
+                <div class="space-y-2">
                     <div>
                         <label class="block text-sm text-gray-400 mb-2">Shape Type</label>
                         <select id="shapeType" class="w-full bg-gray-700 rounded px-3 py-2">
@@ -527,7 +527,7 @@ app.get('/', (c) => {
                         </select>
                     </div>
                     
-                    <div class="grid grid-cols-2 gap-3">
+                    <div class="grid grid-cols-2 gap-2">
                         <div>
                             <label class="block text-sm text-gray-400 mb-2">Width</label>
                             <input type="number" id="shapeWidth" value="200" class="w-full bg-gray-700 rounded px-3 py-2">
@@ -558,15 +558,15 @@ app.get('/', (c) => {
         
         <!-- Text Modal -->
         <div id="textModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-            <div class="bg-gray-800 rounded-lg p-6 w-[500px]">
-                <div class="flex justify-between items-center mb-4">
+            <div class="bg-gray-800 rounded-lg p-3 w-[500px]">
+                <div class="flex justify-between items-center mb-2">
                     <h3 class="text-xl font-bold">Add Text</h3>
                     <button id="closeTextModal" class="text-gray-400 hover:text-white">
                         <i class="fas fa-times"></i>
                     </button>
                 </div>
                 
-                <div class="space-y-4">
+                <div class="space-y-2">
                     <div>
                         <label class="block text-sm text-gray-400 mb-2">Text Content</label>
                         <input type="text" id="textContent" placeholder="Your Text Here" class="w-full bg-gray-700 rounded px-3 py-2">
