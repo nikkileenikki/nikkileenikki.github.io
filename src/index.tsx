@@ -470,10 +470,10 @@ app.get('/', (c) => {
                     </div>
                     
                     <div class="flex space-x-2">
-                        <button id="saveAnimBtn" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-2 rounded transition-colors">
+                        <button type="button" id="saveAnimBtn" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-2 rounded transition-colors">
                             <span id="animBtnText">Add Animation</span>
                         </button>
-                        <button id="deleteAnimBtn" class="hidden bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded transition-colors">
+                        <button type="button" id="deleteAnimBtn" class="hidden bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded transition-colors">
                             <i class="fas fa-trash"></i>
                         </button>
                     </div>

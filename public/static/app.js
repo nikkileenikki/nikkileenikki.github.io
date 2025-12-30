@@ -1064,7 +1064,10 @@
                 label = element.text.substring(0, 20);
             } else if (element.type === 'clickthrough') {
                 icon = 'fa-mouse-pointer';
-                label = 'Clickthrough';
+                // Count clickthrough elements to generate click1, click2, etc.
+                const clickthroughElements = elements.filter(el => el.type === 'clickthrough');
+                const clickIndex = clickthroughElements.findIndex(el => el.id === element.id) + 1;
+                label = `Click${clickIndex}`;
             } else if (element.type === 'shape') {
                 icon = 'fa-shapes';
                 label = element.shapeType.charAt(0).toUpperCase() + element.shapeType.slice(1).replace('-', ' ');
@@ -1644,8 +1647,8 @@
         
         $timelineTracks.empty();
         
-        // Sort by zIndex (lowest first, so bottom items appear at bottom)
-        const sortedElements = [...elements].sort((a, b) => a.zIndex - b.zIndex);
+        // Sort by zIndex (highest first, so top visual layers appear at top of timeline)
+        const sortedElements = [...elements].sort((a, b) => b.zIndex - a.zIndex);
         
         sortedElements.forEach(element => {
             let icon, label;
@@ -1655,7 +1658,10 @@
                 label = element.text.substring(0, 15);
             } else if (element.type === 'clickthrough') {
                 icon = 'fa-mouse-pointer';
-                label = 'Click';
+                // Count clickthrough elements to generate click1, click2, etc.
+                const clickthroughElements = elements.filter(el => el.type === 'clickthrough');
+                const clickIndex = clickthroughElements.findIndex(el => el.id === element.id) + 1;
+                label = `Click${clickIndex}`;
             } else {
                 icon = 'fa-image';
                 label = (element.filename || 'Image').substring(0, 15);
