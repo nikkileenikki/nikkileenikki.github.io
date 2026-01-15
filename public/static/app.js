@@ -16,7 +16,7 @@
     let totalDuration = 5;
     let isPlaying = false;
     let zoomLevel = 1; // Now controls timeline duration scale
-    let animLoop = -1; // -1 = infinite loop
+    let animLoop = 0; // Default: 0 = play once (matches HTML default)
     let editingAnimation = null; // For editing existing animations
     
     // Canvas dimensions
