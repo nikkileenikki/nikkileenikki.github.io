@@ -375,19 +375,19 @@ app.get('/', (c) => {
                             <!-- Slide -->
                             <label class="flex items-center space-x-2 p-2 bg-gray-800 rounded hover:bg-gray-750 cursor-pointer">
                                 <input type="checkbox" class="anim-checkbox" value="slideLeft">
-                                <span class="text-sm">Slide Left</span>
+                                <span class="text-sm">Slide from left</span>
                             </label>
                             <label class="flex items-center space-x-2 p-2 bg-gray-800 rounded hover:bg-gray-750 cursor-pointer">
                                 <input type="checkbox" class="anim-checkbox" value="slideRight">
-                                <span class="text-sm">Slide Right</span>
+                                <span class="text-sm">Slide from right</span>
                             </label>
                             <label class="flex items-center space-x-2 p-2 bg-gray-800 rounded hover:bg-gray-750 cursor-pointer">
                                 <input type="checkbox" class="anim-checkbox" value="slideUp">
-                                <span class="text-sm">Slide Up</span>
+                                <span class="text-sm">Slide from top</span>
                             </label>
                             <label class="flex items-center space-x-2 p-2 bg-gray-800 rounded hover:bg-gray-750 cursor-pointer">
                                 <input type="checkbox" class="anim-checkbox" value="slideDown">
-                                <span class="text-sm">Slide Down</span>
+                                <span class="text-sm">Slide from bottom</span>
                             </label>
                             
                             <!-- Scale -->
