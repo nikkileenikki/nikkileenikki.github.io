@@ -2415,14 +2415,18 @@
     
     function zoomIn() {
         if (stageZoom < 2.0) {
-            stageZoom = Math.min(2.0, stageZoom + 0.25);
+            // Round to nearest 0.25 to ensure exact 25% steps
+            stageZoom = Math.round((stageZoom + 0.25) * 4) / 4;
+            stageZoom = Math.min(2.0, stageZoom);
             updateStageZoom();
         }
     }
     
     function zoomOut() {
         if (stageZoom > 0.25) {
-            stageZoom = Math.max(0.25, stageZoom - 0.25);
+            // Round to nearest 0.25 to ensure exact 25% steps
+            stageZoom = Math.round((stageZoom - 0.25) * 4) / 4;
+            stageZoom = Math.max(0.25, stageZoom);
             updateStageZoom();
         }
     }

@@ -300,8 +300,8 @@ app.get('/', (c) => {
                 </div>
 
                 <!-- Canvas -->
-                <div class="flex-1 flex flex-col p-8 overflow-auto bg-gray-900">
-                    <div id="canvasContainer" class="flex items-center justify-center flex-1">
+                <div class="flex-1 flex flex-col overflow-hidden bg-gray-900">
+                    <div id="canvasContainer" class="flex-1 flex items-center justify-center p-8 overflow-auto">
                         <div id="canvasWrapper" class="relative shadow-2xl" style="width: 300px; height: 250px;">
                             <div id="canvas" class="w-full h-full relative overflow-hidden">
                                 <!-- Elements will be added here -->
@@ -309,8 +309,8 @@ app.get('/', (c) => {
                         </div>
                     </div>
                     
-                    <!-- Timeline Editor -->
-                    <div class="mt-6 bg-gray-800 rounded-lg p-4 border border-gray-700">
+                    <!-- Timeline Editor - Fixed at bottom -->
+                    <div class="flex-shrink-0 bg-gray-800 border-t border-gray-700 p-4">
                         <div class="flex items-center justify-between mb-3">
                             <h3 class="text-lg font-semibold flex items-center">
                                 <i class="fas fa-film mr-2 text-purple-400"></i>
