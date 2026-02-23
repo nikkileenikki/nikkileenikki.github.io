@@ -15,6 +15,7 @@
     let timeline = gsap.timeline({ paused: true });
     let totalDuration = 5;
     let isPlaying = false;
+    let playbackTimeout = null; // Store timeout ID to clear on stop
     let zoomLevel = 1; // Now controls timeline duration scale
     let animLoop = 0; // Default: 0 = play once (matches HTML default)
     let editingAnimation = null; // For editing existing animations
@@ -1871,6 +1872,11 @@
             return;
         }
         
+        // Stop any existing playback first
+        if (isPlaying) {
+            stopTimeline();
+        }
+        
         rebuildTimeline();
         isPlaying = true;
         
@@ -1894,7 +1900,8 @@
         // Let GSAP use the natural duration based on individual animation timings
         timeline.play(0);
         
-        setTimeout(() => {
+        // Store timeout ID so we can clear it on stop
+        playbackTimeout = setTimeout(() => {
             if (animLoop !== -1) {
                 isPlaying = false;
                 $('#timelinePlayhead').css('left', '0');
@@ -1904,6 +1911,12 @@
     }
     
     function stopTimeline() {
+        // Clear any pending timeout
+        if (playbackTimeout) {
+            clearTimeout(playbackTimeout);
+            playbackTimeout = null;
+        }
+        
         timeline.pause(0);
         isPlaying = false;
         $('#timelinePlayhead').css('left', '0');
