@@ -1942,15 +1942,25 @@
         }
         
         // Get and validate banner name
-        let bannerName = $('#bannerName').val().trim();
+        let bannerName = $('#bannerName').val();
+        console.log('Raw banner name:', bannerName);
+        
+        if (bannerName) {
+            bannerName = bannerName.trim();
+        }
+        
         if (!bannerName) {
             bannerName = 'ad-banner';
         }
+        
         // Remove spaces and special characters, keep only alphanumeric, dash, underscore
         bannerName = bannerName.replace(/\s+/g, '-').replace(/[^a-zA-Z0-9-_]/g, '');
+        
         if (!bannerName) {
             bannerName = 'ad-banner';
         }
+        
+        console.log('Final banner name:', bannerName);
         
         // Get polite load option from checkbox
         const usePoliteLoad = $('#politeLoadCheckbox').is(':checked');
@@ -1978,6 +1988,7 @@
         }
         
         zip.generateAsync({ type: 'blob' }).then(function(content) {
+            console.log('Saving as:', `${bannerName}.zip`);
             saveAs(content, `${bannerName}.zip`);
         });
     }
