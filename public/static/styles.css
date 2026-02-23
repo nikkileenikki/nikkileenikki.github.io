@@ -126,7 +126,7 @@
 .timeline-track {
     display: flex;
     border-bottom: 1px solid rgb(55, 65, 81);
-    min-height: 48px;
+    min-height: 38px;
     user-select: none; /* Disable text selection */
     cursor: move; /* Show move cursor on track */
 }
@@ -193,8 +193,8 @@
 
 .timeline-block {
     position: absolute;
-    height: 32px;
-    top: 8px;
+    height: 26px;
+    top: 6px;
     background: linear-gradient(135deg, rgba(139, 92, 246, 0.8), rgba(168, 85, 247, 0.8));
     border: 1px solid rgba(139, 92, 246, 1);
     border-radius: 4px;

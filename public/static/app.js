@@ -24,6 +24,9 @@
     let canvasHeight = 250;
     let stageZoom = 1.0; // Stage zoom level (0.25 to 2.0)
     
+    // Ensure stageZoom is initialized to exact 1.0
+    stageZoom = Math.round(stageZoom * 4) / 4;
+    
     // DOM elements
     const $canvas = $('#canvas');
     const $canvasWrapper = $('#canvasWrapper');
@@ -2432,7 +2435,26 @@
     }
     
     function zoomReset() {
-        stageZoom = 1.0;
+        // Get canvas container dimensions (available space for canvas)
+        const containerWidth = $('#canvasContainer').width();
+        const containerHeight = $('#canvasContainer').height();
+        
+        // Calculate zoom to fit canvas in container
+        const zoomToFitWidth = containerWidth / canvasWidth;
+        const zoomToFitHeight = containerHeight / canvasHeight;
+        const zoomToFit = Math.min(zoomToFitWidth, zoomToFitHeight, 1.0);
+        
+        // For small banners (fits easily), use 100%
+        // For tall/wide banners, fit to stage
+        if (zoomToFit >= 1.0) {
+            stageZoom = 1.0;
+        } else {
+            // Round to nearest 25% step
+            stageZoom = Math.floor(zoomToFit * 4) / 4;
+            // Ensure minimum 25%
+            if (stageZoom < 0.25) stageZoom = 0.25;
+        }
+        
         updateStageZoom();
     }
     

@@ -327,10 +327,10 @@ app.get('/', (c) => {
                         </div>
                         
                         <!-- Timeline Container -->
-                        <div id="timelineContainer" class="bg-gray-900 rounded-lg overflow-x-auto relative">
+                        <div id="timelineContainer" class="bg-gray-900 rounded-lg overflow-x-auto relative" style="max-height: 190px;">
                             <div class="min-w-[800px]">
                                 <!-- Timeline Header -->
-                                <div class="flex border-b border-gray-700">
+                                <div class="flex border-b border-gray-700 sticky top-0 bg-gray-900 z-10">
                                     <div class="w-[200px] p-2 bg-gray-800 border-r border-gray-700">
                                         <span class="text-xs text-gray-400 font-semibold">LAYER</span>
                                     </div>
@@ -344,8 +344,8 @@ app.get('/', (c) => {
                                     </div>
                                 </div>
                                 
-                                <!-- Timeline Tracks -->
-                                <div id="timelineTracks">
+                                <!-- Timeline Tracks (scrollable) -->
+                                <div id="timelineTracks" class="overflow-y-auto" style="max-height: 150px;">
                                     <div class="text-center text-gray-500 text-sm py-8">
                                         Add elements and animations to see timeline
                                     </div>
