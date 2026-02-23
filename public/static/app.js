@@ -1882,6 +1882,10 @@
         const html = generateHTML();
         zip.file('index.html', html);
         
+        // Generate and add manifest.js
+        const manifest = generateManifest();
+        zip.file('manifest.js', manifest);
+        
         // Add images
         const imageElements = elements.filter(el => el.type === 'image');
         for (let i = 0; i < imageElements.length; i++) {
@@ -1898,6 +1902,23 @@
         zip.generateAsync({ type: 'blob' }).then(function(content) {
             saveAs(content, 'ad-banner.zip');
         });
+    }
+    
+    function generateManifest() {
+        // Count clickthrough elements
+        const clickthroughCount = elements.filter(el => el.type === 'clickthrough').length;
+        
+        // Get canvas dimensions
+        const width = canvasWidth;
+        const height = canvasHeight;
+        
+        return `FT.manifest({
+    "filename": "index.html",
+    "width": ${width},
+    "height": ${height},
+    "clickTagCount": ${clickthroughCount},
+    "hideBrowsers": ["ie8"]
+});`;
     }
     
     function getExtensionFromDataUrl(dataUrl) {
