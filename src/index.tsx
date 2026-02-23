@@ -280,14 +280,14 @@ app.get('/', (c) => {
                         
                         <div class="border-l border-gray-600 pl-4 flex items-center space-x-2">
                             <label class="text-sm text-gray-400">Zoom:</label>
-                            <button id="zoomOut" class="bg-gray-700 hover:bg-gray-600 text-white px-3 py-1 rounded text-sm transition-colors">
+                            <button id="stageZoomOut" class="bg-gray-700 hover:bg-gray-600 text-white px-3 py-1 rounded text-sm transition-colors">
                                 <i class="fas fa-search-minus"></i>
                             </button>
-                            <span id="zoomLevel" class="text-sm text-gray-300 w-12 text-center">100%</span>
-                            <button id="zoomIn" class="bg-gray-700 hover:bg-gray-600 text-white px-3 py-1 rounded text-sm transition-colors">
+                            <span id="stageZoomLevel" class="text-sm text-gray-300 w-12 text-center">100%</span>
+                            <button id="stageZoomIn" class="bg-gray-700 hover:bg-gray-600 text-white px-3 py-1 rounded text-sm transition-colors">
                                 <i class="fas fa-search-plus"></i>
                             </button>
-                            <button id="zoomReset" class="bg-gray-700 hover:bg-gray-600 text-white px-3 py-1 rounded text-sm transition-colors">
+                            <button id="stageZoomReset" class="bg-gray-700 hover:bg-gray-600 text-white px-3 py-1 rounded text-sm transition-colors">
                                 <i class="fas fa-compress"></i>
                             </button>
                         </div>

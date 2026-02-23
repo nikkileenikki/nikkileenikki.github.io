@@ -228,10 +228,10 @@
         $('#exportBtn').on('click', exportToZip);
         $('#clearBtn').on('click', clearAll);
         
-        // Zoom controls
-        $('#zoomIn').on('click', zoomIn);
-        $('#zoomOut').on('click', zoomOut);
-        $('#zoomReset').on('click', zoomReset);
+        // Stage zoom controls
+        $('#stageZoomIn').on('click', stageZoomIn);
+        $('#stageZoomOut').on('click', stageZoomOut);
+        $('#stageZoomReset').on('click', stageZoomReset);
     }
     
     // ============================================
@@ -2413,10 +2413,10 @@
         });
         
         // Update zoom level display
-        $('#zoomLevel').text(Math.round(stageZoom * 100) + '%');
+        $('#stageZoomLevel').text(Math.round(stageZoom * 100) + '%');
     }
     
-    function zoomIn() {
+    function stageZoomIn() {
         if (stageZoom < 2.0) {
             // Round to nearest 0.25 to ensure exact 25% steps
             stageZoom = Math.round((stageZoom + 0.25) * 4) / 4;
@@ -2425,7 +2425,7 @@
         }
     }
     
-    function zoomOut() {
+    function stageZoomOut() {
         if (stageZoom > 0.25) {
             // Round to nearest 0.25 to ensure exact 25% steps
             stageZoom = Math.round((stageZoom - 0.25) * 4) / 4;
@@ -2434,7 +2434,7 @@
         }
     }
     
-    function zoomReset() {
+    function stageZoomReset() {
         // Get canvas container dimensions (available space for canvas)
         const containerWidth = $('#canvasContainer').width();
         const containerHeight = $('#canvasContainer').height();
