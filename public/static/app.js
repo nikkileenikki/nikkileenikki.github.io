@@ -780,44 +780,64 @@
         elementCounter++;
         const id = `element_${elementCounter}`;
         
-        const element = {
-            id: id,
-            type: 'image',
-            src: url,
-            filename: filename,
-            x: 50,
-            y: 50,
-            width: 100,
-            height: 100,
-            rotation: 0,
-            opacity: 1,
-            zIndex: elements.length,
-            animations: []
+        // Load image to get natural dimensions
+        const img = new Image();
+        img.onload = function() {
+            const naturalWidth = img.width;
+            const naturalHeight = img.height;
+            const aspectRatio = naturalHeight / naturalWidth;
+            
+            // Fit to canvas width, maintain aspect ratio
+            const fitWidth = canvasWidth;
+            const fitHeight = Math.round(fitWidth * aspectRatio);
+            
+            const element = {
+                id: id,
+                type: 'image',
+                src: url,
+                filename: filename,
+                x: 0,  // Start at X = 0
+                y: 0,  // Start at Y = 0
+                width: fitWidth,
+                height: fitHeight,
+                rotation: 0,
+                opacity: 1,
+                zIndex: elements.length,
+                animations: []
+            };
+            
+            elements.push(element);
+            
+            const $element = $(`
+                <div class="canvas-element" id="${id}" style="
+                    left: ${element.x}px;
+                    top: ${element.y}px;
+                    width: ${element.width}px;
+                    height: ${element.height}px;
+                    opacity: ${element.opacity};
+                    transform: rotate(${element.rotation}deg);
+                    z-index: ${element.zIndex};
+                ">
+                    <img src="${url}" style="width: 100%; height: 100%; object-fit: contain; pointer-events: none;">
+                    <div class="resize-handle nw"></div>
+                    <div class="resize-handle ne"></div>
+                    <div class="resize-handle sw"></div>
+                    <div class="resize-handle se"></div>
+                </div>
+            `);
+            
+            $canvas.append($element);
+            updateLayersList();
+            selectElement(id);
         };
         
-        elements.push(element);
+        img.onerror = function() {
+            // Fallback if image fails to load
+            console.error('Failed to load image:', filename);
+            alert('Failed to load image. Please try again.');
+        };
         
-        const $element = $(`
-            <div class="canvas-element" id="${id}" style="
-                left: ${element.x}px;
-                top: ${element.y}px;
-                width: ${element.width}px;
-                height: ${element.height}px;
-                opacity: ${element.opacity};
-                transform: rotate(${element.rotation}deg);
-                z-index: ${element.zIndex};
-            ">
-                <img src="${url}" style="width: 100%; height: 100%; object-fit: contain; pointer-events: none;">
-                <div class="resize-handle nw"></div>
-                <div class="resize-handle ne"></div>
-                <div class="resize-handle sw"></div>
-                <div class="resize-handle se"></div>
-            </div>
-        `);
-        
-        $canvas.append($element);
-        updateLayersList();
-        selectElement(id);
+        img.src = url;
     }
     
     function updateCanvasSize() {
@@ -1878,8 +1898,11 @@
             return;
         }
         
+        // Get polite load option from checkbox
+        const usePoliteLoad = $('#politeLoadCheckbox').is(':checked');
+        
         const zip = new JSZip();
-        const html = generateHTML();
+        const html = generateHTML(usePoliteLoad);
         zip.file('index.html', html);
         
         // Generate and add manifest.js
@@ -1928,7 +1951,7 @@
         return 'jpg';
     }
     
-    function generateHTML() {
+    function generateHTML(usePoliteLoad = true) {
         let elementsHtml = '';
         let animationsJs = '';
         let clickthroughJs = '';
@@ -2064,10 +2087,10 @@
             width: ${canvasWidth}px;
             height: ${canvasHeight}px;
             background: white;
-            overflow: hidden;
+            overflow: hidden;${usePoliteLoad ? `
             opacity: 0;
-            visibility: hidden;
-        }
+            visibility: hidden;` : ''}
+        }${usePoliteLoad ? `
         #ad-container.loaded {
             opacity: 1;
             visibility: visible;
@@ -2089,21 +2112,21 @@
         }
         .loader.hidden {
             display: none;
-        }
+        }` : ''}
     </style>
 </head>
 <body>
     <!-- Flashtalking API as first child in body -->
     <script src="https://cdn.flashtalking.com/frameworks/js/api/2/10/html5API.js"></script>
-    
+    ${usePoliteLoad ? `
     <!-- Loader (shown while loading) -->
     <div class="loader"></div>
-    
+    ` : ''}
     <div id="ad-container">
         ${elementsHtml}
     </div>
     
-    <script>
+    <script>${usePoliteLoad ? `
         // Polite load function - waits for page to be ready
         function politeLoad(callback) {
             if (document.readyState === 'complete') {
@@ -2149,7 +2172,7 @@
                 }
             });
         }
-        
+        ` : ''}
         function startAnimation() {
             // Clickthrough handling with JavaScript (no <a> tags)
             const clickthroughZones = document.querySelectorAll('.clickthrough-zone');
@@ -2172,9 +2195,11 @@
             const tl = gsap.timeline({ repeat: ${animLoop} });
             ${animationsJs}
         }
-        
+        ${usePoliteLoad ? `
         // Use polite load to ensure page is fully loaded before initializing
-        politeLoad(initAd);
+        politeLoad(initAd);` : `
+        // Start animation immediately (no polite load)
+        startAnimation();`}
     </script>
 </body>
 </html>`;

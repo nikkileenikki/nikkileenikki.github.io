@@ -245,6 +245,11 @@ app.get('/', (c) => {
                     <div class="mb-2">
                         <h2 class="text-lg font-semibold mb-3">Export</h2>
                         <div class="space-y-2">
+                            <!-- Polite Load Option -->
+                            <label class="flex items-center space-x-2 text-sm text-gray-300 cursor-pointer hover:text-white">
+                                <input type="checkbox" id="politeLoadCheckbox" checked class="w-4 h-4 text-blue-600 bg-gray-700 border-gray-600 rounded focus:ring-blue-500">
+                                <span>Enable Polite Load</span>
+                            </label>
                             <button id="exportBtn" class="w-full bg-green-600 hover:bg-green-700 text-white py-2 rounded transition-colors">
                                 <i class="fas fa-file-archive mr-2"></i>Export as ZIP
                             </button>
