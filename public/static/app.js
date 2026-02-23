@@ -1886,14 +1886,15 @@
         const manifest = generateManifest();
         zip.file('manifest.js', manifest);
         
-        // Add images
+        // Add images to root folder (no subfolders)
         const imageElements = elements.filter(el => el.type === 'image');
         for (let i = 0; i < imageElements.length; i++) {
             const element = imageElements[i];
             try {
                 const response = await fetch(element.src);
                 const blob = await response.blob();
-                zip.file(`images/image_${i}.${getExtensionFromDataUrl(element.src)}`, blob);
+                // Place images in root folder (same level as index.html)
+                zip.file(`image_${i}.${getExtensionFromDataUrl(element.src)}`, blob);
             } catch (error) {
                 console.error('Error adding image to zip:', error);
             }
@@ -1937,7 +1938,8 @@
         
         sortedElements.forEach((element) => {
             if (element.type === 'image') {
-                const imgSrc = `images/image_${imageCounter}.${getExtensionFromDataUrl(element.src)}`;
+                // Images in root folder (no subfolder)
+                const imgSrc = `image_${imageCounter}.${getExtensionFromDataUrl(element.src)}`;
                 elementsHtml += `
         <img id="${element.id}" src="${imgSrc}" style="
             position: absolute;
@@ -1972,8 +1974,10 @@
             z-index: ${element.zIndex};
         ">${element.text}</div>`;
             } else if (element.type === 'clickthrough') {
+                // Use div with JavaScript click handler instead of <a> tag
+                const clickIndex = elements.filter(el => el.type === 'clickthrough').findIndex(el => el.id === element.id) + 1;
                 elementsHtml += `
-        <a id="${element.id}" href="${element.url}" target="${element.target}" style="
+        <div id="${element.id}" class="clickthrough-zone" data-url="${element.url}" data-target="${element.target}" data-click-index="${clickIndex}" style="
             position: absolute;
             left: ${element.x}px;
             top: ${element.y}px;
@@ -1981,8 +1985,8 @@
             height: ${element.height}px;
             opacity: 0;
             z-index: ${element.zIndex};
-            display: block;
-        "></a>`;
+            cursor: pointer;
+        "></div>`;
             } else if (element.type === 'shape') {
                 let borderRadius = '0';
                 if (element.shapeType === 'circle') {
@@ -2065,11 +2069,34 @@
     </style>
 </head>
 <body>
+    <!-- Flashtalking API as first child in body -->
+    <script src="https://cdn.flashtalking.com/frameworks/js/api/2/10/html5API.js"></script>
+    
     <div id="ad-container">
         ${elementsHtml}
     </div>
     
     <script>
+        // Clickthrough handling with JavaScript (no <a> tags)
+        document.addEventListener('DOMContentLoaded', function() {
+            const clickthroughZones = document.querySelectorAll('.clickthrough-zone');
+            clickthroughZones.forEach(function(zone) {
+                zone.addEventListener('click', function() {
+                    const url = this.getAttribute('data-url');
+                    const target = this.getAttribute('data-target');
+                    const clickIndex = this.getAttribute('data-click-index');
+                    
+                    // Try Flashtalking API first, fallback to window.open
+                    if (typeof myFT !== 'undefined' && myFT.clickTag) {
+                        myFT.clickTag(clickIndex, url);
+                    } else {
+                        window.open(url, target);
+                    }
+                });
+            });
+        });
+        
+        // GSAP Timeline Animation
         const tl = gsap.timeline({ repeat: ${animLoop} });
         ${animationsJs}
     </script>
