@@ -534,10 +534,7 @@
     function openTextModal() {
         $('#textContent').val('');
         $textModal.removeClass('hidden');
-        setTimeout(() => {
-            $('#textContent').focus();
-            $textModal.focus(); // Fallback for Escape key
-        }, 100);
+        setTimeout(() => $('#textContent').focus(), 100);
     }
     
     function closeTextModal() {
@@ -621,10 +618,7 @@
         $('#clickthroughUrl').val('https://kult.my');
         $('#clickthroughTarget').val('_blank');
         $clickthroughModal.removeClass('hidden');
-        setTimeout(() => {
-            $('#clickthroughUrl').focus();
-            $clickthroughModal.focus(); // Fallback for Escape key
-        }, 100);
+        setTimeout(() => $('#clickthroughUrl').focus(), 100);
     }
     
     function closeClickthroughModal() {
@@ -643,10 +637,7 @@
     // ============================================
     function openShapeModal() {
         $shapeModal.removeClass('hidden');
-        setTimeout(() => {
-            $('#shapeWidth').focus();
-            $shapeModal.focus(); // Fallback for Escape key
-        }, 100);
+        setTimeout(() => $('#shapeWidth').focus(), 100);
     }
     
     function closeShapeModal() {
@@ -1467,7 +1458,7 @@
         $('.anim-checkbox').prop('checked', false);
         
         $animModal.removeClass('hidden');
-        setTimeout(() => $animModal.focus(), 100); // Focus modal for Escape key
+        setTimeout(() => $('#animStart').focus(), 100);
     }
     
     function closeAnimationModal() {
