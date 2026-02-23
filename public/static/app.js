@@ -1102,7 +1102,10 @@
                 label = `Click${clickIndex}`;
             } else if (element.type === 'shape') {
                 icon = 'fa-shapes';
-                label = element.shapeType.charAt(0).toUpperCase() + element.shapeType.slice(1).replace('-', ' ');
+                // Count shape elements to generate shape1, shape2, etc.
+                const shapeElements = elements.filter(el => el.type === 'shape');
+                const shapeIndex = shapeElements.findIndex(el => el.id === element.id) + 1;
+                label = `Shape${shapeIndex}`;
             } else {
                 icon = 'fa-image';
                 label = (element.filename || 'Image').substring(0, 20);
@@ -1668,6 +1671,12 @@
                 const clickthroughElements = elements.filter(el => el.type === 'clickthrough');
                 const clickIndex = clickthroughElements.findIndex(el => el.id === element.id) + 1;
                 label = `Click${clickIndex}`;
+            } else if (element.type === 'shape') {
+                icon = 'fa-shapes';
+                // Count shape elements to generate shape1, shape2, etc.
+                const shapeElements = elements.filter(el => el.type === 'shape');
+                const shapeIndex = shapeElements.findIndex(el => el.id === element.id) + 1;
+                label = `Shape${shapeIndex}`;
             } else {
                 icon = 'fa-image';
                 label = (element.filename || 'Image').substring(0, 15);
