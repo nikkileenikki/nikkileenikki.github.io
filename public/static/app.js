@@ -2065,6 +2065,30 @@
             height: ${canvasHeight}px;
             background: white;
             overflow: hidden;
+            opacity: 0;
+            visibility: hidden;
+        }
+        #ad-container.loaded {
+            opacity: 1;
+            visibility: visible;
+        }
+        .loader {
+            position: absolute;
+            width: 15px;
+            aspect-ratio: 1;
+            border-radius: 50%;
+            animation: l5 1s infinite linear alternate;
+            left: calc(50% - 10px);
+            top: calc(50% - 10px);
+        }
+        @keyframes l5 {
+            0%  {box-shadow: 20px 0 #000, -20px 0 #0002;background: #000 }
+            33% {box-shadow: 20px 0 #000, -20px 0 #0002;background: #0002}
+            66% {box-shadow: 20px 0 #0002,-20px 0 #000; background: #0002}
+            100%{box-shadow: 20px 0 #0002,-20px 0 #000; background: #000 }
+        }
+        .loader.hidden {
+            display: none;
         }
     </style>
 </head>
@@ -2072,13 +2096,62 @@
     <!-- Flashtalking API as first child in body -->
     <script src="https://cdn.flashtalking.com/frameworks/js/api/2/10/html5API.js"></script>
     
+    <!-- Loader (shown while loading) -->
+    <div class="loader"></div>
+    
     <div id="ad-container">
         ${elementsHtml}
     </div>
     
     <script>
-        // Clickthrough handling with JavaScript (no <a> tags)
-        document.addEventListener('DOMContentLoaded', function() {
+        // Polite load function - waits for page to be ready
+        function politeLoad(callback) {
+            if (document.readyState === 'complete') {
+                callback();
+            } else {
+                window.addEventListener('load', callback);
+            }
+        }
+        
+        // Preload all images and show ad when ready
+        function initAd() {
+            const images = document.querySelectorAll('#ad-container img');
+            const loader = document.querySelector('.loader');
+            const adContainer = document.getElementById('ad-container');
+            
+            if (images.length === 0) {
+                // No images, show ad immediately
+                loader.classList.add('hidden');
+                adContainer.classList.add('loaded');
+                startAnimation();
+                return;
+            }
+            
+            let loadedCount = 0;
+            const totalImages = images.length;
+            
+            function imageLoaded() {
+                loadedCount++;
+                if (loadedCount === totalImages) {
+                    // All images loaded, hide loader and show ad
+                    loader.classList.add('hidden');
+                    adContainer.classList.add('loaded');
+                    startAnimation();
+                }
+            }
+            
+            images.forEach(function(img) {
+                if (img.complete) {
+                    imageLoaded();
+                } else {
+                    img.addEventListener('load', imageLoaded);
+                    img.addEventListener('error', imageLoaded); // Count errors as loaded
+                }
+            });
+        }
+        
+        function startAnimation() {
+            // Clickthrough handling with JavaScript (no <a> tags)
             const clickthroughZones = document.querySelectorAll('.clickthrough-zone');
             clickthroughZones.forEach(function(zone) {
                 zone.addEventListener('click', function() {
@@ -2094,11 +2167,14 @@
                     }
                 });
             });
-        });
+            
+            // GSAP Timeline Animation
+            const tl = gsap.timeline({ repeat: ${animLoop} });
+            ${animationsJs}
+        }
         
-        // GSAP Timeline Animation
-        const tl = gsap.timeline({ repeat: ${animLoop} });
-        ${animationsJs}
+        // Use polite load to ensure page is fully loaded before initializing
+        politeLoad(initAd);
     </script>
 </body>
 </html>`;
