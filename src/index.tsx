@@ -379,7 +379,7 @@ app.get('/', (c) => {
         </div>
 
         <!-- Animation Modal -->
-        <div id="animModal" tabindex="-1" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div id="animModal" tabindex="-1" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[10000]">
             <div class="bg-gray-800 rounded-lg p-3 w-[600px] max-h-[90vh] overflow-y-auto">
                 <div class="flex justify-between items-center mb-2">
                     <h3 class="text-xl font-bold">Add Animation</h3>
@@ -498,7 +498,7 @@ app.get('/', (c) => {
         </div>
         
         <!-- Clickthrough Modal -->
-        <div id="clickthroughModal" tabindex="-1" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div id="clickthroughModal" tabindex="-1" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[10000]">
             <div class="bg-gray-800 rounded-lg p-3 w-[500px]">
                 <div class="flex justify-between items-center mb-2">
                     <h3 class="text-xl font-bold">Add Clickthrough Layer</h3>
@@ -531,7 +531,7 @@ app.get('/', (c) => {
         </div>
         
         <!-- Shape Modal -->
-        <div id="shapeModal" tabindex="-1" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div id="shapeModal" tabindex="-1" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[10000]">
             <div class="bg-gray-800 rounded-lg p-3 w-[500px]">
                 <div class="flex justify-between items-center mb-2">
                     <h3 class="text-xl font-bold">Add Shape</h3>
@@ -597,7 +597,7 @@ app.get('/', (c) => {
         </div>
         
         <!-- Text Modal -->
-        <div id="textModal" tabindex="-1" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div id="textModal" tabindex="-1" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[10000]">
             <div class="bg-gray-800 rounded-lg p-3 w-[500px]">
                 <div class="flex justify-between items-center mb-2">
                     <h3 class="text-xl font-bold">Add Text</h3>
