@@ -381,7 +381,7 @@
             if (element) {
                 const anim = element.animations.find(a => a.id === animId);
                 if (anim) {
-                    anim.start = (newLeftPercent / 100) * totalDuration;
+                    anim.start = Math.round(((newLeftPercent / 100) * totalDuration) * 10) / 10;
                 }
             }
         };
@@ -449,8 +449,8 @@
                     $block.css('left', newLeft + '%');
                     $block.css('width', newWidthPercent + '%');
                     
-                    anim.start = (newLeft / 100) * totalDuration;
-                    anim.duration = (newWidthPercent / 100) * totalDuration;
+                    anim.start = Math.round(((newLeft / 100) * totalDuration) * 10) / 10;
+                    anim.duration = Math.round(((newWidthPercent / 100) * totalDuration) * 10) / 10;
                 }
             } else {
                 // Resize from right - adjust duration only
@@ -460,7 +460,7 @@
                 const newWidthPercent = (newWidthPx / trackWidth) * 100;
                 
                 $block.css('width', newWidthPercent + '%');
-                anim.duration = (newWidthPercent / 100) * totalDuration;
+                anim.duration = Math.round(((newWidthPercent / 100) * totalDuration) * 10) / 10;
             }
         };
         
@@ -1496,8 +1496,8 @@
             $(`.anim-checkbox[value="${type}"]`).prop('checked', true);
         });
         
-        $('#animStart').val(anim.start);
-        $('#animDuration').val(anim.duration);
+        $('#animStart').val(anim.start.toFixed(1));
+        $('#animDuration').val(anim.duration.toFixed(1));
         $('#animEase').val(anim.ease);
         $('#timelineDuration').val(totalDuration);
         
