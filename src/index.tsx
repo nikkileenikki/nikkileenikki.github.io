@@ -245,6 +245,15 @@ app.get('/', (c) => {
                     <div class="mb-2">
                         <h2 class="text-lg font-semibold mb-3">Export</h2>
                         <div class="space-y-2">
+                            <!-- Banner Name Input -->
+                            <div class="space-y-1">
+                                <label class="text-sm text-gray-400">Banner Name</label>
+                                <input type="text" id="bannerName" placeholder="my-banner" 
+                                    class="w-full bg-gray-700 text-white rounded px-3 py-2 text-sm border border-gray-600 focus:border-blue-500 focus:outline-none"
+                                    value="ad-banner">
+                                <p class="text-xs text-gray-500">No spaces allowed (used for ZIP filename)</p>
+                            </div>
+                            
                             <!-- Polite Load Option -->
                             <label class="flex items-center space-x-2 text-sm text-gray-300 cursor-pointer hover:text-white">
                                 <input type="checkbox" id="politeLoadCheckbox" checked class="w-4 h-4 text-blue-600 bg-gray-700 border-gray-600 rounded focus:ring-blue-500">
@@ -327,7 +336,7 @@ app.get('/', (c) => {
                         </div>
                         
                         <!-- Timeline Container -->
-                        <div id="timelineContainer" class="bg-gray-900 rounded-lg overflow-x-auto relative" style="max-height: 190px;">
+                        <div id="timelineContainer" class="bg-gray-900 rounded-lg overflow-x-auto relative" style="height: 190px;">
                             <div class="min-w-[800px]">
                                 <!-- Timeline Header -->
                                 <div class="flex border-b border-gray-700 sticky top-0 bg-gray-900 z-10">

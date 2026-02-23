@@ -228,6 +228,14 @@
         $('#exportBtn').on('click', exportToZip);
         $('#clearBtn').on('click', clearAll);
         
+        // Banner name input - sanitize in real-time
+        $('#bannerName').on('input', function() {
+            let value = $(this).val();
+            // Replace spaces with dashes, remove special characters
+            value = value.replace(/\s+/g, '-').replace(/[^a-zA-Z0-9-_]/g, '');
+            $(this).val(value);
+        });
+        
         // Stage zoom controls
         $('#stageZoomIn').on('click', stageZoomIn);
         $('#stageZoomOut').on('click', stageZoomOut);
@@ -1933,6 +1941,17 @@
             return;
         }
         
+        // Get and validate banner name
+        let bannerName = $('#bannerName').val().trim();
+        if (!bannerName) {
+            bannerName = 'ad-banner';
+        }
+        // Remove spaces and special characters, keep only alphanumeric, dash, underscore
+        bannerName = bannerName.replace(/\s+/g, '-').replace(/[^a-zA-Z0-9-_]/g, '');
+        if (!bannerName) {
+            bannerName = 'ad-banner';
+        }
+        
         // Get polite load option from checkbox
         const usePoliteLoad = $('#politeLoadCheckbox').is(':checked');
         
@@ -1959,7 +1978,7 @@
         }
         
         zip.generateAsync({ type: 'blob' }).then(function(content) {
-            saveAs(content, 'ad-banner.zip');
+            saveAs(content, `${bannerName}.zip`);
         });
     }
     
