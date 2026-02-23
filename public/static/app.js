@@ -27,25 +27,30 @@
     // Ensure stageZoom is initialized to exact 1.0
     stageZoom = Math.round(stageZoom * 4) / 4;
     
-    // DOM elements
-    const $canvas = $('#canvas');
-    const $canvasWrapper = $('#canvasWrapper');
-    const $layersList = $('#layersList');
-    const $dropzone = $('#dropzone');
-    const $fileInput = $('#fileInput');
-    const $propertiesPanel = $('#propertiesPanel');
-    const $textProps = $('#textProps');
-    const $animModal = $('#animModal');
-    const $textModal = $('#textModal');
-    const $clickthroughModal = $('#clickthroughModal');
-    const $shapeModal = $('#shapeModal');
-    const $timelineTracks = $('#timelineTracks');
-    const $timelineRuler = $('#timelineRuler');
+    // DOM elements - initialized after DOM is ready
+    let $canvas, $canvasWrapper, $layersList, $dropzone, $fileInput;
+    let $propertiesPanel, $textProps, $animModal, $textModal;
+    let $clickthroughModal, $shapeModal, $timelineTracks, $timelineRuler;
     
     // ============================================
     // INITIALIZATION
     // ============================================
     $(document).ready(function() {
+        // Initialize DOM element references
+        $canvas = $('#canvas');
+        $canvasWrapper = $('#canvasWrapper');
+        $layersList = $('#layersList');
+        $dropzone = $('#dropzone');
+        $fileInput = $('#fileInput');
+        $propertiesPanel = $('#propertiesPanel');
+        $textProps = $('#textProps');
+        $animModal = $('#animModal');
+        $textModal = $('#textModal');
+        $clickthroughModal = $('#clickthroughModal');
+        $shapeModal = $('#shapeModal');
+        $timelineTracks = $('#timelineTracks');
+        $timelineRuler = $('#timelineRuler');
+        
         initEventListeners();
         updateCanvasSize();
         updateTimelineRuler();
@@ -93,7 +98,7 @@
             $('#shapeOpacityValue').text(Math.round(val * 100) + '%');
         });
         // Enter key support for shape
-        $('#shapeWidth, #shapeHeight, #shapeFillColor, #shapeOpacity, #shapeBorderRadius').on('keypress', function(e) {
+        $('#shapeType, #shapeWidth, #shapeHeight, #shapeFillColor, #shapeOpacity, #shapeBorderRadius').on('keypress', function(e) {
             if (e.which === 13) { // Enter key
                 e.preventDefault();
                 saveShape();
