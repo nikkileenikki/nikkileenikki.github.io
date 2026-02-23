@@ -76,6 +76,13 @@
                 saveText();
             }
         });
+        // Escape key for text modal
+        $('#textModal').on('keydown', function(e) {
+            if (e.keyCode === 27) { // Escape
+                e.preventDefault();
+                closeTextModal();
+            }
+        });
         
         // Clickthrough
         $('#addClickthroughBtn').on('click', openClickthroughModal);
@@ -86,6 +93,13 @@
             if (e.which === 13) { // Enter key
                 e.preventDefault();
                 saveClickthrough();
+            }
+        });
+        // Escape key for clickthrough modal
+        $('#clickthroughModal').on('keydown', function(e) {
+            if (e.keyCode === 27) { // Escape
+                e.preventDefault();
+                closeClickthroughModal();
             }
         });
         
@@ -102,6 +116,13 @@
             if (e.which === 13) { // Enter key
                 e.preventDefault();
                 saveShape();
+            }
+        });
+        // Escape key for shape modal
+        $('#shapeModal').on('keydown', function(e) {
+            if (e.keyCode === 27) { // Escape
+                e.preventDefault();
+                closeShapeModal();
             }
         });
         
@@ -196,6 +217,13 @@
         $timelineTracks.on('click', '.delete-anim', function(e) {
             e.stopPropagation();
             handleDeleteAnimation(e);
+        });
+        // Escape key for animation modal
+        $('#animModal').on('keydown', function(e) {
+            if (e.keyCode === 27) { // Escape
+                e.preventDefault();
+                closeAnimationModal();
+            }
         });
         
         // Timeline layer controls
