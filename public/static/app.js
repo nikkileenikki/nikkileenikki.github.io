@@ -38,6 +38,7 @@
     const $animModal = $('#animModal');
     const $textModal = $('#textModal');
     const $clickthroughModal = $('#clickthroughModal');
+    const $shapeModal = $('#shapeModal');
     const $timelineTracks = $('#timelineTracks');
     const $timelineRuler = $('#timelineRuler');
     
@@ -75,6 +76,13 @@
         $('#addClickthroughBtn').on('click', openClickthroughModal);
         $('#closeClickthroughModal').on('click', closeClickthroughModal);
         $('#saveClickthroughBtn').on('click', saveClickthrough);
+        // Enter key support for clickthrough
+        $('#clickthroughUrl, #clickthroughTarget').on('keypress', function(e) {
+            if (e.which === 13) { // Enter key
+                e.preventDefault();
+                saveClickthrough();
+            }
+        });
         
         // Shape
         $('#addShapeBtn').on('click', openShapeModal);
@@ -83,6 +91,13 @@
         $('#shapeOpacity').on('input', function() {
             const val = $(this).val();
             $('#shapeOpacityValue').text(Math.round(val * 100) + '%');
+        });
+        // Enter key support for shape
+        $('#shapeWidth, #shapeHeight, #shapeFillColor, #shapeOpacity, #shapeBorderRadius').on('keypress', function(e) {
+            if (e.which === 13) { // Enter key
+                e.preventDefault();
+                saveShape();
+            }
         });
         
         // Canvas size
@@ -587,11 +602,12 @@
     // SHAPE
     // ============================================
     function openShapeModal() {
-        $('#shapeModal').removeClass('hidden');
+        $shapeModal.removeClass('hidden');
+        $('#shapeWidth').focus();
     }
     
     function closeShapeModal() {
-        $('#shapeModal').addClass('hidden');
+        $shapeModal.addClass('hidden');
     }
     
     function saveShape() {
@@ -923,6 +939,26 @@
     // ARROW KEY POSITIONING
     // ============================================
     function handleKeyDown(e) {
+        // Escape key: close any open modal
+        if (e.keyCode === 27) { // Escape
+            if (!$textModal.hasClass('hidden')) {
+                closeTextModal();
+                return;
+            }
+            if (!$clickthroughModal.hasClass('hidden')) {
+                closeClickthroughModal();
+                return;
+            }
+            if (!$shapeModal.hasClass('hidden')) {
+                closeShapeModal();
+                return;
+            }
+            if (!$animModal.hasClass('hidden')) {
+                closeAnimationModal();
+                return;
+            }
+        }
+        
         if (!selectedElement) return;
         
         // Delete/Backspace keys: 8=backspace, 46=delete
