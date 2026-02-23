@@ -217,12 +217,6 @@
         // Playhead dragging
         $('#timelinePlayhead').on('mousedown', handlePlayheadDragStart);
         
-        // Timeline track drag and drop
-        $timelineTracks.on('dragstart', '.timeline-track', handleTimelineTrackDragStart);
-        $timelineTracks.on('dragover', '.timeline-track', handleTimelineTrackDragOver);
-        $timelineTracks.on('drop', '.timeline-track', handleTimelineTrackDrop);
-        $timelineTracks.on('dragend', '.timeline-track', handleTimelineTrackDragEnd);
-        
         // Actions
         $('#previewBtn').on('click', playTimeline);
         $('#exportBtn').on('click', exportToZip);
@@ -283,81 +277,6 @@
     }
     
     // Timeline track drag and drop
-    let draggedTrackId = null;
-    
-    function handleTimelineTrackDragStart(e) {
-        draggedTrackId = $(e.currentTarget).data('element-id');
-        $(e.currentTarget).addClass('dragging');
-    }
-    
-    function handleTimelineTrackDragOver(e) {
-        e.preventDefault();
-        
-        const $target = $(e.currentTarget);
-        if ($target.data('element-id') === draggedTrackId) return;
-        
-        // Remove all drag-over classes first
-        $('.timeline-track').removeClass('drag-over-top drag-over-bottom');
-        
-        // Determine if dragging over top or bottom half
-        const rect = e.currentTarget.getBoundingClientRect();
-        const mouseY = e.originalEvent.clientY;
-        const targetMidY = rect.top + rect.height / 2;
-        const isBottom = mouseY > targetMidY;
-        
-        $target.addClass(isBottom ? 'drag-over-bottom' : 'drag-over-top');
-    }
-    
-    function handleTimelineTrackDrop(e) {
-        e.preventDefault();
-        e.stopPropagation();
-        
-        const targetId = $(e.currentTarget).data('element-id');
-        if (!draggedTrackId || draggedTrackId === targetId) {
-            handleTimelineTrackDragEnd();
-            return;
-        }
-        
-        const draggedEl = elements.find(el => el.id === draggedTrackId);
-        const targetEl = elements.find(el => el.id === targetId);
-        
-        if (draggedEl && targetEl) {
-            const draggedIndex = elements.indexOf(draggedEl);
-            const targetIndex = elements.indexOf(targetEl);
-            
-            // Determine if dropping above or below target
-            const rect = e.currentTarget.getBoundingClientRect();
-            const mouseY = e.originalEvent.clientY;
-            const targetMidY = rect.top + rect.height / 2;
-            const dropBelow = mouseY > targetMidY;
-            
-            // Remove dragged element
-            elements.splice(draggedIndex, 1);
-            
-            // Calculate new insertion index
-            let newIndex = elements.indexOf(targetEl);
-            if (dropBelow) newIndex += 1;
-            
-            // Insert at new position
-            elements.splice(newIndex, 0, draggedEl);
-            
-            // Reassign z-indexes
-            elements.forEach((el, idx) => {
-                el.zIndex = idx;
-                $(`#${el.id}`).css('z-index', el.zIndex);
-            });
-            
-            updateTimelineTracks();
-            rebuildTimeline();
-        }
-        
-        handleTimelineTrackDragEnd();
-    }
-    
-    function handleTimelineTrackDragEnd() {
-        $('.timeline-track').removeClass('dragging drag-over-top drag-over-bottom');
-        draggedTrackId = null;
-    }
     
     // ============================================
     // TIMELINE BLOCK DRAGGING AND RESIZING
@@ -1691,9 +1610,10 @@
             }
             
             const $track = $(`
-                <div class="timeline-track" draggable="true" data-element-id="${element.id}">
+                <div class="timeline-track" data-element-id="${element.id}">
                     <div class="timeline-track-label">
                         <div class="flex items-center flex-1">
+                            <i class="fas fa-grip-vertical text-gray-600 mr-2"></i>
                             <i class="fas ${icon} text-blue-400 mr-2"></i>
                             <span class="truncate flex-1">${label}</span>
                         </div>
@@ -1739,6 +1659,34 @@
                 
                 $(`#track_${element.id}`).append($block);
             });
+        });
+        
+        // Initialize jQuery UI sortable for timeline tracks
+        $timelineTracks.sortable({
+            handle: '.timeline-track-label',
+            axis: 'y',
+            cursor: 'move',
+            tolerance: 'pointer',
+            update: function(event, ui) {
+                // Get new order of elements based on DOM order
+                const newOrder = [];
+                $timelineTracks.find('.timeline-track').each(function() {
+                    const elementId = $(this).data('element-id');
+                    const element = elements.find(el => el.id === elementId);
+                    if (element) {
+                        newOrder.push(element);
+                    }
+                });
+                
+                // Update zIndex based on new order (reverse because top = highest zIndex)
+                newOrder.reverse().forEach((element, index) => {
+                    element.zIndex = index;
+                    $(`#${element.id}`).css('z-index', index);
+                });
+                
+                // Update layers list and rebuild timeline
+                updateLayersList();
+            }
         });
     }
     
@@ -1939,6 +1887,15 @@
         if (elements.length === 0) {
             alert('Please add at least one element to export');
             return;
+        }
+        
+        // Check if there's at least one clickthrough
+        const hasClickthrough = elements.some(el => el.type === 'clickthrough');
+        if (!hasClickthrough) {
+            const proceed = confirm('Warning: No clickthrough layer added. The banner will not be clickable.\n\nDo you want to continue exporting?');
+            if (!proceed) {
+                return;
+            }
         }
         
         // Get and validate banner name
