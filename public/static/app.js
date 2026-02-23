@@ -22,6 +22,7 @@
     // Canvas dimensions
     let canvasWidth = 300;
     let canvasHeight = 250;
+    let stageZoom = 1.0; // Stage zoom level (0.25 to 2.0)
     
     // DOM elements
     const $canvas = $('#canvas');
@@ -223,6 +224,11 @@
         $('#previewBtn').on('click', playTimeline);
         $('#exportBtn').on('click', exportToZip);
         $('#clearBtn').on('click', clearAll);
+        
+        // Zoom controls
+        $('#zoomIn').on('click', zoomIn);
+        $('#zoomOut').on('click', zoomOut);
+        $('#zoomReset').on('click', zoomReset);
     }
     
     // ============================================
@@ -988,6 +994,23 @@
     // ============================================
     function handleKeyDown(e) {
         if (!selectedElement) return;
+        
+        // Delete/Backspace keys: 8=backspace, 46=delete
+        if (e.keyCode === 8 || e.keyCode === 46) {
+            // Prevent default browser back navigation on Backspace
+            e.preventDefault();
+            
+            // Delete the selected element
+            elements = elements.filter(el => el.id !== selectedElement);
+            $(`#${selectedElement}`).remove();
+            
+            selectedElement = null;
+            $propertiesPanel.addClass('hidden');
+            
+            updateLayersList();
+            rebuildTimeline();
+            return;
+        }
         
         // Arrow keys: 37=left, 38=up, 39=right, 40=down
         const arrowKeys = [37, 38, 39, 40];
@@ -2087,7 +2110,9 @@
             width: ${canvasWidth}px;
             height: ${canvasHeight}px;
             background: white;
-            overflow: hidden;${usePoliteLoad ? `
+            overflow: hidden;
+            border: 1px solid #000;
+            box-sizing: border-box;${usePoliteLoad ? `
             opacity: 0;
             visibility: hidden;` : ''}
         }${usePoliteLoad ? `
@@ -2373,6 +2398,39 @@
     window.handleDragOverLayer = handleDragOverLayer;
     window.handleLayerDrop = handleLayerDrop;
     window.handleDragEnd = handleDragEnd;
+    
+    // ============================================
+    // ZOOM CONTROLS
+    // ============================================
+    function updateStageZoom() {
+        // Update the wrapper's transform scale
+        $canvasWrapper.css({
+            'transform': `scale(${stageZoom})`,
+            'transform-origin': 'center center'
+        });
+        
+        // Update zoom level display
+        $('#zoomLevel').text(Math.round(stageZoom * 100) + '%');
+    }
+    
+    function zoomIn() {
+        if (stageZoom < 2.0) {
+            stageZoom = Math.min(2.0, stageZoom + 0.25);
+            updateStageZoom();
+        }
+    }
+    
+    function zoomOut() {
+        if (stageZoom > 0.25) {
+            stageZoom = Math.max(0.25, stageZoom - 0.25);
+            updateStageZoom();
+        }
+    }
+    
+    function zoomReset() {
+        stageZoom = 1.0;
+        updateStageZoom();
+    }
     
 })();
     

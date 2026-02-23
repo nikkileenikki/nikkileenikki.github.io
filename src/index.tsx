@@ -277,6 +277,20 @@ app.get('/', (c) => {
                         </select>
                         <input type="number" id="customWidth" class="bg-gray-700 rounded px-3 py-1 text-sm w-20 hidden" placeholder="Width">
                         <input type="number" id="customHeight" class="bg-gray-700 rounded px-3 py-1 text-sm w-20 hidden" placeholder="Height">
+                        
+                        <div class="border-l border-gray-600 pl-4 flex items-center space-x-2">
+                            <label class="text-sm text-gray-400">Zoom:</label>
+                            <button id="zoomOut" class="bg-gray-700 hover:bg-gray-600 text-white px-3 py-1 rounded text-sm transition-colors">
+                                <i class="fas fa-search-minus"></i>
+                            </button>
+                            <span id="zoomLevel" class="text-sm text-gray-300 w-12 text-center">100%</span>
+                            <button id="zoomIn" class="bg-gray-700 hover:bg-gray-600 text-white px-3 py-1 rounded text-sm transition-colors">
+                                <i class="fas fa-search-plus"></i>
+                            </button>
+                            <button id="zoomReset" class="bg-gray-700 hover:bg-gray-600 text-white px-3 py-1 rounded text-sm transition-colors">
+                                <i class="fas fa-compress"></i>
+                            </button>
+                        </div>
                     </div>
                     <div class="flex items-center space-x-2">
                         <button id="clearBtn" class="bg-red-600 hover:bg-red-700 text-white px-4 py-1 rounded text-sm transition-colors">
