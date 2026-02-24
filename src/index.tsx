@@ -204,6 +204,24 @@ app.get('/', (c) => {
                                         </button>
                                     </div>
                                 </div>
+                                <div>
+                                    <label class="text-sm text-gray-400">Text Shadow</label>
+                                    <div class="flex space-x-2">
+                                        <input type="number" id="propTextShadowX" class="flex-1 bg-gray-800 rounded px-2 py-1 text-sm" placeholder="X" min="-50" max="50" value="0">
+                                        <input type="number" id="propTextShadowY" class="flex-1 bg-gray-800 rounded px-2 py-1 text-sm" placeholder="Y" min="-50" max="50" value="0">
+                                        <input type="number" id="propTextShadowBlur" class="flex-1 bg-gray-800 rounded px-2 py-1 text-sm" placeholder="Blur" min="0" max="50" value="0">
+                                        <input type="color" id="propTextShadowColor" class="w-10 h-8 bg-gray-800 rounded" value="#000000">
+                                    </div>
+                                    <p class="text-xs text-gray-500 mt-1">Shadow offset and blur</p>
+                                </div>
+                                <div>
+                                    <label class="text-sm text-gray-400">Glow Effect</label>
+                                    <div class="flex space-x-2">
+                                        <input type="number" id="propTextGlow" class="flex-1 bg-gray-800 rounded px-2 py-1 text-sm" placeholder="Size" min="0" max="50" value="0">
+                                        <input type="color" id="propTextGlowColor" class="flex-1 h-8 bg-gray-800 rounded" value="#ffffff">
+                                    </div>
+                                    <p class="text-xs text-gray-500 mt-1">Glow size and color</p>
+                                </div>
                             </div>
                             
                             <!-- Clickthrough Properties -->
@@ -220,6 +238,40 @@ app.get('/', (c) => {
                                         <option value="_parent">Parent Frame (_parent)</option>
                                         <option value="_top">Top Frame (_top)</option>
                                     </select>
+                                </div>
+                            </div>
+                            
+                            <!-- Shape Properties -->
+                            <div id="shapeProps" class="hidden space-y-2 pb-3 border-b border-gray-700">
+                                <div>
+                                    <label class="text-sm text-gray-400">Shape Type</label>
+                                    <select id="propShapeType" class="w-full bg-gray-800 rounded px-3 py-2 text-sm">
+                                        <option value="rectangle">Rectangle</option>
+                                        <option value="rounded-rectangle">Rounded Rectangle</option>
+                                        <option value="circle">Circle</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="text-sm text-gray-400">Fill Color</label>
+                                    <input type="color" id="propShapeColor" class="w-full h-10 bg-gray-800 rounded px-2 py-1">
+                                </div>
+                                <div>
+                                    <label class="text-sm text-gray-400">Shadow</label>
+                                    <div class="flex space-x-2">
+                                        <input type="number" id="propShapeShadowX" class="flex-1 bg-gray-800 rounded px-2 py-1 text-sm" placeholder="X" min="-50" max="50" value="0">
+                                        <input type="number" id="propShapeShadowY" class="flex-1 bg-gray-800 rounded px-2 py-1 text-sm" placeholder="Y" min="-50" max="50" value="0">
+                                        <input type="number" id="propShapeShadowBlur" class="flex-1 bg-gray-800 rounded px-2 py-1 text-sm" placeholder="Blur" min="0" max="50" value="0">
+                                        <input type="color" id="propShapeShadowColor" class="w-10 h-8 bg-gray-800 rounded" value="#000000">
+                                    </div>
+                                    <p class="text-xs text-gray-500 mt-1">Shadow offset and blur</p>
+                                </div>
+                                <div>
+                                    <label class="text-sm text-gray-400">Glow Effect</label>
+                                    <div class="flex space-x-2">
+                                        <input type="number" id="propShapeGlow" class="flex-1 bg-gray-800 rounded px-2 py-1 text-sm" placeholder="Size" min="0" max="50" value="0">
+                                        <input type="color" id="propShapeGlowColor" class="flex-1 h-8 bg-gray-800 rounded" value="#ffffff">
+                                    </div>
+                                    <p class="text-xs text-gray-500 mt-1">Glow size and color</p>
                                 </div>
                             </div>
                             
@@ -315,9 +367,10 @@ app.get('/', (c) => {
                         <label class="text-sm text-gray-400">Canvas Size:</label>
                         <select id="canvasSize" class="bg-gray-700 rounded px-3 py-1 text-sm">
                             <option value="300x250">300x250 (Medium Rectangle)</option>
-                            <option value="728x90">728x90 (Leaderboard)</option>
-                            <option value="160x600">160x600 (Wide Skyscraper)</option>
                             <option value="300x600">300x600 (Half Page)</option>
+                            <option value="320x480">320x480 (Mobile Portrait)</option>
+                            <option value="800x600">800x600 (Large Rectangle)</option>
+                            <option value="970x250">970x250 (Billboard)</option>
                             <option value="320x50">320x50 (Mobile Banner)</option>
                             <option value="custom">Custom Size</option>
                         </select>

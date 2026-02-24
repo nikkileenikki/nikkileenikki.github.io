@@ -147,6 +147,16 @@
             }
         });
         
+        // Video play trigger change handler (modal)
+        $('#videoPlayTrigger').on('change', function() {
+            const playTrigger = $(this).val();
+            if (playTrigger === 'autoplay') {
+                $('#videoMuted').prop('checked', true).prop('disabled', true);
+            } else {
+                $('#videoMuted').prop('disabled', false);
+            }
+        });
+        
         // Canvas size
         $('#canvasSize').on('change', handleCanvasSizeChange);
         $('#customWidth, #customHeight').on('change', updateCustomCanvasSize);
@@ -234,6 +244,24 @@
         $('#propVideoPlayTrigger').on('change', updateVideoPlayTrigger);
         $('#propVideoMuted').on('change', updateVideoMuted);
         $('#propVideoControls').on('change', updateVideoControls);
+        
+        // Video play trigger change handler (properties panel)
+        $('#propVideoPlayTrigger').on('change', function() {
+            const playTrigger = $(this).val();
+            if (playTrigger === 'autoplay') {
+                $('#propVideoMuted').prop('checked', true).prop('disabled', true);
+            } else {
+                $('#propVideoMuted').prop('disabled', false);
+            }
+        });
+        
+        // Text glow and shadow
+        $('#propTextShadowX, #propTextShadowY, #propTextShadowBlur, #propTextShadowColor').on('change input', updateTextShadow);
+        $('#propTextGlow, #propTextGlowColor').on('change input', updateTextGlow);
+        
+        // Shape glow and shadow
+        $('#propShapeShadowX, #propShapeShadowY, #propShapeShadowBlur, #propShapeShadowColor').on('change input', updateShapeShadow);
+        $('#propShapeGlow, #propShapeGlowColor').on('change input', updateShapeGlow);
         
         // Animation
         $('#addAnimBtn').on('click', openAnimationModal);
@@ -600,6 +628,12 @@
             italic: false,
             underline: false,
             textAlign: 'left',
+            shadowX: 0,
+            shadowY: 0,
+            shadowBlur: 0,
+            shadowColor: '#000000',
+            glow: 0,
+            glowColor: '#ffffff',
             zIndex: elements.length,
             animations: []
         };
@@ -700,6 +734,12 @@
             height: height,
             rotation: 0,
             opacity: opacity,
+            shadowX: 0,
+            shadowY: 0,
+            shadowBlur: 0,
+            shadowColor: '#000000',
+            glow: 0,
+            glowColor: '#ffffff',
             zIndex: elements.length,
             animations: []
         };
@@ -746,7 +786,7 @@
         $('#videoUrl').val('');
         $('#videoName').val('video1');
         $('#videoPlayTrigger').val('autoplay');
-        $('#videoMuted').prop('checked', true);
+        $('#videoMuted').prop('checked', true).prop('disabled', true); // Autoplay requires muted
         $('#videoControls').prop('checked', false);
         $videoModal.removeClass('hidden');
         setTimeout(() => $('#videoUrl').focus(), 100);
@@ -1366,6 +1406,14 @@
             
             $('.text-align-btn').removeClass('active');
             $(`.text-align-btn[data-align="${element.textAlign}"]`).addClass('active');
+            
+            // Text shadow and glow
+            $('#propTextShadowX').val(element.shadowX || 0);
+            $('#propTextShadowY').val(element.shadowY || 0);
+            $('#propTextShadowBlur').val(element.shadowBlur || 0);
+            $('#propTextShadowColor').val(element.shadowColor || '#000000');
+            $('#propTextGlow').val(element.glow || 0);
+            $('#propTextGlowColor').val(element.glowColor || '#ffffff');
         } else {
             $textProps.addClass('hidden');
         }
@@ -1386,6 +1434,14 @@
             $shapeProps.removeClass('hidden');
             $('#propShapeType').val(element.shapeType);
             $('#propShapeColor').val(element.fillColor);
+            
+            // Shape shadow and glow
+            $('#propShapeShadowX').val(element.shadowX || 0);
+            $('#propShapeShadowY').val(element.shadowY || 0);
+            $('#propShapeShadowBlur').val(element.shadowBlur || 0);
+            $('#propShapeShadowColor').val(element.shadowColor || '#000000');
+            $('#propShapeGlow').val(element.glow || 0);
+            $('#propShapeGlowColor').val(element.glowColor || '#ffffff');
         } else {
             $shapeProps.addClass('hidden');
         }
@@ -1399,6 +1455,13 @@
             $('#propVideoPlayTrigger').val(element.playTrigger || 'autoplay');
             $('#propVideoMuted').prop('checked', element.muted);
             $('#propVideoControls').prop('checked', element.controls);
+            
+            // Enable/disable muted based on play trigger
+            if (element.playTrigger === 'autoplay') {
+                $('#propVideoMuted').prop('disabled', true);
+            } else {
+                $('#propVideoMuted').prop('disabled', false);
+            }
         } else {
             $videoProps.addClass('hidden');
         }
@@ -1658,6 +1721,88 @@
             <div class="text-xs">${element.videoUrl}</div>
             <div class="text-xs mt-1">${playTriggerText} ${mutedIcon}${controlsText}</div>
         `);
+    }
+    
+    // Text shadow and glow updates
+    function updateTextShadow() {
+        if (!selectedElement) return;
+        const element = elements.find(el => el.id === selectedElement);
+        if (element.type !== 'text') return;
+        
+        element.shadowX = parseInt($('#propTextShadowX').val()) || 0;
+        element.shadowY = parseInt($('#propTextShadowY').val()) || 0;
+        element.shadowBlur = parseInt($('#propTextShadowBlur').val()) || 0;
+        element.shadowColor = $('#propTextShadowColor').val() || '#000000';
+        
+        applyTextStyles(element);
+    }
+    
+    function updateTextGlow() {
+        if (!selectedElement) return;
+        const element = elements.find(el => el.id === selectedElement);
+        if (element.type !== 'text') return;
+        
+        element.glow = parseInt($('#propTextGlow').val()) || 0;
+        element.glowColor = $('#propTextGlowColor').val() || '#ffffff';
+        
+        applyTextStyles(element);
+    }
+    
+    function applyTextStyles(element) {
+        const $el = $(`#${selectedElement}`);
+        
+        // Build text-shadow CSS
+        let textShadow = '';
+        if (element.shadowX || element.shadowY || element.shadowBlur) {
+            textShadow = `${element.shadowX}px ${element.shadowY}px ${element.shadowBlur}px ${element.shadowColor}`;
+        }
+        if (element.glow > 0) {
+            const glowShadow = `0 0 ${element.glow}px ${element.glowColor}`;
+            textShadow = textShadow ? `${textShadow}, ${glowShadow}` : glowShadow;
+        }
+        
+        $el.css('text-shadow', textShadow || 'none');
+    }
+    
+    // Shape shadow and glow updates
+    function updateShapeShadow() {
+        if (!selectedElement) return;
+        const element = elements.find(el => el.id === selectedElement);
+        if (element.type !== 'shape') return;
+        
+        element.shadowX = parseInt($('#propShapeShadowX').val()) || 0;
+        element.shadowY = parseInt($('#propShapeShadowY').val()) || 0;
+        element.shadowBlur = parseInt($('#propShapeShadowBlur').val()) || 0;
+        element.shadowColor = $('#propShapeShadowColor').val() || '#000000';
+        
+        applyShapeStyles(element);
+    }
+    
+    function updateShapeGlow() {
+        if (!selectedElement) return;
+        const element = elements.find(el => el.id === selectedElement);
+        if (element.type !== 'shape') return;
+        
+        element.glow = parseInt($('#propShapeGlow').val()) || 0;
+        element.glowColor = $('#propShapeGlowColor').val() || '#ffffff';
+        
+        applyShapeStyles(element);
+    }
+    
+    function applyShapeStyles(element) {
+        const $el = $(`#${selectedElement}`);
+        
+        // Build box-shadow CSS
+        let boxShadow = '';
+        if (element.shadowX || element.shadowY || element.shadowBlur) {
+            boxShadow = `${element.shadowX}px ${element.shadowY}px ${element.shadowBlur}px ${element.shadowColor}`;
+        }
+        if (element.glow > 0) {
+            const glowShadow = `0 0 ${element.glow}px ${element.glowColor}`;
+            boxShadow = boxShadow ? `${boxShadow}, ${glowShadow}` : glowShadow;
+        }
+        
+        $el.css('box-shadow', boxShadow || 'none');
     }
     
     // ============================================
@@ -2328,6 +2473,17 @@
         ">`;
                 imageCounter++;
             } else if (element.type === 'text') {
+                // Build text-shadow CSS
+                let textShadow = '';
+                if (element.shadowX || element.shadowY || element.shadowBlur) {
+                    textShadow = `${element.shadowX}px ${element.shadowY}px ${element.shadowBlur}px ${element.shadowColor}`;
+                }
+                if (element.glow > 0) {
+                    const glowShadow = `0 0 ${element.glow}px ${element.glowColor}`;
+                    textShadow = textShadow ? `${textShadow}, ${glowShadow}` : glowShadow;
+                }
+                const textShadowStyle = textShadow ? `text-shadow: ${textShadow};` : '';
+                
                 elementsHtml += `
         <div id="${element.id}" style="
             position: absolute;
@@ -2346,6 +2502,7 @@
             text-align: ${element.textAlign};
             line-height: 1.2;
             word-wrap: break-word;
+            ${textShadowStyle}
             z-index: ${element.zIndex};
         ">${element.text}</div>`;
             } else if (element.type === 'clickthrough') {
@@ -2372,6 +2529,17 @@
                     borderRadius = element.borderRadius + 'px';
                 }
                 
+                // Build box-shadow CSS
+                let boxShadow = '';
+                if (element.shadowX || element.shadowY || element.shadowBlur) {
+                    boxShadow = `${element.shadowX}px ${element.shadowY}px ${element.shadowBlur}px ${element.shadowColor}`;
+                }
+                if (element.glow > 0) {
+                    const glowShadow = `0 0 ${element.glow}px ${element.glowColor}`;
+                    boxShadow = boxShadow ? `${boxShadow}, ${glowShadow}` : glowShadow;
+                }
+                const boxShadowStyle = boxShadow ? `box-shadow: ${boxShadow};` : '';
+                
                 elementsHtml += `
         <div id="${element.id}" style="
             position: absolute;
@@ -2383,6 +2551,7 @@
             transform: rotate(${element.rotation}deg);
             background-color: ${element.fillColor};
             border-radius: ${borderRadius};
+            ${boxShadowStyle}
             z-index: ${element.zIndex};
         "></div>`;
             } else if (element.type === 'video') {
