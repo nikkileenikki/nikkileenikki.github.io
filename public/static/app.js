@@ -279,6 +279,9 @@
             if (e.keyCode === 27) { // Escape
                 e.preventDefault();
                 closeAnimationModal();
+            } else if (e.keyCode === 13) { // Enter
+                e.preventDefault();
+                saveAnimation();
             }
         });
         
@@ -311,6 +314,7 @@
         $timelineTracks.on('mousedown', '.timeline-block-resize-handle', handleTimelineBlockResizeStart);
         
         // Timeline controls
+        $('#timelineDuration').on('change', updateTimelineDuration);
         $('#animLoop').on('change', updateAnimLoop);
         $('#zoomIn').on('click', zoomIn);
         $('#zoomOut').on('click', zoomOut);
@@ -2069,6 +2073,14 @@
         }
     }
     
+    function updateTimelineDuration() {
+        const newDuration = parseFloat($('#timelineDuration').val());
+        if (newDuration && newDuration >= 1 && newDuration <= 60) {
+            totalDuration = newDuration;
+            updateTimelineRuler();
+            updateTimelineTracks();
+        }
+    }
     
     function updateAnimLoop() {
         const value = $('#animLoop').val();
@@ -2078,6 +2090,7 @@
     function zoomIn() {
         // Zoom in = decrease duration to see more detail
         totalDuration = Math.max(totalDuration - 2, 2);
+        $('#timelineDuration').val(totalDuration);
         updateTimelineRuler();
         updateTimelineTracks();
     }
@@ -2085,6 +2098,7 @@
     function zoomOut() {
         // Zoom out = increase duration to see more time
         totalDuration = Math.min(totalDuration + 2, 60);
+        $('#timelineDuration').val(totalDuration);
         updateTimelineRuler();
         updateTimelineTracks();
     }
@@ -2281,6 +2295,7 @@
         const actualDuration = timeline.duration();
         if (actualDuration > 0) {
             totalDuration = Math.max(actualDuration, 2); // Minimum 2 seconds for visibility
+            $('#timelineDuration').val(totalDuration);
             updateTimelineRuler();
         }
     }

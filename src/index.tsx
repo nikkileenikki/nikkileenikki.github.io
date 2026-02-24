@@ -528,7 +528,9 @@ app.get('/', (c) => {
                             </div>
                             
                             <!-- Timeline Zoom Controls -->
-                            <div class="absolute bottom-4 right-4 flex space-x-2 bg-gray-800 rounded-lg p-2 shadow-lg">
+                            <div class="absolute bottom-4 right-4 flex items-center space-x-2 bg-gray-800 rounded-lg p-2 shadow-lg">
+                                <label class="text-xs text-gray-400">Duration (s):</label>
+                                <input type="number" id="timelineDuration" value="5" step="0.5" min="1" max="60" class="bg-gray-700 rounded px-2 py-1 text-sm w-16">
                                 <button id="zoomOut" class="bg-gray-700 hover:bg-gray-600 rounded px-3 py-1 text-sm">
                                     <i class="fas fa-search-minus"></i>
                                 </button>
