@@ -2348,8 +2348,6 @@
                 break;
             case 'bounce':
                 props.y = '+=50';
-                props.repeat = 3;
-                props.yoyo = true;
                 break;
         }
         
@@ -3002,8 +3000,6 @@
                 break;
             case 'bounce':
                 props.y = '+=50';
-                props.repeat = 3;
-                props.yoyo = true;
                 break;
         }
         
