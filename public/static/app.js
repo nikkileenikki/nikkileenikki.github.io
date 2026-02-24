@@ -1203,7 +1203,7 @@
             $propertiesPanel.addClass('hidden');
             
             updateLayersList();
-            rebuildTimeline(true); // Auto-update duration when deleting element
+            rebuildTimeline();
             return;
         }
         
@@ -1362,7 +1362,7 @@
         }
         
         updateLayersList();
-        rebuildTimeline(true); // Auto-update duration when adding element
+        rebuildTimeline();
     }
     
     function handleAddLayerAnimation(e) {
@@ -2043,7 +2043,7 @@
             element.animations.push(animation);
         }
         
-        rebuildTimeline(true); // Auto-update duration when saving animation
+        rebuildTimeline();
         updateTimelineTracks();
         closeAnimationModal();
     }
@@ -2054,7 +2054,7 @@
         const element = elements.find(el => el.id === editingAnimation.elementId);
         if (element) {
             element.animations = element.animations.filter(a => a.id !== editingAnimation.animId);
-            rebuildTimeline(true); // Auto-update duration when deleting animation
+            rebuildTimeline();
             updateTimelineTracks();
         }
         
@@ -2068,7 +2068,7 @@
         const element = elements.find(el => el.id === elementId);
         if (element) {
             element.animations = element.animations.filter(a => a.id !== animId);
-            rebuildTimeline(true); // Auto-update duration when deleting animation
+            rebuildTimeline();
             updateTimelineTracks();
         }
     }
@@ -2250,7 +2250,7 @@
         });
     }
     
-    function rebuildTimeline(autoUpdateDuration = false) {
+    function rebuildTimeline() {
         timeline.clear();
         timeline.repeat(0); // Reset repeat, will be set in playTimeline
         
@@ -2289,18 +2289,6 @@
         });
         
         timeline.eventCallback('onUpdate', updatePlayhead);
-        
-        // Only auto-update duration when explicitly requested (e.g., when adding/removing animations)
-        // Don't auto-update during playback to preserve user's manual duration setting
-        if (autoUpdateDuration) {
-            const actualDuration = timeline.duration();
-            if (actualDuration > 0) {
-                // Cap between 2 and 30 seconds
-                totalDuration = Math.max(Math.min(actualDuration, 30), 2);
-                $('#timelineDuration').val(totalDuration);
-                updateTimelineRuler();
-            }
-        }
     }
     
     function getAnimationProps(type, element, customProps = {}) {
@@ -2458,10 +2446,9 @@
     
     function updatePlayhead() {
         if (!isPlaying) return;
-        // Use timeline's actual time and duration for accurate playhead position
+        // Use totalDuration (ruler duration) for playhead position
         const currentTime = timeline.time();
-        const timelineDuration = timeline.duration();
-        const progress = timelineDuration > 0 ? currentTime / timelineDuration : 0;
+        const progress = totalDuration > 0 ? currentTime / totalDuration : 0;
         $('#timelinePlayhead').css('left', (progress * 100) + '%');
     }
     
