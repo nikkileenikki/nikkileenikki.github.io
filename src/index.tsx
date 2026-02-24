@@ -491,13 +491,34 @@ app.get('/', (c) => {
                                 <i class="fas fa-film mr-2 text-purple-400"></i>
                                 Animation Timeline
                             </h3>
-                            <div class="flex space-x-2">
-                                <button id="playTimeline" class="bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded text-sm transition-colors">
-                                    <i class="fas fa-play mr-1"></i>Play
-                                </button>
-                                <button id="stopTimeline" class="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded text-sm transition-colors">
-                                    <i class="fas fa-stop mr-1"></i>Stop
-                                </button>
+                            <div class="flex items-center space-x-4">
+                                <!-- Duration Controls -->
+                                <div class="flex items-center space-x-2 bg-gray-800 rounded-lg px-3 py-1">
+                                    <label class="text-xs text-gray-400">Duration:</label>
+                                    <input type="number" id="timelineDuration" value="5" step="0.5" min="1" max="30" class="bg-gray-700 rounded px-2 py-1 text-sm w-16">
+                                    <button id="zoomOut" class="bg-gray-700 hover:bg-gray-600 rounded px-2 py-1 text-sm">
+                                        <i class="fas fa-search-minus"></i>
+                                    </button>
+                                    <button id="zoomIn" class="bg-gray-700 hover:bg-gray-600 rounded px-2 py-1 text-sm">
+                                        <i class="fas fa-search-plus"></i>
+                                    </button>
+                                </div>
+                                
+                                <!-- Loop Control -->
+                                <div class="flex items-center space-x-2 bg-gray-800 rounded-lg px-3 py-1">
+                                    <label class="text-xs text-gray-400">Loop:</label>
+                                    <input type="number" id="animLoop" value="1" min="1" max="999" class="bg-gray-700 rounded px-2 py-1 text-sm w-16">
+                                </div>
+                                
+                                <!-- Play/Stop Buttons -->
+                                <div class="flex space-x-2">
+                                    <button id="playTimeline" class="bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded text-sm transition-colors">
+                                        <i class="fas fa-play mr-1"></i>Play
+                                    </button>
+                                    <button id="stopTimeline" class="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded text-sm transition-colors">
+                                        <i class="fas fa-stop mr-1"></i>Stop
+                                    </button>
+                                </div>
                             </div>
                         </div>
                         
@@ -525,20 +546,6 @@ app.get('/', (c) => {
                                         Add elements and animations to see timeline
                                     </div>
                                 </div>
-                            </div>
-                            
-                            <!-- Timeline Zoom Controls -->
-                            <div class="absolute bottom-4 right-4 flex items-center space-x-2 bg-gray-800 rounded-lg p-2 shadow-lg">
-                                <label class="text-xs text-gray-400">Duration (s):</label>
-                                <input type="number" id="timelineDuration" value="5" step="0.5" min="1" max="30" class="bg-gray-700 rounded px-2 py-1 text-sm w-16">
-                                <button id="zoomOut" class="bg-gray-700 hover:bg-gray-600 rounded px-3 py-1 text-sm">
-                                    <i class="fas fa-search-minus"></i>
-                                </button>
-                                <button id="zoomIn" class="bg-gray-700 hover:bg-gray-600 rounded px-3 py-1 text-sm">
-                                    <i class="fas fa-search-plus"></i>
-                                </button>
-                                <label class="text-xs text-gray-400 ml-4">Loop:</label>
-                                <input type="number" id="animLoop" value="1" min="1" max="999" class="bg-gray-700 rounded px-2 py-1 text-sm w-16">
                             </div>
                         </div>
                     </div>
