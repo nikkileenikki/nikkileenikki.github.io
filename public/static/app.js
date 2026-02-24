@@ -738,8 +738,9 @@
     function openVideoModal() {
         $('#videoUrl').val('');
         $('#videoName').val('video1');
-        $('#videoAutoplay').prop('checked', true);
+        $('#videoPlayTrigger').val('autoplay');
         $('#videoMuted').prop('checked', true);
+        $('#videoControls').prop('checked', false);
         $videoModal.removeClass('hidden');
         setTimeout(() => $('#videoUrl').focus(), 100);
     }
@@ -751,19 +752,20 @@
     function saveVideo() {
         const videoUrl = $('#videoUrl').val().trim();
         const videoName = $('#videoName').val().trim() || 'video1';
-        const autoplay = $('#videoAutoplay').is(':checked');
+        const playTrigger = $('#videoPlayTrigger').val();
         const muted = $('#videoMuted').is(':checked');
+        const controls = $('#videoControls').is(':checked');
         
         if (!videoUrl) {
             alert('Please enter video URL');
             return;
         }
         
-        addVideoToCanvas(videoUrl, videoName, autoplay, muted);
+        addVideoToCanvas(videoUrl, videoName, playTrigger, muted, controls);
         closeVideoModal();
     }
     
-    function addVideoToCanvas(videoUrl, videoName, autoplay, muted) {
+    function addVideoToCanvas(videoUrl, videoName, playTrigger, muted, controls) {
         elementCounter++;
         const id = `element_${elementCounter}`;
         
@@ -772,8 +774,9 @@
             type: 'video',
             videoUrl: videoUrl,
             videoName: videoName,
-            autoplay: autoplay,
+            playTrigger: playTrigger, // 'autoplay', 'mouseover', or 'click'
             muted: muted,
+            controls: controls,
             x: 50,
             y: 50,
             width: 300,
@@ -785,6 +788,16 @@
         };
         
         elements.push(element);
+        
+        // Get play trigger display text
+        let playText = '';
+        if (playTrigger === 'autoplay') {
+            playText = '▶ Autoplay';
+        } else if (playTrigger === 'mouseover') {
+            playText = '🖱 On Hover';
+        } else if (playTrigger === 'click') {
+            playText = '👆 On Click';
+        }
         
         const $element = $(`
             <div class="canvas-element video-element" id="${id}" style="
@@ -808,7 +821,7 @@
                     <div>${videoName}</div>
                     <div style="font-size: 11px; opacity: 0.7;">${videoUrl}</div>
                     <div style="font-size: 11px; margin-top: 4px;">
-                        ${autoplay ? '▶ Autoplay' : '⏸ Manual'} ${muted ? '🔇 Muted' : '🔊 Sound'}
+                        ${playText} ${muted ? '🔇 Muted' : '🔊 Sound'} ${controls ? '⚙ Controls' : ''}
                     </div>
                 </div>
                 <div class="resize-handle nw"></div>
@@ -2289,10 +2302,12 @@
             z-index: ${element.zIndex};
         "></div>`;
             } else if (element.type === 'video') {
-                const autoplayAttr = element.autoplay ? ' autoplay' : '';
+                const autoplayAttr = element.playTrigger === 'autoplay' ? ' autoplay' : '';
                 const mutedAttr = element.muted ? ' muted' : '';
+                const controlsAttr = element.controls ? ' controls' : '';
+                const playTrigger = element.playTrigger || 'autoplay';
                 elementsHtml += `
-        <ft-video id="${element.videoName}" name="${element.videoName}"${autoplayAttr}${mutedAttr} style="
+        <ft-video id="${element.videoName}" name="${element.videoName}"${autoplayAttr}${mutedAttr}${controlsAttr} data-play-trigger="${playTrigger}" style="
             position: absolute;
             left: ${element.x}px;
             top: ${element.y}px;
@@ -2461,6 +2476,27 @@
                         window.open(url, target);
                     }
                 });
+            });
+            
+            // Video play trigger handling
+            const videos = document.querySelectorAll('ft-video[data-play-trigger]');
+            videos.forEach(function(video) {
+                const playTrigger = video.getAttribute('data-play-trigger');
+                
+                if (playTrigger === 'mouseover') {
+                    video.addEventListener('mouseenter', function() {
+                        this.play();
+                    });
+                } else if (playTrigger === 'click') {
+                    video.addEventListener('click', function() {
+                        if (this.paused) {
+                            this.play();
+                        } else {
+                            this.pause();
+                        }
+                    });
+                }
+                // autoplay is handled by the autoplay attribute
             });
             
             // GSAP Timeline Animation

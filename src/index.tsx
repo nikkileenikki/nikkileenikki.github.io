@@ -624,15 +624,24 @@ app.get('/', (c) => {
                         <p class="text-xs text-gray-500 mt-1">Unique identifier (e.g., video1, video2)</p>
                     </div>
                     
+                    <div>
+                        <label class="block text-sm text-gray-400 mb-2">Start Playing When</label>
+                        <select id="videoPlayTrigger" class="w-full bg-gray-700 rounded px-3 py-2">
+                            <option value="autoplay">Autoplay</option>
+                            <option value="mouseover">Mouse Over</option>
+                            <option value="click">Click/Tap</option>
+                        </select>
+                    </div>
+                    
                     <div class="flex items-center space-x-4 py-2">
-                        <label class="flex items-center cursor-pointer">
-                            <input type="checkbox" id="videoAutoplay" class="w-4 h-4 mr-2" checked>
-                            <span class="text-sm text-gray-300">Autoplay</span>
-                        </label>
-                        
                         <label class="flex items-center cursor-pointer">
                             <input type="checkbox" id="videoMuted" class="w-4 h-4 mr-2" checked>
                             <span class="text-sm text-gray-300">Muted</span>
+                        </label>
+                        
+                        <label class="flex items-center cursor-pointer">
+                            <input type="checkbox" id="videoControls" class="w-4 h-4 mr-2">
+                            <span class="text-sm text-gray-300">Controls</span>
                         </label>
                     </div>
                     
