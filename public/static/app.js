@@ -31,7 +31,7 @@
     // DOM elements - initialized after DOM is ready
     let $canvas, $canvasWrapper, $layersList, $dropzone, $fileInput;
     let $propertiesPanel, $textProps, $animModal, $textModal;
-    let $clickthroughModal, $shapeModal, $timelineTracks, $timelineRuler;
+    let $clickthroughModal, $shapeModal, $videoModal, $timelineTracks, $timelineRuler;
     
     // ============================================
     // INITIALIZATION
@@ -49,6 +49,7 @@
         $textModal = $('#textModal');
         $clickthroughModal = $('#clickthroughModal');
         $shapeModal = $('#shapeModal');
+        $videoModal = $('#videoModal');
         $timelineTracks = $('#timelineTracks');
         $timelineRuler = $('#timelineRuler');
         
@@ -124,6 +125,25 @@
             if (e.keyCode === 27) { // Escape
                 e.preventDefault();
                 closeShapeModal();
+            }
+        });
+        
+        // Video
+        $('#addVideoBtn').on('click', openVideoModal);
+        $('#closeVideoModal').on('click', closeVideoModal);
+        $('#saveVideoBtn').on('click', saveVideo);
+        // Enter key support for video
+        $('#videoUrl, #videoName').on('keypress', function(e) {
+            if (e.which === 13) { // Enter key
+                e.preventDefault();
+                saveVideo();
+            }
+        });
+        // Escape key for video modal
+        $('#videoModal').on('keydown', function(e) {
+            if (e.keyCode === 27) { // Escape
+                e.preventDefault();
+                closeVideoModal();
             }
         });
         
@@ -712,6 +732,98 @@
         updateTimelineTracks();
     }
     
+    // ============================================
+    // VIDEO MANAGEMENT
+    // ============================================
+    function openVideoModal() {
+        $('#videoUrl').val('');
+        $('#videoName').val('video1');
+        $('#videoAutoplay').prop('checked', true);
+        $('#videoMuted').prop('checked', true);
+        $videoModal.removeClass('hidden');
+        setTimeout(() => $('#videoUrl').focus(), 100);
+    }
+    
+    function closeVideoModal() {
+        $videoModal.addClass('hidden');
+    }
+    
+    function saveVideo() {
+        const videoUrl = $('#videoUrl').val().trim();
+        const videoName = $('#videoName').val().trim() || 'video1';
+        const autoplay = $('#videoAutoplay').is(':checked');
+        const muted = $('#videoMuted').is(':checked');
+        
+        if (!videoUrl) {
+            alert('Please enter video URL');
+            return;
+        }
+        
+        addVideoToCanvas(videoUrl, videoName, autoplay, muted);
+        closeVideoModal();
+    }
+    
+    function addVideoToCanvas(videoUrl, videoName, autoplay, muted) {
+        elementCounter++;
+        const id = `element_${elementCounter}`;
+        
+        const element = {
+            id: id,
+            type: 'video',
+            videoUrl: videoUrl,
+            videoName: videoName,
+            autoplay: autoplay,
+            muted: muted,
+            x: 50,
+            y: 50,
+            width: 300,
+            height: 169, // 16:9 aspect ratio
+            rotation: 0,
+            opacity: 1,
+            zIndex: elements.length,
+            animations: []
+        };
+        
+        elements.push(element);
+        
+        const $element = $(`
+            <div class="canvas-element video-element" id="${id}" style="
+                left: ${element.x}px;
+                top: ${element.y}px;
+                width: ${element.width}px;
+                height: ${element.height}px;
+                opacity: ${element.opacity};
+                transform: rotate(${element.rotation}deg);
+                z-index: ${element.zIndex};
+                background-color: #000;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                color: #fff;
+                font-size: 14px;
+                border: 2px solid #e53e3e;
+            ">
+                <div style="text-align: center;">
+                    <i class="fas fa-video" style="font-size: 32px; margin-bottom: 8px;"></i>
+                    <div>${videoName}</div>
+                    <div style="font-size: 11px; opacity: 0.7;">${videoUrl}</div>
+                    <div style="font-size: 11px; margin-top: 4px;">
+                        ${autoplay ? '▶ Autoplay' : '⏸ Manual'} ${muted ? '🔇 Muted' : '🔊 Sound'}
+                    </div>
+                </div>
+                <div class="resize-handle nw"></div>
+                <div class="resize-handle ne"></div>
+                <div class="resize-handle sw"></div>
+                <div class="resize-handle se"></div>
+            </div>
+        `);
+        
+        $canvas.append($element);
+        updateLayersList();
+        selectElement(id);
+        updateTimelineTracks();
+    }
+    
     function addClickthroughToCanvas(url, target) {
         elementCounter++;
         const id = `element_${elementCounter}`;
@@ -1104,6 +1216,9 @@
                 const shapeElements = elements.filter(el => el.type === 'shape');
                 const shapeIndex = shapeElements.findIndex(el => el.id === element.id) + 1;
                 label = `Shape${shapeIndex}`;
+            } else if (element.type === 'video') {
+                icon = 'fa-video';
+                label = element.videoName;
             } else {
                 icon = 'fa-image';
                 label = (element.filename || 'Image').substring(0, 20);
@@ -1676,6 +1791,9 @@
                 const shapeElements = elements.filter(el => el.type === 'shape');
                 const shapeIndex = shapeElements.findIndex(el => el.id === element.id) + 1;
                 label = `Shape${shapeIndex}`;
+            } else if (element.type === 'video') {
+                icon = 'fa-video';
+                label = element.videoName;
             } else {
                 icon = 'fa-image';
                 label = (element.filename || 'Image').substring(0, 15);
@@ -2038,17 +2156,39 @@
         // Count clickthrough elements
         const clickthroughCount = elements.filter(el => el.type === 'clickthrough').length;
         
+        // Get video elements
+        const videoElements = elements.filter(el => el.type === 'video');
+        
         // Get canvas dimensions
         const width = canvasWidth;
         const height = canvasHeight;
         
-        return `FT.manifest({
+        let manifestContent = `FT.manifest({
     "filename": "index.html",
     "width": ${width},
     "height": ${height},
-    "clickTagCount": ${clickthroughCount},
+    "clickTagCount": ${clickthroughCount}`;
+        
+        // Add videos array if there are video elements
+        if (videoElements.length > 0) {
+            manifestContent += `,
+    "videos": [`;
+            videoElements.forEach((video, index) => {
+                manifestContent += `
+        { "name": "${video.videoName}", "ref": "${video.videoUrl}" }`;
+                if (index < videoElements.length - 1) {
+                    manifestContent += ',';
+                }
+            });
+            manifestContent += `
+    ]`;
+        }
+        
+        manifestContent += `,
     "hideBrowsers": ["ie8"]
 });`;
+        
+        return manifestContent;
     }
     
     function getExtensionFromDataUrl(dataUrl) {
@@ -2139,6 +2279,20 @@
             border-radius: ${borderRadius};
             z-index: ${element.zIndex};
         "></div>`;
+            } else if (element.type === 'video') {
+                const autoplayAttr = element.autoplay ? ' autoplay' : '';
+                const mutedAttr = element.muted ? ' muted' : '';
+                elementsHtml += `
+        <ft-video id="${element.videoName}" name="${element.videoName}"${autoplayAttr}${mutedAttr} style="
+            position: absolute;
+            left: ${element.x}px;
+            top: ${element.y}px;
+            width: ${element.width}px;
+            height: ${element.height}px;
+            opacity: ${element.opacity};
+            transform: rotate(${element.rotation}deg);
+            z-index: ${element.zIndex};
+        "></ft-video>`;
             }
             
             // Generate animations
@@ -2226,6 +2380,7 @@
 <body>
     <!-- Flashtalking API as first child in body -->
     <script src="https://cdn.flashtalking.com/frameworks/js/api/2/10/html5API.js"></script>
+    <script src="https://cdn.flashtalking.com/feeds/frameworks/js/utils/Tracker.js"></script>
     ${usePoliteLoad ? `
     <!-- Loader (shown while loading) -->
     <div class="loader"></div>

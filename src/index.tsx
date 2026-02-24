@@ -123,6 +123,10 @@ app.get('/', (c) => {
                                 </button>
                             </div>
                             
+                            <button id="addVideoBtn" class="w-full bg-red-600 hover:bg-red-700 text-white py-2 rounded transition-colors">
+                                <i class="fas fa-video mr-2"></i>Add Video
+                            </button>
+                            
                             <button id="addClickthroughBtn" class="w-full bg-purple-600 hover:bg-purple-700 text-white py-2 rounded transition-colors">
                                 <i class="fas fa-mouse-pointer mr-2"></i>Add Clickthrough
                             </button>
@@ -596,6 +600,49 @@ app.get('/', (c) => {
             </div>
         </div>
         
+        <!-- Text Modal -->
+        <!-- Video Modal -->
+        <div id="videoModal" tabindex="-1" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[10000]">
+            <div class="bg-gray-800 rounded-lg p-3 w-[500px]">
+                <div class="flex justify-between items-center mb-2">
+                    <h3 class="text-xl font-bold">Add Video</h3>
+                    <button id="closeVideoModal" class="text-gray-400 hover:text-white">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                
+                <div class="space-y-2">
+                    <div>
+                        <label class="block text-sm text-gray-400 mb-2">Video URL (Flashtalking)</label>
+                        <input type="text" id="videoUrl" placeholder="220952/video" class="w-full bg-gray-700 rounded px-3 py-2">
+                        <p class="text-xs text-gray-500 mt-1">Format: folder/filename</p>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm text-gray-400 mb-2">Video Name/ID</label>
+                        <input type="text" id="videoName" placeholder="video1" class="w-full bg-gray-700 rounded px-3 py-2">
+                        <p class="text-xs text-gray-500 mt-1">Unique identifier (e.g., video1, video2)</p>
+                    </div>
+                    
+                    <div class="flex items-center space-x-4 py-2">
+                        <label class="flex items-center cursor-pointer">
+                            <input type="checkbox" id="videoAutoplay" class="w-4 h-4 mr-2" checked>
+                            <span class="text-sm text-gray-300">Autoplay</span>
+                        </label>
+                        
+                        <label class="flex items-center cursor-pointer">
+                            <input type="checkbox" id="videoMuted" class="w-4 h-4 mr-2" checked>
+                            <span class="text-sm text-gray-300">Muted</span>
+                        </label>
+                    </div>
+                    
+                    <button id="saveVideoBtn" class="w-full bg-red-600 hover:bg-red-700 text-white py-2 rounded transition-colors">
+                        Add Video
+                    </button>
+                </div>
+            </div>
+        </div>
+
         <!-- Text Modal -->
         <div id="textModal" tabindex="-1" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[10000]">
             <div class="bg-gray-800 rounded-lg p-3 w-[500px]">
