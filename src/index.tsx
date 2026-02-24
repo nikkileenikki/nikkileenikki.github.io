@@ -620,11 +620,6 @@ app.get('/', (c) => {
                     </div>
                     
                     <div>
-                        <label class="block text-sm text-gray-400 mb-2">Total Timeline Duration</label>
-                        <input type="number" id="timelineDuration" value="5" step="0.5" min="1" max="60" class="w-full bg-gray-700 rounded px-3 py-2">
-                    </div>
-                    
-                    <div>
                         <label class="block text-sm text-gray-400 mb-2">Animation Loop</label>
                         <select id="animLoop" class="w-full bg-gray-700 rounded px-3 py-2">
                             <option value="0" selected>Play Once</option>

@@ -311,7 +311,6 @@
         $timelineTracks.on('mousedown', '.timeline-block-resize-handle', handleTimelineBlockResizeStart);
         
         // Timeline controls
-        $('#timelineDuration').on('change', updateTotalDuration);
         $('#animLoop').on('change', updateAnimLoop);
         $('#zoomIn').on('click', zoomIn);
         $('#zoomOut').on('click', zoomOut);
@@ -1987,7 +1986,6 @@
         $('#animStart').val(anim.start.toFixed(1));
         $('#animDuration').val(anim.duration.toFixed(1));
         $('#animEase').val(anim.ease);
-        $('#timelineDuration').val(totalDuration);
         
         $('#animBtnText').text('Update Animation');
         $('#deleteAnimBtn').removeClass('hidden');
@@ -2014,13 +2012,6 @@
         const start = Math.round(parseFloat($('#animStart').val()) * 10) / 10;
         const duration = Math.round(parseFloat($('#animDuration').val()) * 10) / 10;
         const ease = $('#animEase').val();
-        
-        // Update total duration if needed
-        const newTotalDuration = Math.round(parseFloat($('#timelineDuration').val()) * 10) / 10;
-        if (newTotalDuration !== totalDuration) {
-            totalDuration = newTotalDuration;
-            updateTimelineRuler();
-        }
         
         if (editingAnimation) {
             // Update existing animation - only one type allowed when editing
@@ -2078,11 +2069,6 @@
         }
     }
     
-    function updateTotalDuration() {
-        totalDuration = parseFloat($('#timelineDuration').val()) || 5;
-        updateTimelineRuler();
-        updateTimelineTracks();
-    }
     
     function updateAnimLoop() {
         const value = $('#animLoop').val();
@@ -2092,7 +2078,6 @@
     function zoomIn() {
         // Zoom in = decrease duration to see more detail
         totalDuration = Math.max(totalDuration - 2, 2);
-        $('#timelineDuration').val(totalDuration);
         updateTimelineRuler();
         updateTimelineTracks();
     }
@@ -2100,7 +2085,6 @@
     function zoomOut() {
         // Zoom out = increase duration to see more time
         totalDuration = Math.min(totalDuration + 2, 60);
-        $('#timelineDuration').val(totalDuration);
         updateTimelineRuler();
         updateTimelineTracks();
     }
@@ -2291,6 +2275,14 @@
         });
         
         timeline.eventCallback('onUpdate', updatePlayhead);
+        
+        // Update totalDuration to match timeline's actual duration
+        // This ensures the ruler and playhead are synchronized
+        const actualDuration = timeline.duration();
+        if (actualDuration > 0) {
+            totalDuration = Math.max(actualDuration, 2); // Minimum 2 seconds for visibility
+            updateTimelineRuler();
+        }
     }
     
     function getAnimationProps(type, element, customProps = {}) {
@@ -2448,7 +2440,10 @@
     
     function updatePlayhead() {
         if (!isPlaying) return;
-        const progress = timeline.progress();
+        // Use timeline's actual time and duration for accurate playhead position
+        const currentTime = timeline.time();
+        const timelineDuration = timeline.duration();
+        const progress = timelineDuration > 0 ? currentTime / timelineDuration : 0;
         $('#timelinePlayhead').css('left', (progress * 100) + '%');
     }
     
