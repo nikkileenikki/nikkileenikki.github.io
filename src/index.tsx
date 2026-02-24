@@ -223,6 +223,37 @@ app.get('/', (c) => {
                                 </div>
                             </div>
                             
+                            <!-- Video Properties -->
+                            <div id="videoProps" class="hidden space-y-2 pb-3 border-b border-gray-700">
+                                <div>
+                                    <label class="text-sm text-gray-400">Video URL</label>
+                                    <input type="text" id="propVideoUrl" class="w-full bg-gray-800 rounded px-3 py-2 text-sm" placeholder="220952/video">
+                                </div>
+                                <div>
+                                    <label class="text-sm text-gray-400">Video Name/ID</label>
+                                    <input type="text" id="propVideoName" class="w-full bg-gray-800 rounded px-3 py-2 text-sm" placeholder="video1">
+                                </div>
+                                <div>
+                                    <label class="text-sm text-gray-400">Start Playing When</label>
+                                    <select id="propVideoPlayTrigger" class="w-full bg-gray-800 rounded px-3 py-2 text-sm">
+                                        <option value="autoplay">Autoplay</option>
+                                        <option value="mouseover">Mouse Over</option>
+                                        <option value="click">Click/Tap</option>
+                                    </select>
+                                </div>
+                                <div class="flex items-center space-x-4">
+                                    <label class="flex items-center cursor-pointer">
+                                        <input type="checkbox" id="propVideoMuted" class="w-4 h-4 mr-2">
+                                        <span class="text-sm text-gray-300">Muted</span>
+                                    </label>
+                                    
+                                    <label class="flex items-center cursor-pointer">
+                                        <input type="checkbox" id="propVideoControls" class="w-4 h-4 mr-2">
+                                        <span class="text-sm text-gray-300">Controls</span>
+                                    </label>
+                                </div>
+                            </div>
+                            
                             <!-- Common Properties -->
                             <div class="grid grid-cols-2 gap-2">
                                 <div>

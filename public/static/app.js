@@ -228,6 +228,13 @@
         $('#propShapeType').on('change', updateShapeType);
         $('#propShapeColor').on('change', updateShapeColor);
         
+        // Video properties
+        $('#propVideoUrl').on('change', updateVideoUrl);
+        $('#propVideoName').on('change', updateVideoName);
+        $('#propVideoPlayTrigger').on('change', updateVideoPlayTrigger);
+        $('#propVideoMuted').on('change', updateVideoMuted);
+        $('#propVideoControls').on('change', updateVideoControls);
+        
         // Animation
         $('#addAnimBtn').on('click', openAnimationModal);
         $('#closeModal').on('click', closeAnimationModal);
@@ -1383,6 +1390,19 @@
             $shapeProps.addClass('hidden');
         }
         
+        // Show/hide video properties
+        const $videoProps = $('#videoProps');
+        if (element.type === 'video') {
+            $videoProps.removeClass('hidden');
+            $('#propVideoUrl').val(element.videoUrl);
+            $('#propVideoName').val(element.videoName);
+            $('#propVideoPlayTrigger').val(element.playTrigger || 'autoplay');
+            $('#propVideoMuted').prop('checked', element.muted);
+            $('#propVideoControls').prop('checked', element.controls);
+        } else {
+            $videoProps.addClass('hidden');
+        }
+        
         // Common properties
         $('#propWidth').val(Math.round(element.width));
         $('#propHeight').val(Math.round(element.height));
@@ -1574,6 +1594,70 @@
         
         element.fillColor = $(this).val();
         $(`#${selectedElement}`).css('background-color', element.fillColor);
+    }
+    
+    // Video property updates
+    function updateVideoUrl() {
+        if (!selectedElement) return;
+        const element = elements.find(el => el.id === selectedElement);
+        if (element.type !== 'video') return;
+        
+        element.videoUrl = $(this).val() || '';
+        updateVideoDisplay(element);
+    }
+    
+    function updateVideoName() {
+        if (!selectedElement) return;
+        const element = elements.find(el => el.id === selectedElement);
+        if (element.type !== 'video') return;
+        
+        element.videoName = $(this).val() || 'video1';
+        updateVideoDisplay(element);
+    }
+    
+    function updateVideoPlayTrigger() {
+        if (!selectedElement) return;
+        const element = elements.find(el => el.id === selectedElement);
+        if (element.type !== 'video') return;
+        
+        element.playTrigger = $(this).val();
+        updateVideoDisplay(element);
+    }
+    
+    function updateVideoMuted() {
+        if (!selectedElement) return;
+        const element = elements.find(el => el.id === selectedElement);
+        if (element.type !== 'video') return;
+        
+        element.muted = $(this).is(':checked');
+        updateVideoDisplay(element);
+    }
+    
+    function updateVideoControls() {
+        if (!selectedElement) return;
+        const element = elements.find(el => el.id === selectedElement);
+        if (element.type !== 'video') return;
+        
+        element.controls = $(this).is(':checked');
+        updateVideoDisplay(element);
+    }
+    
+    function updateVideoDisplay(element) {
+        const playTriggerText = 
+            element.playTrigger === 'autoplay' ? '▶ Autoplay' :
+            element.playTrigger === 'mouseover' ? '🖱 On Hover' :
+            '👆 On Click';
+        
+        const mutedIcon = element.muted ? '🔇' : '🔊';
+        const controlsText = element.controls ? ' | 🎛 Controls' : '';
+        
+        const $element = $(`#${element.id}`);
+        $element.find('div').last().html(`
+            <i class="fas fa-video text-2xl mb-2"></i>
+            <div class="text-xs font-bold">${element.videoName}</div>
+            <div class="text-xs">${element.videoUrl}</div>
+            <div class="text-xs mt-1">${playTriggerText} ${mutedIcon}${controlsText}</div>
+        `);
     }
     
     // ============================================
