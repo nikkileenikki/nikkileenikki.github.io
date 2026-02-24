@@ -537,6 +537,8 @@ app.get('/', (c) => {
                                 <button id="zoomIn" class="bg-gray-700 hover:bg-gray-600 rounded px-3 py-1 text-sm">
                                     <i class="fas fa-search-plus"></i>
                                 </button>
+                                <label class="text-xs text-gray-400 ml-4">Loop:</label>
+                                <input type="number" id="animLoop" value="1" min="1" max="999" class="bg-gray-700 rounded px-2 py-1 text-sm w-16">
                             </div>
                         </div>
                     </div>
@@ -619,17 +621,6 @@ app.get('/', (c) => {
                             <label class="block text-sm text-gray-400 mb-2">Duration (s)</label>
                             <input type="number" id="animDuration" value="1" step="0.1" min="0.1" class="w-full bg-gray-700 rounded px-3 py-2">
                         </div>
-                    </div>
-                    
-                    <div>
-                        <label class="block text-sm text-gray-400 mb-2">Animation Loop</label>
-                        <select id="animLoop" class="w-full bg-gray-700 rounded px-3 py-2">
-                            <option value="0" selected>Play Once</option>
-                            <option value="infinite">Loop Forever</option>
-                            <option value="1">Play Twice</option>
-                            <option value="2">Play 3 Times</option>
-                            <option value="4">Play 5 Times</option>
-                        </select>
                     </div>
                     
                     <div>

@@ -17,7 +17,7 @@
     let isPlaying = false;
     let playbackTimeout = null; // Store timeout ID to clear on stop
     let zoomLevel = 1; // Now controls timeline duration scale
-    let animLoop = 0; // Default: 0 = play once (matches HTML default)
+    let animLoop = 0; // Default: 0 = play once (GSAP repeat count)
     let editingAnimation = null; // For editing existing animations
     
     // Canvas dimensions
@@ -2083,8 +2083,11 @@
     }
     
     function updateAnimLoop() {
-        const value = $('#animLoop').val();
-        animLoop = value === 'infinite' ? -1 : parseInt(value);
+        const value = parseInt($('#animLoop').val()) || 1;
+        // User input: 1 = play once, 2 = twice, etc.
+        // GSAP repeat: 0 = once, 1 = twice, etc.
+        // So: animLoop = userInput - 1
+        animLoop = Math.max(0, value - 1);
     }
     
     function zoomIn() {
