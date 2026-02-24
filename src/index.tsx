@@ -206,21 +206,57 @@ app.get('/', (c) => {
                                 </div>
                                 <div>
                                     <label class="text-sm text-gray-400">Text Shadow</label>
-                                    <div class="flex space-x-2">
-                                        <input type="number" id="propTextShadowX" class="flex-1 bg-gray-800 rounded px-2 py-1 text-sm" placeholder="X" min="-50" max="50" value="0">
-                                        <input type="number" id="propTextShadowY" class="flex-1 bg-gray-800 rounded px-2 py-1 text-sm" placeholder="Y" min="-50" max="50" value="0">
-                                        <input type="number" id="propTextShadowBlur" class="flex-1 bg-gray-800 rounded px-2 py-1 text-sm" placeholder="Blur" min="0" max="50" value="0">
-                                        <input type="color" id="propTextShadowColor" class="w-10 h-8 bg-gray-800 rounded" value="#000000">
+                                    <div class="grid grid-cols-4 gap-2">
+                                        <div>
+                                            <input type="number" id="propTextShadowX" class="w-full bg-gray-800 rounded px-2 py-1 text-xs" placeholder="X" min="-100" max="100" value="0">
+                                            <label class="text-xs text-gray-500">X Offset</label>
+                                        </div>
+                                        <div>
+                                            <input type="number" id="propTextShadowY" class="w-full bg-gray-800 rounded px-2 py-1 text-xs" placeholder="Y" min="-100" max="100" value="0">
+                                            <label class="text-xs text-gray-500">Y Offset</label>
+                                        </div>
+                                        <div>
+                                            <input type="number" id="propTextShadowBlur" class="w-full bg-gray-800 rounded px-2 py-1 text-xs" placeholder="Blur" min="0" max="100" value="0">
+                                            <label class="text-xs text-gray-500">Blur Size</label>
+                                        </div>
+                                        <div>
+                                            <input type="color" id="propTextShadowColor" class="w-full h-8 bg-gray-800 rounded" value="#000000">
+                                            <label class="text-xs text-gray-500">Color</label>
+                                        </div>
                                     </div>
-                                    <p class="text-xs text-gray-500 mt-1">Shadow offset and blur</p>
+                                    <label class="flex items-center cursor-pointer mt-2">
+                                        <input type="checkbox" id="propTextShadowHover" class="w-4 h-4 mr-2">
+                                        <span class="text-xs text-gray-300">Show on mouse over only</span>
+                                    </label>
                                 </div>
                                 <div>
                                     <label class="text-sm text-gray-400">Glow Effect</label>
-                                    <div class="flex space-x-2">
-                                        <input type="number" id="propTextGlow" class="flex-1 bg-gray-800 rounded px-2 py-1 text-sm" placeholder="Size" min="0" max="50" value="0">
-                                        <input type="color" id="propTextGlowColor" class="flex-1 h-8 bg-gray-800 rounded" value="#ffffff">
+                                    <div class="grid grid-cols-5 gap-2">
+                                        <div>
+                                            <input type="number" id="propTextGlowX" class="w-full bg-gray-800 rounded px-2 py-1 text-xs" placeholder="X" min="-100" max="100" value="0">
+                                            <label class="text-xs text-gray-500">X Offset</label>
+                                        </div>
+                                        <div>
+                                            <input type="number" id="propTextGlowY" class="w-full bg-gray-800 rounded px-2 py-1 text-xs" placeholder="Y" min="-100" max="100" value="0">
+                                            <label class="text-xs text-gray-500">Y Offset</label>
+                                        </div>
+                                        <div>
+                                            <input type="number" id="propTextGlowBlur" class="w-full bg-gray-800 rounded px-2 py-1 text-xs" placeholder="Blur" min="0" max="100" value="0">
+                                            <label class="text-xs text-gray-500">Blur Size</label>
+                                        </div>
+                                        <div>
+                                            <input type="number" id="propTextGlowSpread" class="w-full bg-gray-800 rounded px-2 py-1 text-xs" placeholder="Spread" min="-50" max="50" value="0">
+                                            <label class="text-xs text-gray-500">Spread</label>
+                                        </div>
+                                        <div>
+                                            <input type="color" id="propTextGlowColor" class="w-full h-8 bg-gray-800 rounded" value="#ffffff">
+                                            <label class="text-xs text-gray-500">Color</label>
+                                        </div>
                                     </div>
-                                    <p class="text-xs text-gray-500 mt-1">Glow size and color</p>
+                                    <label class="flex items-center cursor-pointer mt-2">
+                                        <input type="checkbox" id="propTextGlowHover" class="w-4 h-4 mr-2">
+                                        <span class="text-xs text-gray-300">Show on mouse over only</span>
+                                    </label>
                                 </div>
                             </div>
                             
@@ -257,21 +293,61 @@ app.get('/', (c) => {
                                 </div>
                                 <div>
                                     <label class="text-sm text-gray-400">Shadow</label>
-                                    <div class="flex space-x-2">
-                                        <input type="number" id="propShapeShadowX" class="flex-1 bg-gray-800 rounded px-2 py-1 text-sm" placeholder="X" min="-50" max="50" value="0">
-                                        <input type="number" id="propShapeShadowY" class="flex-1 bg-gray-800 rounded px-2 py-1 text-sm" placeholder="Y" min="-50" max="50" value="0">
-                                        <input type="number" id="propShapeShadowBlur" class="flex-1 bg-gray-800 rounded px-2 py-1 text-sm" placeholder="Blur" min="0" max="50" value="0">
-                                        <input type="color" id="propShapeShadowColor" class="w-10 h-8 bg-gray-800 rounded" value="#000000">
+                                    <div class="grid grid-cols-5 gap-2">
+                                        <div>
+                                            <input type="number" id="propShapeShadowX" class="w-full bg-gray-800 rounded px-2 py-1 text-xs" placeholder="X" min="-100" max="100" value="0">
+                                            <label class="text-xs text-gray-500">X Offset</label>
+                                        </div>
+                                        <div>
+                                            <input type="number" id="propShapeShadowY" class="w-full bg-gray-800 rounded px-2 py-1 text-xs" placeholder="Y" min="-100" max="100" value="0">
+                                            <label class="text-xs text-gray-500">Y Offset</label>
+                                        </div>
+                                        <div>
+                                            <input type="number" id="propShapeShadowBlur" class="w-full bg-gray-800 rounded px-2 py-1 text-xs" placeholder="Blur" min="0" max="100" value="0">
+                                            <label class="text-xs text-gray-500">Blur Size</label>
+                                        </div>
+                                        <div>
+                                            <input type="number" id="propShapeShadowSpread" class="w-full bg-gray-800 rounded px-2 py-1 text-xs" placeholder="Spread" min="-50" max="50" value="0">
+                                            <label class="text-xs text-gray-500">Spread</label>
+                                        </div>
+                                        <div>
+                                            <input type="color" id="propShapeShadowColor" class="w-full h-8 bg-gray-800 rounded" value="#000000">
+                                            <label class="text-xs text-gray-500">Color</label>
+                                        </div>
                                     </div>
-                                    <p class="text-xs text-gray-500 mt-1">Shadow offset and blur</p>
+                                    <label class="flex items-center cursor-pointer mt-2">
+                                        <input type="checkbox" id="propShapeShadowHover" class="w-4 h-4 mr-2">
+                                        <span class="text-xs text-gray-300">Show on mouse over only</span>
+                                    </label>
                                 </div>
                                 <div>
                                     <label class="text-sm text-gray-400">Glow Effect</label>
-                                    <div class="flex space-x-2">
-                                        <input type="number" id="propShapeGlow" class="flex-1 bg-gray-800 rounded px-2 py-1 text-sm" placeholder="Size" min="0" max="50" value="0">
-                                        <input type="color" id="propShapeGlowColor" class="flex-1 h-8 bg-gray-800 rounded" value="#ffffff">
+                                    <div class="grid grid-cols-5 gap-2">
+                                        <div>
+                                            <input type="number" id="propShapeGlowX" class="w-full bg-gray-800 rounded px-2 py-1 text-xs" placeholder="X" min="-100" max="100" value="0">
+                                            <label class="text-xs text-gray-500">X Offset</label>
+                                        </div>
+                                        <div>
+                                            <input type="number" id="propShapeGlowY" class="w-full bg-gray-800 rounded px-2 py-1 text-xs" placeholder="Y" min="-100" max="100" value="0">
+                                            <label class="text-xs text-gray-500">Y Offset</label>
+                                        </div>
+                                        <div>
+                                            <input type="number" id="propShapeGlowBlur" class="w-full bg-gray-800 rounded px-2 py-1 text-xs" placeholder="Blur" min="0" max="100" value="0">
+                                            <label class="text-xs text-gray-500">Blur Size</label>
+                                        </div>
+                                        <div>
+                                            <input type="number" id="propShapeGlowSpread" class="w-full bg-gray-800 rounded px-2 py-1 text-xs" placeholder="Spread" min="-50" max="50" value="0">
+                                            <label class="text-xs text-gray-500">Spread</label>
+                                        </div>
+                                        <div>
+                                            <input type="color" id="propShapeGlowColor" class="w-full h-8 bg-gray-800 rounded" value="#ffffff">
+                                            <label class="text-xs text-gray-500">Color</label>
+                                        </div>
                                     </div>
-                                    <p class="text-xs text-gray-500 mt-1">Glow size and color</p>
+                                    <label class="flex items-center cursor-pointer mt-2">
+                                        <input type="checkbox" id="propShapeGlowHover" class="w-4 h-4 mr-2">
+                                        <span class="text-xs text-gray-300">Show on mouse over only</span>
+                                    </label>
                                 </div>
                             </div>
                             

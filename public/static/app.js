@@ -256,12 +256,12 @@
         });
         
         // Text glow and shadow
-        $('#propTextShadowX, #propTextShadowY, #propTextShadowBlur, #propTextShadowColor').on('change input', updateTextShadow);
-        $('#propTextGlow, #propTextGlowColor').on('change input', updateTextGlow);
+        $('#propTextShadowX, #propTextShadowY, #propTextShadowBlur, #propTextShadowColor, #propTextShadowHover').on('change input', updateTextShadow);
+        $('#propTextGlowX, #propTextGlowY, #propTextGlowBlur, #propTextGlowSpread, #propTextGlowColor, #propTextGlowHover').on('change input', updateTextGlow);
         
         // Shape glow and shadow
-        $('#propShapeShadowX, #propShapeShadowY, #propShapeShadowBlur, #propShapeShadowColor').on('change input', updateShapeShadow);
-        $('#propShapeGlow, #propShapeGlowColor').on('change input', updateShapeGlow);
+        $('#propShapeShadowX, #propShapeShadowY, #propShapeShadowBlur, #propShapeShadowSpread, #propShapeShadowColor, #propShapeShadowHover').on('change input', updateShapeShadow);
+        $('#propShapeGlowX, #propShapeGlowY, #propShapeGlowBlur, #propShapeGlowSpread, #propShapeGlowColor, #propShapeGlowHover').on('change input', updateShapeGlow);
         
         // Animation
         $('#addAnimBtn').on('click', openAnimationModal);
@@ -632,8 +632,13 @@
             shadowY: 0,
             shadowBlur: 0,
             shadowColor: '#000000',
-            glow: 0,
+            shadowHover: false,
+            glowX: 0,
+            glowY: 0,
+            glowBlur: 0,
+            glowSpread: 0,
             glowColor: '#ffffff',
+            glowHover: false,
             zIndex: elements.length,
             animations: []
         };
@@ -737,9 +742,15 @@
             shadowX: 0,
             shadowY: 0,
             shadowBlur: 0,
+            shadowSpread: 0,
             shadowColor: '#000000',
-            glow: 0,
+            shadowHover: false,
+            glowX: 0,
+            glowY: 0,
+            glowBlur: 0,
+            glowSpread: 0,
             glowColor: '#ffffff',
+            glowHover: false,
             zIndex: elements.length,
             animations: []
         };
@@ -1412,8 +1423,14 @@
             $('#propTextShadowY').val(element.shadowY || 0);
             $('#propTextShadowBlur').val(element.shadowBlur || 0);
             $('#propTextShadowColor').val(element.shadowColor || '#000000');
-            $('#propTextGlow').val(element.glow || 0);
+            $('#propTextShadowHover').prop('checked', element.shadowHover || false);
+            
+            $('#propTextGlowX').val(element.glowX || 0);
+            $('#propTextGlowY').val(element.glowY || 0);
+            $('#propTextGlowBlur').val(element.glowBlur || 0);
+            $('#propTextGlowSpread').val(element.glowSpread || 0);
             $('#propTextGlowColor').val(element.glowColor || '#ffffff');
+            $('#propTextGlowHover').prop('checked', element.glowHover || false);
         } else {
             $textProps.addClass('hidden');
         }
@@ -1439,9 +1456,16 @@
             $('#propShapeShadowX').val(element.shadowX || 0);
             $('#propShapeShadowY').val(element.shadowY || 0);
             $('#propShapeShadowBlur').val(element.shadowBlur || 0);
+            $('#propShapeShadowSpread').val(element.shadowSpread || 0);
             $('#propShapeShadowColor').val(element.shadowColor || '#000000');
-            $('#propShapeGlow').val(element.glow || 0);
+            $('#propShapeShadowHover').prop('checked', element.shadowHover || false);
+            
+            $('#propShapeGlowX').val(element.glowX || 0);
+            $('#propShapeGlowY').val(element.glowY || 0);
+            $('#propShapeGlowBlur').val(element.glowBlur || 0);
+            $('#propShapeGlowSpread').val(element.glowSpread || 0);
             $('#propShapeGlowColor').val(element.glowColor || '#ffffff');
+            $('#propShapeGlowHover').prop('checked', element.glowHover || false);
         } else {
             $shapeProps.addClass('hidden');
         }
@@ -1733,6 +1757,7 @@
         element.shadowY = parseInt($('#propTextShadowY').val()) || 0;
         element.shadowBlur = parseInt($('#propTextShadowBlur').val()) || 0;
         element.shadowColor = $('#propTextShadowColor').val() || '#000000';
+        element.shadowHover = $('#propTextShadowHover').is(':checked');
         
         applyTextStyles(element);
     }
@@ -1742,8 +1767,12 @@
         const element = elements.find(el => el.id === selectedElement);
         if (element.type !== 'text') return;
         
-        element.glow = parseInt($('#propTextGlow').val()) || 0;
+        element.glowX = parseInt($('#propTextGlowX').val()) || 0;
+        element.glowY = parseInt($('#propTextGlowY').val()) || 0;
+        element.glowBlur = parseInt($('#propTextGlowBlur').val()) || 0;
+        element.glowSpread = parseInt($('#propTextGlowSpread').val()) || 0;
         element.glowColor = $('#propTextGlowColor').val() || '#ffffff';
+        element.glowHover = $('#propTextGlowHover').is(':checked');
         
         applyTextStyles(element);
     }
@@ -1751,17 +1780,68 @@
     function applyTextStyles(element) {
         const $el = $(`#${selectedElement}`);
         
-        // Build text-shadow CSS
+        // Build text-shadow CSS (for always-on effects)
         let textShadow = '';
-        if (element.shadowX || element.shadowY || element.shadowBlur) {
+        
+        // Add shadow if not hover-only or if both are not hover-only
+        if (!element.shadowHover && (element.shadowX || element.shadowY || element.shadowBlur)) {
             textShadow = `${element.shadowX}px ${element.shadowY}px ${element.shadowBlur}px ${element.shadowColor}`;
         }
-        if (element.glow > 0) {
-            const glowShadow = `0 0 ${element.glow}px ${element.glowColor}`;
+        
+        // Add glow if not hover-only
+        if (!element.glowHover && (element.glowX || element.glowY || element.glowBlur || element.glowSpread)) {
+            // For text, we simulate spread by using multiple shadows with slight offsets
+            let glowShadow = `${element.glowX}px ${element.glowY}px ${element.glowBlur}px ${element.glowColor}`;
+            if (element.glowSpread > 0) {
+                // Add additional glow layers for spread effect
+                const spreadLayers = [];
+                for (let i = 1; i <= element.glowSpread; i += 2) {
+                    spreadLayers.push(`${element.glowX}px ${element.glowY}px ${element.glowBlur + i}px ${element.glowColor}`);
+                }
+                glowShadow = [glowShadow, ...spreadLayers].join(', ');
+            }
             textShadow = textShadow ? `${textShadow}, ${glowShadow}` : glowShadow;
         }
         
         $el.css('text-shadow', textShadow || 'none');
+        
+        // Build hover styles if needed
+        let hoverShadow = '';
+        
+        // Add shadow for hover
+        if (element.shadowHover && (element.shadowX || element.shadowY || element.shadowBlur)) {
+            hoverShadow = `${element.shadowX}px ${element.shadowY}px ${element.shadowBlur}px ${element.shadowColor}`;
+        }
+        
+        // Add glow for hover
+        if (element.glowHover && (element.glowX || element.glowY || element.glowBlur || element.glowSpread)) {
+            let glowShadow = `${element.glowX}px ${element.glowY}px ${element.glowBlur}px ${element.glowColor}`;
+            if (element.glowSpread > 0) {
+                const spreadLayers = [];
+                for (let i = 1; i <= element.glowSpread; i += 2) {
+                    spreadLayers.push(`${element.glowX}px ${element.glowY}px ${element.glowBlur + i}px ${element.glowColor}`);
+                }
+                glowShadow = [glowShadow, ...spreadLayers].join(', ');
+            }
+            hoverShadow = hoverShadow ? `${hoverShadow}, ${glowShadow}` : glowShadow;
+        }
+        
+        // Store hover effect on element data
+        $el.data('hover-shadow', hoverShadow);
+        $el.data('normal-shadow', textShadow || 'none');
+        
+        // Remove old hover handlers
+        $el.off('mouseenter.shadow mouseleave.shadow');
+        
+        // Add hover handlers if needed
+        if (element.shadowHover || element.glowHover) {
+            $el.on('mouseenter.shadow', function() {
+                $(this).css('text-shadow', hoverShadow);
+            });
+            $el.on('mouseleave.shadow', function() {
+                $(this).css('text-shadow', textShadow || 'none');
+            });
+        }
     }
     
     // Shape shadow and glow updates
@@ -1773,7 +1853,9 @@
         element.shadowX = parseInt($('#propShapeShadowX').val()) || 0;
         element.shadowY = parseInt($('#propShapeShadowY').val()) || 0;
         element.shadowBlur = parseInt($('#propShapeShadowBlur').val()) || 0;
+        element.shadowSpread = parseInt($('#propShapeShadowSpread').val()) || 0;
         element.shadowColor = $('#propShapeShadowColor').val() || '#000000';
+        element.shadowHover = $('#propShapeShadowHover').is(':checked');
         
         applyShapeStyles(element);
     }
@@ -1783,8 +1865,12 @@
         const element = elements.find(el => el.id === selectedElement);
         if (element.type !== 'shape') return;
         
-        element.glow = parseInt($('#propShapeGlow').val()) || 0;
+        element.glowX = parseInt($('#propShapeGlowX').val()) || 0;
+        element.glowY = parseInt($('#propShapeGlowY').val()) || 0;
+        element.glowBlur = parseInt($('#propShapeGlowBlur').val()) || 0;
+        element.glowSpread = parseInt($('#propShapeGlowSpread').val()) || 0;
         element.glowColor = $('#propShapeGlowColor').val() || '#ffffff';
+        element.glowHover = $('#propShapeGlowHover').is(':checked');
         
         applyShapeStyles(element);
     }
@@ -1792,17 +1878,52 @@
     function applyShapeStyles(element) {
         const $el = $(`#${selectedElement}`);
         
-        // Build box-shadow CSS
+        // Build box-shadow CSS (for always-on effects)
         let boxShadow = '';
-        if (element.shadowX || element.shadowY || element.shadowBlur) {
-            boxShadow = `${element.shadowX}px ${element.shadowY}px ${element.shadowBlur}px ${element.shadowColor}`;
+        
+        // Add shadow if not hover-only
+        if (!element.shadowHover && (element.shadowX || element.shadowY || element.shadowBlur || element.shadowSpread)) {
+            boxShadow = `${element.shadowX}px ${element.shadowY}px ${element.shadowBlur}px ${element.shadowSpread}px ${element.shadowColor}`;
         }
-        if (element.glow > 0) {
-            const glowShadow = `0 0 ${element.glow}px ${element.glowColor}`;
+        
+        // Add glow if not hover-only
+        if (!element.glowHover && (element.glowX || element.glowY || element.glowBlur || element.glowSpread)) {
+            const glowShadow = `${element.glowX}px ${element.glowY}px ${element.glowBlur}px ${element.glowSpread}px ${element.glowColor}`;
             boxShadow = boxShadow ? `${boxShadow}, ${glowShadow}` : glowShadow;
         }
         
         $el.css('box-shadow', boxShadow || 'none');
+        
+        // Build hover styles if needed
+        let hoverShadow = '';
+        
+        // Add shadow for hover
+        if (element.shadowHover && (element.shadowX || element.shadowY || element.shadowBlur || element.shadowSpread)) {
+            hoverShadow = `${element.shadowX}px ${element.shadowY}px ${element.shadowBlur}px ${element.shadowSpread}px ${element.shadowColor}`;
+        }
+        
+        // Add glow for hover
+        if (element.glowHover && (element.glowX || element.glowY || element.glowBlur || element.glowSpread)) {
+            const glowShadow = `${element.glowX}px ${element.glowY}px ${element.glowBlur}px ${element.glowSpread}px ${element.glowColor}`;
+            hoverShadow = hoverShadow ? `${hoverShadow}, ${glowShadow}` : glowShadow;
+        }
+        
+        // Store hover effect on element data
+        $el.data('hover-shadow', hoverShadow);
+        $el.data('normal-shadow', boxShadow || 'none');
+        
+        // Remove old hover handlers
+        $el.off('mouseenter.shadow mouseleave.shadow');
+        
+        // Add hover handlers if needed
+        if (element.shadowHover || element.glowHover) {
+            $el.on('mouseenter.shadow', function() {
+                $(this).css('box-shadow', hoverShadow);
+            });
+            $el.on('mouseleave.shadow', function() {
+                $(this).css('box-shadow', boxShadow || 'none');
+            });
+        }
     }
     
     // ============================================
@@ -2473,19 +2594,44 @@
         ">`;
                 imageCounter++;
             } else if (element.type === 'text') {
-                // Build text-shadow CSS
+                // Build text-shadow CSS (always-on effects)
                 let textShadow = '';
-                if (element.shadowX || element.shadowY || element.shadowBlur) {
+                if (!element.shadowHover && (element.shadowX || element.shadowY || element.shadowBlur)) {
                     textShadow = `${element.shadowX}px ${element.shadowY}px ${element.shadowBlur}px ${element.shadowColor}`;
                 }
-                if (element.glow > 0) {
-                    const glowShadow = `0 0 ${element.glow}px ${element.glowColor}`;
+                if (!element.glowHover && (element.glowX || element.glowY || element.glowBlur || element.glowSpread)) {
+                    let glowShadow = `${element.glowX}px ${element.glowY}px ${element.glowBlur}px ${element.glowColor}`;
+                    if (element.glowSpread > 0) {
+                        const spreadLayers = [];
+                        for (let i = 1; i <= element.glowSpread; i += 2) {
+                            spreadLayers.push(`${element.glowX}px ${element.glowY}px ${element.glowBlur + i}px ${element.glowColor}`);
+                        }
+                        glowShadow = [glowShadow, ...spreadLayers].join(', ');
+                    }
                     textShadow = textShadow ? `${textShadow}, ${glowShadow}` : glowShadow;
                 }
                 const textShadowStyle = textShadow ? `text-shadow: ${textShadow};` : '';
                 
+                // Build hover text-shadow (if hover effects exist)
+                let hoverShadow = '';
+                if (element.shadowHover && (element.shadowX || element.shadowY || element.shadowBlur)) {
+                    hoverShadow = `${element.shadowX}px ${element.shadowY}px ${element.shadowBlur}px ${element.shadowColor}`;
+                }
+                if (element.glowHover && (element.glowX || element.glowY || element.glowBlur || element.glowSpread)) {
+                    let glowShadow = `${element.glowX}px ${element.glowY}px ${element.glowBlur}px ${element.glowColor}`;
+                    if (element.glowSpread > 0) {
+                        const spreadLayers = [];
+                        for (let i = 1; i <= element.glowSpread; i += 2) {
+                            spreadLayers.push(`${element.glowX}px ${element.glowY}px ${element.glowBlur + i}px ${element.glowColor}`);
+                        }
+                        glowShadow = [glowShadow, ...spreadLayers].join(', ');
+                    }
+                    hoverShadow = hoverShadow ? `${hoverShadow}, ${glowShadow}` : glowShadow;
+                }
+                const hoverClass = (element.shadowHover || element.glowHover) ? ` class="text-hover-${element.id}"` : '';
+                
                 elementsHtml += `
-        <div id="${element.id}" style="
+        <div id="${element.id}"${hoverClass} style="
             position: absolute;
             left: ${element.x}px;
             top: ${element.y}px;
@@ -2505,6 +2651,18 @@
             ${textShadowStyle}
             z-index: ${element.zIndex};
         ">${element.text}</div>`;
+                
+                // Add hover CSS if needed
+                if (element.shadowHover || element.glowHover) {
+                    clickthroughJs += `
+            const text_${element.id.replace(/[^a-zA-Z0-9]/g, '_')} = document.getElementById('${element.id}');
+            text_${element.id.replace(/[^a-zA-Z0-9]/g, '_')}.addEventListener('mouseenter', function() {
+                this.style.textShadow = '${hoverShadow}';
+            });
+            text_${element.id.replace(/[^a-zA-Z0-9]/g, '_')}.addEventListener('mouseleave', function() {
+                this.style.textShadow = '${textShadow}';
+            });`;
+                }
             } else if (element.type === 'clickthrough') {
                 // Use div with JavaScript click handler instead of <a> tag
                 const clickIndex = elements.filter(el => el.type === 'clickthrough').findIndex(el => el.id === element.id) + 1;
@@ -2529,16 +2687,26 @@
                     borderRadius = element.borderRadius + 'px';
                 }
                 
-                // Build box-shadow CSS
+                // Build box-shadow CSS (always-on effects)
                 let boxShadow = '';
-                if (element.shadowX || element.shadowY || element.shadowBlur) {
-                    boxShadow = `${element.shadowX}px ${element.shadowY}px ${element.shadowBlur}px ${element.shadowColor}`;
+                if (!element.shadowHover && (element.shadowX || element.shadowY || element.shadowBlur || element.shadowSpread)) {
+                    boxShadow = `${element.shadowX}px ${element.shadowY}px ${element.shadowBlur}px ${element.shadowSpread}px ${element.shadowColor}`;
                 }
-                if (element.glow > 0) {
-                    const glowShadow = `0 0 ${element.glow}px ${element.glowColor}`;
+                if (!element.glowHover && (element.glowX || element.glowY || element.glowBlur || element.glowSpread)) {
+                    const glowShadow = `${element.glowX}px ${element.glowY}px ${element.glowBlur}px ${element.glowSpread}px ${element.glowColor}`;
                     boxShadow = boxShadow ? `${boxShadow}, ${glowShadow}` : glowShadow;
                 }
                 const boxShadowStyle = boxShadow ? `box-shadow: ${boxShadow};` : '';
+                
+                // Build hover box-shadow
+                let hoverShadow = '';
+                if (element.shadowHover && (element.shadowX || element.shadowY || element.shadowBlur || element.shadowSpread)) {
+                    hoverShadow = `${element.shadowX}px ${element.shadowY}px ${element.shadowBlur}px ${element.shadowSpread}px ${element.shadowColor}`;
+                }
+                if (element.glowHover && (element.glowX || element.glowY || element.glowBlur || element.glowSpread)) {
+                    const glowShadow = `${element.glowX}px ${element.glowY}px ${element.glowBlur}px ${element.glowSpread}px ${element.glowColor}`;
+                    hoverShadow = hoverShadow ? `${hoverShadow}, ${glowShadow}` : glowShadow;
+                }
                 
                 elementsHtml += `
         <div id="${element.id}" style="
@@ -2554,6 +2722,18 @@
             ${boxShadowStyle}
             z-index: ${element.zIndex};
         "></div>`;
+                
+                // Add hover CSS if needed
+                if (element.shadowHover || element.glowHover) {
+                    clickthroughJs += `
+            const shape_${element.id.replace(/[^a-zA-Z0-9]/g, '_')} = document.getElementById('${element.id}');
+            shape_${element.id.replace(/[^a-zA-Z0-9]/g, '_')}.addEventListener('mouseenter', function() {
+                this.style.boxShadow = '${hoverShadow}';
+            });
+            shape_${element.id.replace(/[^a-zA-Z0-9]/g, '_')}.addEventListener('mouseleave', function() {
+                this.style.boxShadow = '${boxShadow}';
+            });`;
+                }
             } else if (element.type === 'video') {
                 const autoplayAttr = element.playTrigger === 'autoplay' ? ' autoplay' : '';
                 const mutedAttr = element.muted ? ' muted' : '';
