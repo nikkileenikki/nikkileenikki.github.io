@@ -1086,6 +1086,9 @@
     // ARROW KEY POSITIONING
     // ============================================
     function handleKeyDown(e) {
+        // Check if user is typing in an input field or textarea
+        const isTyping = $(e.target).is('input, textarea, [contenteditable="true"]');
+        
         // Escape key: close any open modal
         if (e.keyCode === 27) { // Escape
             if (!$textModal.hasClass('hidden')) {
@@ -1100,6 +1103,10 @@
                 closeShapeModal();
                 return;
             }
+            if (!$videoModal.hasClass('hidden')) {
+                closeVideoModal();
+                return;
+            }
             if (!$animModal.hasClass('hidden')) {
                 closeAnimationModal();
                 return;
@@ -1109,7 +1116,8 @@
         if (!selectedElement) return;
         
         // Delete/Backspace keys: 8=backspace, 46=delete
-        if (e.keyCode === 8 || e.keyCode === 46) {
+        // Only delete element if NOT typing in an input field
+        if ((e.keyCode === 8 || e.keyCode === 46) && !isTyping) {
             // Prevent default browser back navigation on Backspace
             e.preventDefault();
             
@@ -1126,8 +1134,9 @@
         }
         
         // Arrow keys: 37=left, 38=up, 39=right, 40=down
+        // Only move element if NOT typing in an input field
         const arrowKeys = [37, 38, 39, 40];
-        if (!arrowKeys.includes(e.keyCode)) return;
+        if (!arrowKeys.includes(e.keyCode) || isTyping) return;
         
         e.preventDefault();
         
