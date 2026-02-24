@@ -2075,7 +2075,7 @@
     
     function updateTimelineDuration() {
         const newDuration = parseFloat($('#timelineDuration').val());
-        if (newDuration && newDuration >= 1 && newDuration <= 60) {
+        if (newDuration && newDuration >= 1 && newDuration <= 30) {
             totalDuration = newDuration;
             updateTimelineRuler();
             updateTimelineTracks();
@@ -2097,7 +2097,7 @@
     
     function zoomOut() {
         // Zoom out = increase duration to see more time
-        totalDuration = Math.min(totalDuration + 2, 60);
+        totalDuration = Math.min(totalDuration + 2, 30);
         $('#timelineDuration').val(totalDuration);
         updateTimelineRuler();
         updateTimelineTracks();
@@ -2294,7 +2294,8 @@
         // This ensures the ruler and playhead are synchronized
         const actualDuration = timeline.duration();
         if (actualDuration > 0) {
-            totalDuration = Math.max(actualDuration, 2); // Minimum 2 seconds for visibility
+            // Cap between 2 and 30 seconds
+            totalDuration = Math.max(Math.min(actualDuration, 30), 2);
             $('#timelineDuration').val(totalDuration);
             updateTimelineRuler();
         }
