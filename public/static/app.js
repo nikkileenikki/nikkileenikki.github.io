@@ -777,8 +777,8 @@
             playTrigger: playTrigger, // 'autoplay', 'mouseover', or 'click'
             muted: muted,
             controls: controls,
-            x: 50,
-            y: 50,
+            x: 0,
+            y: 0,
             width: 300,
             height: 169, // 16:9 aspect ratio
             rotation: 0,
