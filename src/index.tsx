@@ -226,7 +226,7 @@ app.get('/', (c) => {
                                     </div>
                                     <label class="flex items-center cursor-pointer mt-2">
                                         <input type="checkbox" id="propTextShadowHover" class="w-4 h-4 mr-2">
-                                        <span class="text-xs text-gray-300">Show on mouse over only</span>
+                                        <span class="text-xs text-gray-300">On Hover</span>
                                     </label>
                                 </div>
                                 <div>
@@ -255,7 +255,7 @@ app.get('/', (c) => {
                                     </div>
                                     <label class="flex items-center cursor-pointer mt-2">
                                         <input type="checkbox" id="propTextGlowHover" class="w-4 h-4 mr-2">
-                                        <span class="text-xs text-gray-300">Show on mouse over only</span>
+                                        <span class="text-xs text-gray-300">On Hover</span>
                                     </label>
                                 </div>
                             </div>
@@ -317,7 +317,7 @@ app.get('/', (c) => {
                                     </div>
                                     <label class="flex items-center cursor-pointer mt-2">
                                         <input type="checkbox" id="propShapeShadowHover" class="w-4 h-4 mr-2">
-                                        <span class="text-xs text-gray-300">Show on mouse over only</span>
+                                        <span class="text-xs text-gray-300">On Hover</span>
                                     </label>
                                 </div>
                                 <div>
@@ -346,7 +346,7 @@ app.get('/', (c) => {
                                     </div>
                                     <label class="flex items-center cursor-pointer mt-2">
                                         <input type="checkbox" id="propShapeGlowHover" class="w-4 h-4 mr-2">
-                                        <span class="text-xs text-gray-300">Show on mouse over only</span>
+                                        <span class="text-xs text-gray-300">On Hover</span>
                                     </label>
                                 </div>
                             </div>

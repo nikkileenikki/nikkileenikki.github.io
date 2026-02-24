@@ -2931,6 +2931,7 @@
                 }
                 // autoplay is handled by the autoplay attribute
             });
+            ${clickthroughJs}
             
             // GSAP Timeline Animation
             const tl = gsap.timeline({ repeat: ${animLoop} });
