@@ -1203,7 +1203,7 @@
             $propertiesPanel.addClass('hidden');
             
             updateLayersList();
-            rebuildTimeline();
+            rebuildTimeline(true); // Auto-update duration when deleting element
             return;
         }
         
@@ -1362,7 +1362,7 @@
         }
         
         updateLayersList();
-        rebuildTimeline();
+        rebuildTimeline(true); // Auto-update duration when adding element
     }
     
     function handleAddLayerAnimation(e) {
@@ -2043,7 +2043,7 @@
             element.animations.push(animation);
         }
         
-        rebuildTimeline();
+        rebuildTimeline(true); // Auto-update duration when saving animation
         updateTimelineTracks();
         closeAnimationModal();
     }
@@ -2054,7 +2054,7 @@
         const element = elements.find(el => el.id === editingAnimation.elementId);
         if (element) {
             element.animations = element.animations.filter(a => a.id !== editingAnimation.animId);
-            rebuildTimeline();
+            rebuildTimeline(true); // Auto-update duration when deleting animation
             updateTimelineTracks();
         }
         
@@ -2068,7 +2068,7 @@
         const element = elements.find(el => el.id === elementId);
         if (element) {
             element.animations = element.animations.filter(a => a.id !== animId);
-            rebuildTimeline();
+            rebuildTimeline(true); // Auto-update duration when deleting animation
             updateTimelineTracks();
         }
     }
@@ -2250,7 +2250,7 @@
         });
     }
     
-    function rebuildTimeline() {
+    function rebuildTimeline(autoUpdateDuration = false) {
         timeline.clear();
         timeline.repeat(0); // Reset repeat, will be set in playTimeline
         
@@ -2290,14 +2290,16 @@
         
         timeline.eventCallback('onUpdate', updatePlayhead);
         
-        // Update totalDuration to match timeline's actual duration
-        // This ensures the ruler and playhead are synchronized
-        const actualDuration = timeline.duration();
-        if (actualDuration > 0) {
-            // Cap between 2 and 30 seconds
-            totalDuration = Math.max(Math.min(actualDuration, 30), 2);
-            $('#timelineDuration').val(totalDuration);
-            updateTimelineRuler();
+        // Only auto-update duration when explicitly requested (e.g., when adding/removing animations)
+        // Don't auto-update during playback to preserve user's manual duration setting
+        if (autoUpdateDuration) {
+            const actualDuration = timeline.duration();
+            if (actualDuration > 0) {
+                // Cap between 2 and 30 seconds
+                totalDuration = Math.max(Math.min(actualDuration, 30), 2);
+                $('#timelineDuration').val(totalDuration);
+                updateTimelineRuler();
+            }
         }
     }
     
