@@ -2288,6 +2288,14 @@
             });
         });
         
+        // Extend timeline to totalDuration by adding a dummy animation
+        // This ensures the timeline plays for the full duration set by the user
+        const actualDuration = timeline.duration();
+        if (actualDuration < totalDuration) {
+            // Add an invisible dummy animation to extend timeline
+            timeline.to({}, { duration: totalDuration - actualDuration }, actualDuration);
+        }
+        
         timeline.eventCallback('onUpdate', updatePlayhead);
     }
     
