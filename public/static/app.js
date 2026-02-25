@@ -43,7 +43,7 @@
         // Initialize DOM element references
         $canvas = $('#canvas');
         $canvasWrapper = $('#canvasWrapper');
-        $layersList = $('#layersList');
+        $layersList = $('#timelineTracks'); // Use timeline tracks as layers list
         $dropzone = $('#dropzone');
         $fileInput = $('#fileInput');
         $propertiesPanel = $('#propertiesPanel');
