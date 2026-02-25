@@ -2570,7 +2570,143 @@
         // Update canvas z-index after rendering
         updateCanvasZIndex();
         
-        // Note: Do NOT initialize sortable here - it interferes with custom drag handlers
+        // Initialize jQuery UI Sortable for all tracks
+        initTimelineSortable();
+    }
+    
+    function initTimelineSortable() {
+        // Destroy existing sortable if any
+        if ($timelineTracks.hasClass('ui-sortable')) {
+            $timelineTracks.sortable('destroy');
+        }
+        
+        // Initialize sortable
+        $timelineTracks.sortable({
+            handle: '.drag-handle',
+            axis: 'y',
+            cursor: 'move',
+            placeholder: 'timeline-track-placeholder',
+            tolerance: 'pointer',
+            helper: 'clone',
+            opacity: 0.8,
+            start: function(event, ui) {
+                ui.placeholder.height(ui.item.height());
+                console.log('Sortable start');
+            },
+            stop: function(event, ui) {
+                const $item = ui.item;
+                const groupId = $item.attr('data-group-id');
+                const elementId = $item.attr('data-element-id');
+                
+                console.log('Sortable stop - groupId:', groupId, 'elementId:', elementId);
+                
+                // Get all timeline tracks in new order
+                const $allTracks = $timelineTracks.children('.timeline-track, .timeline-group-track');
+                
+                // Rebuild order arrays
+                const newGroupOrder = [];
+                const newUngroupedOrder = [];
+                
+                $allTracks.each(function() {
+                    const $track = $(this);
+                    const trackGroupId = $track.attr('data-group-id');
+                    const trackElementId = $track.attr('data-element-id');
+                    const inGroup = $track.attr('data-in-group');
+                    
+                    // Skip child elements (they're in groups)
+                    if (inGroup) return;
+                    
+                    if (trackGroupId) {
+                        // This is a group
+                        const group = groups.find(g => g.id === trackGroupId);
+                        if (group) newGroupOrder.push(group);
+                    } else if (trackElementId) {
+                        // This is an ungrouped element
+                        const element = elements.find(el => el.id === trackElementId);
+                        if (element && !element.groupId) {
+                            newUngroupedOrder.push(element);
+                        }
+                    }
+                });
+                
+                // Update z-index for groups
+                newGroupOrder.reverse().forEach((group, idx) => {
+                    group.zIndex = idx + 1;
+                });
+                
+                // Update groups array order
+                groups.length = 0;
+                groups.push(...newGroupOrder.reverse());
+                
+                // Update z-index for ungrouped elements
+                newUngroupedOrder.reverse().forEach((element, idx) => {
+                    element.zIndex = idx + 1;
+                });
+                
+                console.log('Reordered - Groups:', groups.length, 'Ungrouped:', newUngroupedOrder.length);
+                
+                // Update canvas z-index
+                updateCanvasZIndex();
+                
+                // Refresh timeline (but prevent infinite loop)
+                setTimeout(() => {
+                    updateTimelineTracks();
+                }, 10);
+            }
+        });
+        
+        // Make group children sortable within their container
+        $('.timeline-group-track').each(function() {
+            const $groupTrack = $(this);
+            const groupId = $groupTrack.attr('data-group-id');
+            
+            // Get next sibling elements that belong to this group
+            const $children = $groupTrack.nextUntil('.timeline-group-track, .timeline-track:not([data-in-group])');
+            
+            if ($children.length > 0) {
+                // Wrap children in a container for sortable
+                const $container = $('<div class="group-children-container" data-group-id="' + groupId + '"></div>');
+                $children.wrapAll($container);
+                
+                $container = $groupTrack.next('.group-children-container');
+                
+                $container.sortable({
+                    handle: '.drag-handle',
+                    axis: 'y',
+                    cursor: 'move',
+                    placeholder: 'timeline-track-placeholder',
+                    tolerance: 'pointer',
+                    helper: 'clone',
+                    opacity: 0.8,
+                    stop: function(event, ui) {
+                        const $item = ui.item;
+                        const elementId = $item.attr('data-element-id');
+                        
+                        console.log('Sortable stop in group - elementId:', elementId, 'groupId:', groupId);
+                        
+                        // Get all child tracks in new order
+                        const $childTracks = $container.children('.timeline-track');
+                        const newOrder = [];
+                        
+                        $childTracks.each(function() {
+                            const childElementId = $(this).attr('data-element-id');
+                            const element = elements.find(el => el.id === childElementId);
+                            if (element) newOrder.push(element);
+                        });
+                        
+                        // Update z-index
+                        newOrder.reverse().forEach((element, idx) => {
+                            element.zIndex = idx + 1;
+                        });
+                        
+                        console.log('Reordered elements in group:', newOrder.length);
+                        
+                        // Update canvas z-index
+                        updateCanvasZIndex();
+                    }
+                });
+            }
+        });
     }
     
     function updateCanvasZIndex() {
@@ -2685,7 +2821,7 @@
                  data-type="group">
                 <div class="timeline-track-label timeline-group-label">
                     <div class="flex items-center flex-1">
-                        <i class="fas fa-grip-vertical drag-handle text-gray-500 hover:text-white mr-2 cursor-move" draggable="true"></i>
+                        <i class="fas fa-grip-vertical drag-handle text-gray-500 hover:text-white mr-2 cursor-move"></i>
                         <button class="group-toggle-btn text-gray-400 hover:text-white mr-1" data-group-id="${group.id}">
                             <i class="fas ${isExpanded ? 'fa-caret-down' : 'fa-caret-right'} text-sm"></i>
                         </button>
@@ -2710,90 +2846,29 @@
             </div>
         `);
         
-        // Drag handlers for folder reordering
-        $groupTrack.find('.drag-handle').on('dragstart', function(e) {
-            e.stopPropagation();
-            e.originalEvent.dataTransfer.effectAllowed = 'move';
-            e.originalEvent.dataTransfer.setData('text/group-id', group.id);
-            $groupTrack.addClass('dragging');
-            console.log('Drag start folder:', group.name);
-        });
-        
-        $groupTrack.on('dragstart', function(e) {
-            // Prevent drag from anywhere except drag handle
-            if (!$(e.target).hasClass('drag-handle')) {
-                e.preventDefault();
-                return false;
-            }
-        });
-        
-        $groupTrack.on('dragend', function(e) {
-            $(this).removeClass('dragging');
-            $('.drag-over, .drag-over-top, .drag-over-bottom').removeClass('drag-over drag-over-top drag-over-bottom');
-            console.log('Drag end');
-        });
-        
-        // Accept both elements and folders for dropping
-        $groupTrack.on('dragover', function(e) {
+        // Add drop zone for dragging elements into folder
+        $groupTrack.find('.group-drop-zone').on('dragover', function(e) {
             e.preventDefault();
             e.stopPropagation();
-            
-            const types = e.originalEvent.dataTransfer.types;
-            const isDraggingElement = types.includes('text/element-id');
-            const isDraggingFolder = types.includes('text/group-id');
-            
-            if (isDraggingElement) {
-                // Dragging element onto folder - add to folder
-                const $content = $(e.target).closest('.timeline-track-content');
-                if ($content.length > 0) {
-                    $(this).addClass('drag-over');
-                }
-            } else if (isDraggingFolder) {
-                // Dragging folder for reordering
-                const rect = this.getBoundingClientRect();
-                const midpoint = rect.top + rect.height / 2;
-                
-                if (e.originalEvent.clientY < midpoint) {
-                    $(this).removeClass('drag-over-bottom').addClass('drag-over-top');
-                } else {
-                    $(this).removeClass('drag-over-top').addClass('drag-over-bottom');
-                }
-            }
+            $(this).addClass('drag-over');
         });
         
-        $groupTrack.on('dragleave', function(e) {
-            if (!$(e.relatedTarget).closest(this).length) {
-                $(this).removeClass('drag-over drag-over-top drag-over-bottom');
-            }
+        $groupTrack.find('.group-drop-zone').on('dragleave', function(e) {
+            $(this).removeClass('drag-over');
         });
         
-        $groupTrack.on('drop', function(e) {
+        $groupTrack.find('.group-drop-zone').on('drop', function(e) {
             e.preventDefault();
             e.stopPropagation();
-            $(this).removeClass('drag-over drag-over-top drag-over-bottom');
+            $(this).removeClass('drag-over');
             
-            const draggedElementId = e.originalEvent.dataTransfer.getData('text/element-id');
-            const draggedGroupId = e.originalEvent.dataTransfer.getData('text/group-id');
-            
+            const draggedElementId = $(ui.helper).attr('data-element-id');
             if (draggedElementId) {
-                // Element dropped on folder - add to folder
-                console.log('Drop element on folder:', group.name, 'element:', draggedElementId);
                 const element = elements.find(el => el.id === draggedElementId);
                 if (element && element.groupId !== group.id) {
+                    console.log('Add element to folder:', element.id, '->', group.name);
                     element.groupId = group.id;
                     updateTimelineTracks();
-                }
-            } else if (draggedGroupId && draggedGroupId !== group.id) {
-                // Folder dropped on another folder - reorder
-                console.log('Reorder folder');
-                const draggedGroup = groups.find(g => g.id === draggedGroupId);
-                if (draggedGroup) {
-                    // Determine if drop is above or below
-                    const rect = this.getBoundingClientRect();
-                    const midpoint = rect.top + rect.height / 2;
-                    const dropAbove = e.originalEvent.clientY < midpoint;
-                    
-                    reorderGroups(draggedGroup, group, dropAbove);
                 }
             }
         });
@@ -2842,7 +2917,7 @@
                  data-in-group="${isInGroup ? parentGroupId : ''}">
                 <div class="timeline-track-label">
                     <div class="flex items-center flex-1">
-                        <i class="fas fa-grip-vertical drag-handle text-gray-500 hover:text-white mr-2 cursor-move" draggable="true"></i>
+                        <i class="fas fa-grip-vertical drag-handle text-gray-500 hover:text-white mr-2 cursor-move"></i>
                         <i class="fas fa-eye${element.hidden ? '-slash' : ''} text-gray-400 hover:text-white mr-2 cursor-pointer toggle-visibility" data-id="${element.id}"></i>
                         <i class="fas ${icon} text-blue-400 mr-2"></i>
                         <span class="truncate flex-1">${label}</span>
@@ -2860,91 +2935,6 @@
                 </div>
             </div>
         `);
-        
-        // Drag handlers for element
-        $track.find('.drag-handle').on('dragstart', function(e) {
-            e.stopPropagation();
-            e.originalEvent.dataTransfer.effectAllowed = 'move';
-            e.originalEvent.dataTransfer.setData('text/element-id', element.id);
-            e.originalEvent.dataTransfer.setData('text/source-group', isInGroup ? parentGroupId : '');
-            $track.addClass('dragging');
-            console.log('Drag start element:', element.id, 'from group:', parentGroupId || 'none');
-        });
-        
-        $track.on('dragstart', function(e) {
-            // Prevent drag from anywhere except drag handle
-            if (!$(e.target).hasClass('drag-handle')) {
-                e.preventDefault();
-                return false;
-            }
-        });
-        
-        $track.on('dragend', function(e) {
-            $(this).removeClass('dragging');
-            $('.drag-over, .drag-over-top, .drag-over-bottom').removeClass('drag-over drag-over-top drag-over-bottom');
-            console.log('Drag end');
-        });
-        
-        // Dragover for reordering
-        $track.on('dragover', function(e) {
-            e.preventDefault();
-            e.stopPropagation();
-            
-            const types = e.originalEvent.dataTransfer.types;
-            if (types.includes('text/element-id')) {
-                // Show drop indicator above or below
-                const rect = this.getBoundingClientRect();
-                const midpoint = rect.top + rect.height / 2;
-                
-                if (e.originalEvent.clientY < midpoint) {
-                    $(this).removeClass('drag-over-bottom').addClass('drag-over-top');
-                } else {
-                    $(this).removeClass('drag-over-top').addClass('drag-over-bottom');
-                }
-            }
-        });
-        
-        $track.on('dragleave', function(e) {
-            if (!$(e.relatedTarget).closest(this).length) {
-                $(this).removeClass('drag-over drag-over-top drag-over-bottom');
-            }
-        });
-        
-        $track.on('drop', function(e) {
-            e.preventDefault();
-            e.stopPropagation();
-            $(this).removeClass('drag-over drag-over-top drag-over-bottom');
-            
-            const draggedElementId = e.originalEvent.dataTransfer.getData('text/element-id');
-            const sourceGroup = e.originalEvent.dataTransfer.getData('text/source-group');
-            
-            if (draggedElementId && draggedElementId !== element.id) {
-                console.log('Drop element for reorder:', draggedElementId, 'target:', element.id);
-                
-                const draggedElement = elements.find(el => el.id === draggedElementId);
-                const targetElement = element;
-                
-                if (draggedElement) {
-                    // Determine drop position
-                    const rect = e.currentTarget.getBoundingClientRect();
-                    const midpoint = rect.top + rect.height / 2;
-                    const dropAbove = e.originalEvent.clientY < midpoint;
-                    
-                    // If dropped on ungrouped area and element is in a group, remove from group
-                    if (!isInGroup && draggedElement.groupId) {
-                        console.log('Remove from group - dropped on ungrouped area');
-                        draggedElement.groupId = null;
-                        updateTimelineTracks();
-                    } else if (isInGroup && parentGroupId) {
-                        // Reorder within the same group
-                        reorderElementsInGroup(draggedElement, targetElement, parentGroupId, dropAbove);
-                    } else if (!isInGroup && !draggedElement.groupId) {
-                        // Reorder in ungrouped area
-                        reorderElements(draggedElement, targetElement, dropAbove);
-                    }
-                }
-            }
-        });
         
         $timelineTracks.append($track);
         
