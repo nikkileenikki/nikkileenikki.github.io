@@ -188,7 +188,13 @@
         });
         
         // Layer selection and controls
-        $layersList.on('click', '.layer-item', handleLayerClick);
+        // Debug: Test if any click is detected
+        $timelineTracks.on('click', function(e) {
+            console.log('Click detected on timelineTracks:', e.target);
+        });
+        
+        // Multi-select for timeline tracks
+        $timelineTracks.on('click', '.timeline-track', handleTimelineTrackClick);
         $layersList.on('click', '.delete-layer', handleDeleteLayer);
         $layersList.on('click', '.add-layer-anim', handleAddLayerAnimation);
         $layersList.on('click', '.toggle-layer-visibility', toggleLayerVisibility);
@@ -1436,19 +1442,17 @@
         $layersList.append($layer);
     }
     
-    function handleLayerClick(e) {
+    function handleTimelineTrackClick(e) {
+        // Ignore clicks on buttons
         if ($(e.target).closest('button').length) return;
         
-        const id = $(e.currentTarget).data('id');
-        const isGroup = $(e.currentTarget).data('type') === 'group';
+        // Ignore clicks on timeline blocks
+        if ($(e.target).closest('.timeline-block').length) return;
         
-        console.log('Layer clicked:', id, 'Ctrl:', e.ctrlKey, 'Meta:', e.metaKey, 'Shift:', e.shiftKey);
+        const id = $(e.currentTarget).data('element-id');
+        if (!id) return;
         
-        // Handle group toggle
-        if (isGroup && $(e.target).closest('.group-toggle').length) {
-            toggleGroup(id);
-            return;
-        }
+        console.log('Timeline track clicked:', id, 'Ctrl:', e.ctrlKey, 'Meta:', e.metaKey, 'Shift:', e.shiftKey);
         
         // Multi-select with Ctrl/Cmd or Shift
         if (e.ctrlKey || e.metaKey) {
@@ -1480,7 +1484,7 @@
             return;
         }
         
-        updateLayersListSelection();
+        updateTimelineTracksSelection();
         updateCanvasSelection();
     }
     
@@ -1662,6 +1666,25 @@
                 $(this).addClass('border-blue-400 bg-blue-900 bg-opacity-30');
             } else {
                 $(this).removeClass('border-blue-400 bg-blue-900 bg-opacity-30').addClass('border-gray-700');
+            }
+        });
+        
+        // Update folder icon button state
+        const $createGroupBtn = $('#createGroupBtn');
+        if (selectedElements.length >= 2) {
+            $createGroupBtn.prop('disabled', false).removeClass('text-gray-600').addClass('text-yellow-400').attr('title', `Create Group from ${selectedElements.length} Selected Layers`);
+        } else {
+            $createGroupBtn.prop('disabled', true).removeClass('text-yellow-400').addClass('text-gray-600').attr('title', 'Select 2 or more layers to create a group');
+        }
+    }
+    
+    function updateTimelineTracksSelection() {
+        $('.timeline-track').each(function() {
+            const id = $(this).data('element-id');
+            if (selectedElements.includes(id)) {
+                $(this).addClass('selected-multi');
+            } else {
+                $(this).removeClass('selected-multi');
             }
         });
         
