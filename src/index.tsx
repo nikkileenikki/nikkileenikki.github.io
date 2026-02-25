@@ -569,82 +569,50 @@ app.get('/', (c) => {
                 
                 <div class="space-y-2">
                     <div>
-                        <label class="block text-sm text-gray-400 mb-2">Select Animation Effects (Multiple)</label>
-                        <div class="grid grid-cols-1 gap-2 p-2 bg-gray-700 rounded max-h-64 overflow-y-auto">
-                            <!-- Fade Group -->
-                            <div class="bg-gray-800 rounded p-2">
-                                <div class="text-xs text-gray-400 font-semibold mb-1">FADE</div>
-                                <div class="grid grid-cols-2 gap-2">
-                                    <label class="flex items-center space-x-2 p-2 bg-gray-900 rounded hover:bg-gray-850 cursor-pointer">
-                                        <input type="checkbox" class="anim-checkbox" value="fadeIn">
-                                        <span class="text-sm">Fade In</span>
-                                    </label>
-                                    <label class="flex items-center space-x-2 p-2 bg-gray-900 rounded hover:bg-gray-850 cursor-pointer">
-                                        <input type="checkbox" class="anim-checkbox" value="fadeOut">
-                                        <span class="text-sm">Fade Out</span>
-                                    </label>
-                                </div>
+                        <label class="block text-sm text-gray-400 mb-2">Select Animation Effects</label>
+                        <div class="grid grid-cols-2 gap-3">
+                            <!-- Fade Dropdown -->
+                            <div>
+                                <label class="block text-xs text-gray-400 mb-1">Fade</label>
+                                <select id="animFade" class="w-full bg-gray-700 rounded px-3 py-2 text-sm">
+                                    <option value="">None</option>
+                                    <option value="fadeIn">Fade In</option>
+                                    <option value="fadeOut">Fade Out</option>
+                                </select>
                             </div>
                             
-                            <!-- Slide Group -->
-                            <div class="bg-gray-800 rounded p-2">
-                                <div class="text-xs text-gray-400 font-semibold mb-1">SLIDE</div>
-                                <div class="grid grid-cols-2 gap-2">
-                                    <label class="flex items-center space-x-2 p-2 bg-gray-900 rounded hover:bg-gray-850 cursor-pointer">
-                                        <input type="checkbox" class="anim-checkbox" value="slideLeft">
-                                        <span class="text-sm">From Left</span>
-                                    </label>
-                                    <label class="flex items-center space-x-2 p-2 bg-gray-900 rounded hover:bg-gray-850 cursor-pointer">
-                                        <input type="checkbox" class="anim-checkbox" value="slideRight">
-                                        <span class="text-sm">From Right</span>
-                                    </label>
-                                    <label class="flex items-center space-x-2 p-2 bg-gray-900 rounded hover:bg-gray-850 cursor-pointer">
-                                        <input type="checkbox" class="anim-checkbox" value="slideUp">
-                                        <span class="text-sm">From Top</span>
-                                    </label>
-                                    <label class="flex items-center space-x-2 p-2 bg-gray-900 rounded hover:bg-gray-850 cursor-pointer">
-                                        <input type="checkbox" class="anim-checkbox" value="slideDown">
-                                        <span class="text-sm">From Bottom</span>
-                                    </label>
-                                </div>
+                            <!-- Slide Dropdown -->
+                            <div>
+                                <label class="block text-xs text-gray-400 mb-1">Slide</label>
+                                <select id="animSlide" class="w-full bg-gray-700 rounded px-3 py-2 text-sm">
+                                    <option value="">None</option>
+                                    <option value="slideLeft">From Left</option>
+                                    <option value="slideRight">From Right</option>
+                                    <option value="slideUp">From Top</option>
+                                    <option value="slideDown">From Bottom</option>
+                                </select>
                             </div>
                             
-                            <!-- Zoom Group -->
-                            <div class="bg-gray-800 rounded p-2">
-                                <div class="text-xs text-gray-400 font-semibold mb-1">ZOOM</div>
-                                <div class="grid grid-cols-2 gap-2">
-                                    <label class="flex items-center space-x-2 p-2 bg-gray-900 rounded hover:bg-gray-850 cursor-pointer">
-                                        <input type="checkbox" class="anim-checkbox" value="scaleIn">
-                                        <span class="text-sm">Zoom In</span>
-                                    </label>
-                                    <label class="flex items-center space-x-2 p-2 bg-gray-900 rounded hover:bg-gray-850 cursor-pointer">
-                                        <input type="checkbox" class="anim-checkbox" value="scaleOut">
-                                        <span class="text-sm">Zoom Out</span>
-                                    </label>
-                                </div>
+                            <!-- Zoom Dropdown -->
+                            <div>
+                                <label class="block text-xs text-gray-400 mb-1">Zoom</label>
+                                <select id="animZoom" class="w-full bg-gray-700 rounded px-3 py-2 text-sm">
+                                    <option value="">None</option>
+                                    <option value="scaleIn">Zoom In</option>
+                                    <option value="scaleOut">Zoom Out</option>
+                                </select>
                             </div>
                             
-                            <!-- Rotate Group -->
-                            <div class="bg-gray-800 rounded p-2">
-                                <div class="text-xs text-gray-400 font-semibold mb-1">ROTATE</div>
-                                <div class="grid grid-cols-2 gap-2">
-                                    <label class="flex items-center space-x-2 p-2 bg-gray-900 rounded hover:bg-gray-850 cursor-pointer">
-                                        <input type="checkbox" class="anim-checkbox" value="rotate90">
-                                        <span class="text-sm">90°</span>
-                                    </label>
-                                    <label class="flex items-center space-x-2 p-2 bg-gray-900 rounded hover:bg-gray-850 cursor-pointer">
-                                        <input type="checkbox" class="anim-checkbox" value="rotate180">
-                                        <span class="text-sm">180°</span>
-                                    </label>
-                                    <label class="flex items-center space-x-2 p-2 bg-gray-900 rounded hover:bg-gray-850 cursor-pointer">
-                                        <input type="checkbox" class="anim-checkbox" value="rotate270">
-                                        <span class="text-sm">270°</span>
-                                    </label>
-                                    <label class="flex items-center space-x-2 p-2 bg-gray-900 rounded hover:bg-gray-850 cursor-pointer">
-                                        <input type="checkbox" class="anim-checkbox" value="rotate360">
-                                        <span class="text-sm">360°</span>
-                                    </label>
-                                </div>
+                            <!-- Rotate Dropdown -->
+                            <div>
+                                <label class="block text-xs text-gray-400 mb-1">Rotate</label>
+                                <select id="animRotate" class="w-full bg-gray-700 rounded px-3 py-2 text-sm">
+                                    <option value="">None</option>
+                                    <option value="rotate90">90°</option>
+                                    <option value="rotate180">180°</option>
+                                    <option value="rotate270">270°</option>
+                                    <option value="rotate360">360°</option>
+                                </select>
                             </div>
                         </div>
                     </div>

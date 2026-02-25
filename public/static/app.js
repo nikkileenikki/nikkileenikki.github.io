@@ -1945,8 +1945,11 @@
         $('#animStart').val(0);
         $('#animDuration').val(1);
         
-        // Uncheck all checkboxes
-        $('.anim-checkbox').prop('checked', false);
+        // Reset all dropdowns to "None"
+        $('#animFade').val('');
+        $('#animSlide').val('');
+        $('#animZoom').val('');
+        $('#animRotate').val('');
         
         $animModal.removeClass('hidden');
         setTimeout(() => $('#animStart').focus(), 100);
@@ -1978,13 +1981,24 @@
         editingAnimation = { elementId, animId };
         selectElement(elementId);
         
-        // Uncheck all first
-        $('.anim-checkbox').prop('checked', false);
+        // Reset all dropdowns first
+        $('#animFade').val('');
+        $('#animSlide').val('');
+        $('#animZoom').val('');
+        $('#animRotate').val('');
         
-        // Check the animation types
+        // Set the dropdown values based on animation types
         const types = anim.types || [anim.type];
         types.forEach(type => {
-            $(`.anim-checkbox[value="${type}"]`).prop('checked', true);
+            if (type === 'fadeIn' || type === 'fadeOut') {
+                $('#animFade').val(type);
+            } else if (type.startsWith('slide')) {
+                $('#animSlide').val(type);
+            } else if (type === 'scaleIn' || type === 'scaleOut') {
+                $('#animZoom').val(type);
+            } else if (type.startsWith('rotate')) {
+                $('#animRotate').val(type);
+            }
         });
         
         $('#animStart').val(anim.start.toFixed(1));
@@ -2002,11 +2016,17 @@
         
         const element = elements.find(el => el.id === selectedElement);
         
-        // Get all selected animation types
+        // Get all selected animation types from dropdowns
         const selectedTypes = [];
-        $('.anim-checkbox:checked').each(function() {
-            selectedTypes.push($(this).val());
-        });
+        const fade = $('#animFade').val();
+        const slide = $('#animSlide').val();
+        const zoom = $('#animZoom').val();
+        const rotate = $('#animRotate').val();
+        
+        if (fade) selectedTypes.push(fade);
+        if (slide) selectedTypes.push(slide);
+        if (zoom) selectedTypes.push(zoom);
+        if (rotate) selectedTypes.push(rotate);
         
         if (selectedTypes.length === 0) {
             alert('Please select at least one animation effect');
