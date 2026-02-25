@@ -8,6 +8,8 @@
     let elements = [];
     let groups = [];
     let selectedElement = null;
+    let selectedElements = []; // For multi-select
+    let groupCounter = 0;
     let dragOffset = { x: 0, y: 0 };
     let isDragging = false;
     let isResizing = false;
@@ -1277,83 +1279,207 @@
     // LAYER MANAGEMENT
     // ============================================
     function updateLayersList() {
-        if (elements.length === 0) {
-            $layersList.html('<p class="text-sm text-gray-500 text-center py-4">No layers yet</p>');
+        if (elements.length === 0 && groups.length === 0) {
+            $layersList.html(`
+                <p class="text-sm text-gray-500 text-center py-4">No layers yet</p>
+                <button id="createGroupBtn" class="hidden w-full bg-blue-600 hover:bg-blue-700 text-white py-2 rounded text-sm transition-colors mt-2">
+                    <i class="fas fa-folder-plus mr-1"></i>Create Group
+                </button>
+            `);
             updateTimelineTracks();
             return;
         }
         
         $layersList.empty();
         
-        // Sort by zIndex (highest first)
-        const sortedElements = [...elements].sort((a, b) => b.zIndex - a.zIndex);
+        // Add Create Group button at top
+        const $groupBtn = $(`
+            <button id="createGroupBtn" class="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 rounded text-sm transition-colors mb-2 ${selectedElements.length < 2 ? 'opacity-50 cursor-not-allowed' : ''}">
+                <i class="fas fa-folder-plus mr-1"></i>Create Group (${selectedElements.length} selected)
+            </button>
+        `);
+        $groupBtn.on('click', createGroupFromSelection);
+        $layersList.append($groupBtn);
         
-        sortedElements.forEach((element, index) => {
-            let icon, label;
-            
-            if (element.type === 'text') {
-                icon = 'fa-font';
-                label = element.text.substring(0, 20);
-            } else if (element.type === 'clickthrough') {
-                icon = 'fa-mouse-pointer';
-                // Count clickthrough elements to generate click1, click2, etc.
-                const clickthroughElements = elements.filter(el => el.type === 'clickthrough');
-                const clickIndex = clickthroughElements.findIndex(el => el.id === element.id) + 1;
-                label = `Click${clickIndex}`;
-            } else if (element.type === 'shape') {
-                icon = 'fa-shapes';
-                // Count shape elements to generate shape1, shape2, etc.
-                const shapeElements = elements.filter(el => el.type === 'shape');
-                const shapeIndex = shapeElements.findIndex(el => el.id === element.id) + 1;
-                label = `Shape${shapeIndex}`;
-            } else if (element.type === 'video') {
-                icon = 'fa-video';
-                label = element.videoName;
+        // Get ungrouped elements
+        const ungroupedElements = elements.filter(el => !el.groupId);
+        
+        // Sort groups and elements by zIndex
+        const sortedGroups = [...groups].sort((a, b) => b.zIndex - a.zIndex);
+        const sortedUngrouped = [...ungroupedElements].sort((a, b) => b.zIndex - a.zIndex);
+        
+        // Render groups and ungrouped elements
+        const allItems = [];
+        
+        sortedGroups.forEach(group => {
+            allItems.push({ type: 'group', data: group });
+        });
+        
+        sortedUngrouped.forEach(element => {
+            allItems.push({ type: 'element', data: element });
+        });
+        
+        allItems.forEach((item, index) => {
+            if (item.type === 'group') {
+                renderGroup(item.data, index);
             } else {
-                icon = 'fa-image';
-                label = (element.filename || 'Image').substring(0, 20);
+                renderElement(item.data, index, false);
             }
-            
-            const $layer = $(`
-                <div class="layer-item p-2 rounded border border-gray-700 flex items-center justify-between" 
-                     data-id="${element.id}" 
-                     draggable="true" 
-                     data-index="${index}">
-                    <div class="flex items-center flex-1">
-                        <i class="fas fa-grip-vertical text-gray-600 mr-2 cursor-move"></i>
-                        <i class="fas ${icon} text-blue-400 mr-2"></i>
-                        <span class="text-sm">${label}</span>
-                    </div>
-                    <div class="flex items-center space-x-1">
-                        <button class="toggle-layer-visibility text-gray-400 hover:text-white px-2 py-1" data-id="${element.id}" title="Toggle Visibility">
-                            <i class="fas ${element.visible === false ? 'fa-eye-slash' : 'fa-eye'} text-xs"></i>
-                        </button>
-                        <button class="add-layer-anim text-blue-400 hover:text-blue-300 px-2 py-1" data-id="${element.id}" title="Add Animation">
-                            <i class="fas fa-plus-circle text-xs"></i>
-                        </button>
-                        <button class="delete-layer text-red-400 hover:text-red-300 px-2 py-1" data-id="${element.id}">
-                            <i class="fas fa-trash text-xs"></i>
-                        </button>
-                    </div>
-                </div>
-            `);
-            
-            // Add drag and drop events
-            $layer.on('dragstart', window.handleDragStart);
-            $layer.on('dragover', window.handleDragOverLayer);
-            $layer.on('drop', window.handleLayerDrop);
-            $layer.on('dragend', window.handleDragEnd);
-            
-            $layersList.append($layer);
         });
         
         updateTimelineTracks();
     }
     
+    function renderGroup(group, index) {
+        const groupElements = elements.filter(el => el.groupId === group.id);
+        const isExpanded = group.expanded !== false;
+        
+        const $groupHeader = $(`
+            <div class="layer-item group-header p-2 rounded border-2 border-blue-600 bg-blue-900 bg-opacity-20 flex items-center justify-between mb-1" 
+                 data-id="${group.id}"
+                 data-type="group"
+                 draggable="true"
+                 data-index="${index}">
+                <div class="flex items-center flex-1">
+                    <i class="fas fa-grip-vertical text-gray-600 mr-2 cursor-move"></i>
+                    <button class="group-toggle text-blue-400 hover:text-blue-300 mr-2">
+                        <i class="fas ${isExpanded ? 'fa-caret-down' : 'fa-caret-right'}"></i>
+                    </button>
+                    <i class="fas fa-folder text-yellow-400 mr-2"></i>
+                    <span class="text-sm font-semibold">${group.name}</span>
+                    <span class="text-xs text-gray-400 ml-2">(${groupElements.length})</span>
+                </div>
+                <div class="flex items-center space-x-1">
+                    <button class="rename-group text-gray-400 hover:text-white px-2 py-1" data-group-id="${group.id}" title="Rename">
+                        <i class="fas fa-edit text-xs"></i>
+                    </button>
+                    <button class="ungroup-btn text-gray-400 hover:text-white px-2 py-1" data-group-id="${group.id}" title="Ungroup">
+                        <i class="fas fa-folder-open text-xs"></i>
+                    </button>
+                    <button class="delete-group text-red-400 hover:text-red-300 px-2 py-1" data-group-id="${group.id}" title="Delete Group">
+                        <i class="fas fa-trash text-xs"></i>
+                    </button>
+                </div>
+            </div>
+        `);
+        
+        $groupHeader.on('dragstart', handleGroupDragStart);
+        $groupHeader.on('dragover', handleDragOverGroup);
+        $groupHeader.on('drop', handleDropOnGroup);
+        $groupHeader.on('dragend', handleDragEnd);
+        
+        $layersList.append($groupHeader);
+        
+        // Render group elements if expanded
+        if (isExpanded) {
+            const sortedGroupElements = [...groupElements].sort((a, b) => b.zIndex - a.zIndex);
+            sortedGroupElements.forEach((element, idx) => {
+                renderElement(element, idx, true);
+            });
+        }
+    }
+    
+    function renderElement(element, index, isInGroup) {
+        let icon, label;
+        
+        if (element.type === 'text') {
+            icon = 'fa-font';
+            label = element.text.substring(0, 20);
+        } else if (element.type === 'clickthrough') {
+            icon = 'fa-mouse-pointer';
+            const clickthroughElements = elements.filter(el => el.type === 'clickthrough');
+            const clickIndex = clickthroughElements.findIndex(el => el.id === element.id) + 1;
+            label = `Click${clickIndex}`;
+        } else if (element.type === 'shape') {
+            icon = 'fa-shapes';
+            const shapeElements = elements.filter(el => el.type === 'shape');
+            const shapeIndex = shapeElements.findIndex(el => el.id === element.id) + 1;
+            label = `Shape${shapeIndex}`;
+        } else if (element.type === 'video') {
+            icon = 'fa-video';
+            label = element.videoName;
+        } else {
+            icon = 'fa-image';
+            label = (element.filename || 'Image').substring(0, 20);
+        }
+        
+        const isSelected = selectedElements.includes(element.id);
+        const indentClass = isInGroup ? 'ml-8' : '';
+        
+        const $layer = $(`
+            <div class="layer-item ${indentClass} p-2 rounded border ${isSelected ? 'border-blue-400 bg-blue-900 bg-opacity-30' : 'border-gray-700'} flex items-center justify-between mb-1" 
+                 data-id="${element.id}" 
+                 draggable="true" 
+                 data-index="${index}"
+                 data-in-group="${isInGroup}">
+                <div class="flex items-center flex-1">
+                    <i class="fas fa-grip-vertical text-gray-600 mr-2 cursor-move"></i>
+                    <i class="fas ${icon} text-blue-400 mr-2"></i>
+                    <span class="text-sm">${label}</span>
+                </div>
+                <div class="flex items-center space-x-1">
+                    <button class="toggle-layer-visibility text-gray-400 hover:text-white px-2 py-1" data-id="${element.id}" title="Toggle Visibility">
+                        <i class="fas ${element.visible === false ? 'fa-eye-slash' : 'fa-eye'} text-xs"></i>
+                    </button>
+                    <button class="add-layer-anim text-blue-400 hover:text-blue-300 px-2 py-1" data-id="${element.id}" title="Add Animation">
+                        <i class="fas fa-plus-circle text-xs"></i>
+                    </button>
+                    <button class="delete-layer text-red-400 hover:text-red-300 px-2 py-1" data-id="${element.id}">
+                        <i class="fas fa-trash text-xs"></i>
+                    </button>
+                </div>
+            </div>
+        `);
+        
+        $layer.on('dragstart', window.handleDragStart);
+        $layer.on('dragover', window.handleDragOverLayer);
+        $layer.on('drop', window.handleLayerDrop);
+        $layer.on('dragend', window.handleDragEnd);
+        
+        $layersList.append($layer);
+    }
+    
     function handleLayerClick(e) {
         if ($(e.target).closest('button').length) return;
+        
         const id = $(e.currentTarget).data('id');
-        selectElement(id);
+        const isGroup = $(e.currentTarget).data('type') === 'group';
+        
+        // Handle group toggle
+        if (isGroup && $(e.target).closest('.group-toggle').length) {
+            toggleGroup(id);
+            return;
+        }
+        
+        // Multi-select with Ctrl/Cmd or Shift
+        if (e.ctrlKey || e.metaKey) {
+            // Ctrl/Cmd+Click: Toggle selection
+            const index = selectedElements.indexOf(id);
+            if (index > -1) {
+                selectedElements.splice(index, 1);
+            } else {
+                selectedElements.push(id);
+            }
+            selectedElement = selectedElements[selectedElements.length - 1] || null;
+        } else if (e.shiftKey && selectedElements.length > 0) {
+            // Shift+Click: Range selection
+            const lastSelected = selectedElements[selectedElements.length - 1];
+            const allIds = elements.map(el => el.id);
+            const start = allIds.indexOf(lastSelected);
+            const end = allIds.indexOf(id);
+            const range = allIds.slice(Math.min(start, end), Math.max(start, end) + 1);
+            selectedElements = [...new Set([...selectedElements, ...range])];
+            selectedElement = id;
+        } else {
+            // Single selection
+            selectedElements = [id];
+            selectedElement = id;
+            selectElement(id);
+            return;
+        }
+        
+        updateLayersListSelection();
+        updateCanvasSelection();
     }
     
     function handleDeleteLayer(e) {
@@ -1378,6 +1504,188 @@
         selectElement(id);
         openAnimationModal();
     }
+    
+    // ============================================
+    // GROUP MANAGEMENT
+    // ============================================
+    function createGroupFromSelection() {
+        if (selectedElements.length < 2) {
+            alert('Please select at least 2 layers to create a group');
+            return;
+        }
+        
+        const groupName = prompt('Enter group name:', `Group ${groupCounter + 1}`);
+        if (!groupName) return;
+        
+        groupCounter++;
+        const groupId = `group_${groupCounter}`;
+        
+        // Calculate average zIndex for the group
+        const avgZIndex = Math.floor(
+            selectedElements.reduce((sum, elId) => {
+                const el = elements.find(e => e.id === elId);
+                return sum + (el ? el.zIndex : 0);
+            }, 0) / selectedElements.length
+        );
+        
+        const newGroup = {
+            id: groupId,
+            name: groupName,
+            elementIds: [...selectedElements],
+            expanded: true,
+            zIndex: avgZIndex
+        };
+        
+        groups.push(newGroup);
+        
+        // Assign elements to group
+        selectedElements.forEach(elId => {
+            const element = elements.find(el => el.id === elId);
+            if (element) {
+                element.groupId = groupId;
+            }
+        });
+        
+        selectedElements = [];
+        updateLayersList();
+    }
+    
+    function toggleGroup(groupId) {
+        const group = groups.find(g => g.id === groupId);
+        if (group) {
+            group.expanded = !group.expanded;
+            updateLayersList();
+        }
+    }
+    
+    function ungroupElements(groupId) {
+        const group = groups.find(g => g.id === groupId);
+        if (!group) return;
+        
+        // Remove group association from elements
+        elements.forEach(el => {
+            if (el.groupId === groupId) {
+                el.groupId = null;
+            }
+        });
+        
+        // Remove group
+        groups = groups.filter(g => g.id !== groupId);
+        updateLayersList();
+    }
+    
+    function deleteGroup(groupId) {
+        const group = groups.find(g => g.id === groupId);
+        if (!group) return;
+        
+        if (!confirm(`Delete group "${group.name}" and all its elements?`)) return;
+        
+        // Delete all elements in group
+        const elementIdsToDelete = [...group.elementIds];
+        elementIdsToDelete.forEach(elId => {
+            const element = elements.find(el => el.id === elId);
+            if (element) {
+                $(`#${elId}`).remove();
+                elements = elements.filter(el => el.id !== elId);
+            }
+        });
+        
+        // Remove group
+        groups = groups.filter(g => g.id !== groupId);
+        updateLayersList();
+        rebuildTimeline();
+    }
+    
+    function renameGroup(groupId) {
+        const group = groups.find(g => g.id === groupId);
+        if (!group) return;
+        
+        const newName = prompt('Enter new group name:', group.name);
+        if (newName && newName.trim()) {
+            group.name = newName.trim();
+            updateLayersList();
+        }
+    }
+    
+    function handleGroupDragStart(e) {
+        const groupId = $(e.currentTarget).data('id');
+        e.originalEvent.dataTransfer.effectAllowed = 'move';
+        e.originalEvent.dataTransfer.setData('groupId', groupId);
+        $(e.currentTarget).addClass('opacity-50');
+    }
+    
+    function handleDragOverGroup(e) {
+        e.preventDefault();
+        e.originalEvent.dataTransfer.dropEffect = 'move';
+        $(e.currentTarget).addClass('border-blue-400');
+    }
+    
+    function handleDropOnGroup(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        $(e.currentTarget).removeClass('border-blue-400');
+        
+        const groupId = $(e.currentTarget).data('id');
+        const elementId = e.originalEvent.dataTransfer.getData('elementId');
+        
+        if (elementId && groupId) {
+            // Add element to group
+            const element = elements.find(el => el.id === elementId);
+            const group = groups.find(g => g.id === groupId);
+            
+            if (element && group) {
+                // Remove from old group if any
+                if (element.groupId) {
+                    const oldGroup = groups.find(g => g.id === element.groupId);
+                    if (oldGroup) {
+                        oldGroup.elementIds = oldGroup.elementIds.filter(id => id !== elementId);
+                    }
+                }
+                
+                // Add to new group
+                element.groupId = groupId;
+                if (!group.elementIds.includes(elementId)) {
+                    group.elementIds.push(elementId);
+                }
+                
+                updateLayersList();
+            }
+        }
+    }
+    
+    function updateLayersListSelection() {
+        $('.layer-item').each(function() {
+            const id = $(this).data('id');
+            if (selectedElements.includes(id)) {
+                $(this).addClass('border-blue-400 bg-blue-900 bg-opacity-30');
+            } else {
+                $(this).removeClass('border-blue-400 bg-blue-900 bg-opacity-30').addClass('border-gray-700');
+            }
+        });
+    }
+    
+    function updateCanvasSelection() {
+        $('.canvas-element').removeClass('selected-multi');
+        selectedElements.forEach(id => {
+            $(`#${id}`).addClass('selected-multi');
+        });
+    }
+    
+    // Add event listeners for group actions
+    $(document).on('click', '.rename-group', function(e) {
+        e.stopPropagation();
+        renameGroup($(this).data('group-id'));
+    });
+    
+    $(document).on('click', '.ungroup-btn', function(e) {
+        e.stopPropagation();
+        ungroupElements($(this).data('group-id'));
+    });
+    
+    $(document).on('click', '.delete-group', function(e) {
+        e.stopPropagation();
+        deleteGroup($(this).data('group-id'));
+    });
     
     function toggleLayerVisibility(e) {
         e.stopPropagation();
@@ -3082,6 +3390,7 @@
         draggedLayerId = $(e.currentTarget).data('id');
         $(e.currentTarget).addClass('dragging');
         e.originalEvent.dataTransfer.effectAllowed = 'move';
+        e.originalEvent.dataTransfer.setData('elementId', draggedLayerId);
     }
     
     function handleDragOverLayer(e) {
