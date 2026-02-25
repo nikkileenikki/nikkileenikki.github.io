@@ -2617,9 +2617,24 @@
         let animationsJs = '';
         let clickthroughJs = '';
         
+        // Debug: Log element z-indexes before sorting
+        console.log('Export - Elements before sort:', elements.map(el => ({
+            id: el.id,
+            type: el.type,
+            filename: el.filename || el.text?.substring(0,20) || el.type,
+            zIndex: el.zIndex
+        })));
+        
         // Sort by z-index DESCENDING (highest z-index first in HTML)
         // This matches the timeline visual order where top layer = highest z-index
         const sortedElements = [...elements].sort((a, b) => b.zIndex - a.zIndex);
+        
+        console.log('Export - Elements after sort:', sortedElements.map(el => ({
+            id: el.id,
+            type: el.type,
+            filename: el.filename || el.text?.substring(0,20) || el.type,
+            zIndex: el.zIndex
+        })));
         let imageCounter = 0;
         
         sortedElements.forEach((element) => {
