@@ -128,46 +128,7 @@
     border-bottom: 1px solid rgb(55, 65, 81);
     min-height: 38px;
     user-select: none; /* Disable text selection */
-    cursor: pointer;
-    transition: all 0.2s;
-}
-
-.timeline-group-track {
-    background: rgba(31, 41, 55, 0.5);
-}
-
-.timeline-group-label {
-    background: rgb(45, 55, 72) !important;
-    font-weight: 600;
-}
-
-.group-toggle-btn {
-    background: none;
-    border: none;
-    padding: 0;
-    cursor: pointer;
-    transition: color 0.2s;
-}
-
-.group-toggle-btn:hover {
-    color: white !important;
-}
-
-.timeline-track.dragging {
-    opacity: 0.5;
-}
-
-.timeline-track.drag-over {
-    background: rgba(59, 130, 246, 0.2);
-    border: 2px solid rgb(59, 130, 246);
-}
-
-.timeline-track.drag-over-top {
-    border-top: 3px solid rgb(59, 130, 246);
-}
-
-.timeline-track.drag-over-bottom {
-    border-bottom: 3px solid rgb(59, 130, 246);
+    cursor: move; /* Show move cursor on track */
 }
 
 .timeline-track.dragging {
@@ -204,16 +165,6 @@
 .timeline-track.selected .timeline-track-label {
     background: rgba(59, 130, 246, 0.2);
     border-right-color: rgb(59, 130, 246);
-}
-
-.timeline-track.selected-multi {
-    background: rgba(59, 130, 246, 0.1);
-}
-
-.timeline-track.selected-multi .timeline-track-label {
-    background: rgba(59, 130, 246, 0.3);
-    border-right-color: rgb(59, 130, 246);
-    border-left: 3px solid rgb(59, 130, 246);
 }
 
 .timeline-layer-btn {

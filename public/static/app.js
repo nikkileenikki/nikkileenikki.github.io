@@ -8,8 +8,6 @@
     let elements = [];
     let groups = [];
     let selectedElement = null;
-    let selectedElements = []; // For multi-select
-    let groupCounter = 0;
     let dragOffset = { x: 0, y: 0 };
     let isDragging = false;
     let isResizing = false;
@@ -43,7 +41,7 @@
         // Initialize DOM element references
         $canvas = $('#canvas');
         $canvasWrapper = $('#canvasWrapper');
-        $layersList = $('#timelineTracks'); // Use timeline tracks as layers list
+        $layersList = $('#layersList');
         $dropzone = $('#dropzone');
         $fileInput = $('#fileInput');
         $propertiesPanel = $('#propertiesPanel');
@@ -70,9 +68,6 @@
         $dropzone.on('dragover', handleDragOver);
         $dropzone.on('drop', handleDrop);
         $fileInput.on('change', handleFileSelect);
-        
-        // Group management
-        $('#createGroupBtn').on('click', createGroup);
         
         // Text
         $('#addTextBtn').on('click', openTextModal);
@@ -188,13 +183,7 @@
         });
         
         // Layer selection and controls
-        // Debug: Test if any click is detected
-        $timelineTracks.on('click', function(e) {
-            console.log('Click detected on timelineTracks:', e.target);
-        });
-        
-        // Multi-select for timeline tracks
-        $timelineTracks.on('click', '.timeline-track', handleTimelineTrackClick);
+        $layersList.on('click', '.layer-item', handleLayerClick);
         $layersList.on('click', '.delete-layer', handleDeleteLayer);
         $layersList.on('click', '.add-layer-anim', handleAddLayerAnimation);
         $layersList.on('click', '.toggle-layer-visibility', toggleLayerVisibility);
@@ -1288,15 +1277,7 @@
     // LAYER MANAGEMENT
     // ============================================
     function updateLayersList() {
-        // Update Create Group button - always enabled
-        const $createGroupBtn = $('#createGroupBtn');
-        if (selectedElements.length >= 1) {
-            $createGroupBtn.removeClass('text-gray-600').addClass('text-yellow-400').attr('title', `Create Group from ${selectedElements.length} Selected Layer${selectedElements.length > 1 ? 's' : ''}`);
-        } else {
-            $createGroupBtn.removeClass('text-yellow-400').addClass('text-gray-600').attr('title', 'Create Empty Group');
-        }
-        
-        if (elements.length === 0 && groups.length === 0) {
+        if (elements.length === 0) {
             $layersList.html('<p class="text-sm text-gray-500 text-center py-4">No layers yet</p>');
             updateTimelineTracks();
             return;
@@ -1304,188 +1285,75 @@
         
         $layersList.empty();
         
-        // Get ungrouped elements
-        const ungroupedElements = elements.filter(el => !el.groupId);
+        // Sort by zIndex (highest first)
+        const sortedElements = [...elements].sort((a, b) => b.zIndex - a.zIndex);
         
-        // Sort groups and elements by zIndex
-        const sortedGroups = [...groups].sort((a, b) => b.zIndex - a.zIndex);
-        const sortedUngrouped = [...ungroupedElements].sort((a, b) => b.zIndex - a.zIndex);
-        
-        // Render groups and ungrouped elements
-        const allItems = [];
-        
-        sortedGroups.forEach(group => {
-            allItems.push({ type: 'group', data: group });
-        });
-        
-        sortedUngrouped.forEach(element => {
-            allItems.push({ type: 'element', data: element });
-        });
-        
-        allItems.forEach((item, index) => {
-            if (item.type === 'group') {
-                renderGroup(item.data, index);
+        sortedElements.forEach((element, index) => {
+            let icon, label;
+            
+            if (element.type === 'text') {
+                icon = 'fa-font';
+                label = element.text.substring(0, 20);
+            } else if (element.type === 'clickthrough') {
+                icon = 'fa-mouse-pointer';
+                // Count clickthrough elements to generate click1, click2, etc.
+                const clickthroughElements = elements.filter(el => el.type === 'clickthrough');
+                const clickIndex = clickthroughElements.findIndex(el => el.id === element.id) + 1;
+                label = `Click${clickIndex}`;
+            } else if (element.type === 'shape') {
+                icon = 'fa-shapes';
+                // Count shape elements to generate shape1, shape2, etc.
+                const shapeElements = elements.filter(el => el.type === 'shape');
+                const shapeIndex = shapeElements.findIndex(el => el.id === element.id) + 1;
+                label = `Shape${shapeIndex}`;
+            } else if (element.type === 'video') {
+                icon = 'fa-video';
+                label = element.videoName;
             } else {
-                renderElement(item.data, index, false);
+                icon = 'fa-image';
+                label = (element.filename || 'Image').substring(0, 20);
             }
+            
+            const $layer = $(`
+                <div class="layer-item p-2 rounded border border-gray-700 flex items-center justify-between" 
+                     data-id="${element.id}" 
+                     draggable="true" 
+                     data-index="${index}">
+                    <div class="flex items-center flex-1">
+                        <i class="fas fa-grip-vertical text-gray-600 mr-2 cursor-move"></i>
+                        <i class="fas ${icon} text-blue-400 mr-2"></i>
+                        <span class="text-sm">${label}</span>
+                    </div>
+                    <div class="flex items-center space-x-1">
+                        <button class="toggle-layer-visibility text-gray-400 hover:text-white px-2 py-1" data-id="${element.id}" title="Toggle Visibility">
+                            <i class="fas ${element.visible === false ? 'fa-eye-slash' : 'fa-eye'} text-xs"></i>
+                        </button>
+                        <button class="add-layer-anim text-blue-400 hover:text-blue-300 px-2 py-1" data-id="${element.id}" title="Add Animation">
+                            <i class="fas fa-plus-circle text-xs"></i>
+                        </button>
+                        <button class="delete-layer text-red-400 hover:text-red-300 px-2 py-1" data-id="${element.id}">
+                            <i class="fas fa-trash text-xs"></i>
+                        </button>
+                    </div>
+                </div>
+            `);
+            
+            // Add drag and drop events
+            $layer.on('dragstart', window.handleDragStart);
+            $layer.on('dragover', window.handleDragOverLayer);
+            $layer.on('drop', window.handleLayerDrop);
+            $layer.on('dragend', window.handleDragEnd);
+            
+            $layersList.append($layer);
         });
         
         updateTimelineTracks();
     }
     
-    function renderGroup(group, index) {
-        const groupElements = elements.filter(el => el.groupId === group.id);
-        const isExpanded = group.expanded !== false;
-        
-        const $groupHeader = $(`
-            <div class="layer-item group-header p-2 rounded border-2 border-blue-600 bg-blue-900 bg-opacity-20 flex items-center justify-between mb-1" 
-                 data-id="${group.id}"
-                 data-type="group"
-                 draggable="true"
-                 data-index="${index}">
-                <div class="flex items-center flex-1">
-                    <i class="fas fa-grip-vertical text-gray-600 mr-2 cursor-move"></i>
-                    <button class="group-toggle text-blue-400 hover:text-blue-300 mr-2">
-                        <i class="fas ${isExpanded ? 'fa-caret-down' : 'fa-caret-right'}"></i>
-                    </button>
-                    <i class="fas fa-folder text-yellow-400 mr-2"></i>
-                    <span class="text-sm font-semibold">${group.name}</span>
-                    <span class="text-xs text-gray-400 ml-2">(${groupElements.length})</span>
-                </div>
-                <div class="flex items-center space-x-1">
-                    <button class="rename-group text-gray-400 hover:text-white px-2 py-1" data-group-id="${group.id}" title="Rename">
-                        <i class="fas fa-edit text-xs"></i>
-                    </button>
-                    <button class="ungroup-btn text-gray-400 hover:text-white px-2 py-1" data-group-id="${group.id}" title="Ungroup">
-                        <i class="fas fa-folder-open text-xs"></i>
-                    </button>
-                    <button class="delete-group text-red-400 hover:text-red-300 px-2 py-1" data-group-id="${group.id}" title="Delete Group">
-                        <i class="fas fa-trash text-xs"></i>
-                    </button>
-                </div>
-            </div>
-        `);
-        
-        $groupHeader.on('dragstart', handleGroupDragStart);
-        $groupHeader.on('dragover', handleDragOverGroup);
-        $groupHeader.on('drop', handleDropOnGroup);
-        $groupHeader.on('dragend', handleDragEnd);
-        
-        $layersList.append($groupHeader);
-        
-        // Render group elements if expanded
-        if (isExpanded) {
-            const sortedGroupElements = [...groupElements].sort((a, b) => b.zIndex - a.zIndex);
-            sortedGroupElements.forEach((element, idx) => {
-                renderElement(element, idx, true);
-            });
-        }
-    }
-    
-    function renderElement(element, index, isInGroup) {
-        let icon, label;
-        
-        if (element.type === 'text') {
-            icon = 'fa-font';
-            label = element.text.substring(0, 20);
-        } else if (element.type === 'clickthrough') {
-            icon = 'fa-mouse-pointer';
-            const clickthroughElements = elements.filter(el => el.type === 'clickthrough');
-            const clickIndex = clickthroughElements.findIndex(el => el.id === element.id) + 1;
-            label = `Click${clickIndex}`;
-        } else if (element.type === 'shape') {
-            icon = 'fa-shapes';
-            const shapeElements = elements.filter(el => el.type === 'shape');
-            const shapeIndex = shapeElements.findIndex(el => el.id === element.id) + 1;
-            label = `Shape${shapeIndex}`;
-        } else if (element.type === 'video') {
-            icon = 'fa-video';
-            label = element.videoName;
-        } else {
-            icon = 'fa-image';
-            label = (element.filename || 'Image').substring(0, 20);
-        }
-        
-        const isSelected = selectedElements.includes(element.id);
-        const indentClass = isInGroup ? 'ml-8' : '';
-        
-        const $layer = $(`
-            <div class="layer-item ${indentClass} p-2 rounded border ${isSelected ? 'border-blue-400 bg-blue-900 bg-opacity-30' : 'border-gray-700'} flex items-center justify-between mb-1" 
-                 data-id="${element.id}" 
-                 draggable="true" 
-                 data-index="${index}"
-                 data-in-group="${isInGroup}">
-                <div class="flex items-center flex-1">
-                    <i class="fas fa-grip-vertical text-gray-600 mr-2 cursor-move"></i>
-                    <i class="fas ${icon} text-blue-400 mr-2"></i>
-                    <span class="text-sm">${label}</span>
-                </div>
-                <div class="flex items-center space-x-1">
-                    <button class="toggle-layer-visibility text-gray-400 hover:text-white px-2 py-1" data-id="${element.id}" title="Toggle Visibility">
-                        <i class="fas ${element.visible === false ? 'fa-eye-slash' : 'fa-eye'} text-xs"></i>
-                    </button>
-                    <button class="add-layer-anim text-blue-400 hover:text-blue-300 px-2 py-1" data-id="${element.id}" title="Add Animation">
-                        <i class="fas fa-plus-circle text-xs"></i>
-                    </button>
-                    <button class="delete-layer text-red-400 hover:text-red-300 px-2 py-1" data-id="${element.id}">
-                        <i class="fas fa-trash text-xs"></i>
-                    </button>
-                </div>
-            </div>
-        `);
-        
-        $layer.on('dragstart', window.handleDragStart);
-        $layer.on('dragover', window.handleDragOverLayer);
-        $layer.on('drop', window.handleLayerDrop);
-        $layer.on('dragend', window.handleDragEnd);
-        
-        $layersList.append($layer);
-    }
-    
-    function handleTimelineTrackClick(e) {
-        // Ignore clicks on buttons
+    function handleLayerClick(e) {
         if ($(e.target).closest('button').length) return;
-        
-        // Ignore clicks on timeline blocks
-        if ($(e.target).closest('.timeline-block').length) return;
-        
-        const id = $(e.currentTarget).data('element-id');
-        if (!id) return;
-        
-        console.log('Timeline track clicked:', id, 'Ctrl:', e.ctrlKey, 'Meta:', e.metaKey, 'Shift:', e.shiftKey);
-        
-        // Multi-select with Ctrl/Cmd or Shift
-        if (e.ctrlKey || e.metaKey) {
-            // Ctrl/Cmd+Click: Toggle selection
-            const index = selectedElements.indexOf(id);
-            if (index > -1) {
-                selectedElements.splice(index, 1);
-            } else {
-                selectedElements.push(id);
-            }
-            selectedElement = selectedElements[selectedElements.length - 1] || null;
-            console.log('Multi-select (toggle):', selectedElements);
-        } else if (e.shiftKey && selectedElements.length > 0) {
-            // Shift+Click: Range selection
-            const lastSelected = selectedElements[selectedElements.length - 1];
-            const allIds = elements.map(el => el.id);
-            const start = allIds.indexOf(lastSelected);
-            const end = allIds.indexOf(id);
-            const range = allIds.slice(Math.min(start, end), Math.max(start, end) + 1);
-            selectedElements = [...new Set([...selectedElements, ...range])];
-            selectedElement = id;
-            console.log('Multi-select (range):', selectedElements);
-        } else {
-            // Single selection
-            selectedElements = [id];
-            selectedElement = id;
-            selectElement(id);
-            console.log('Single select:', id);
-            return;
-        }
-        
-        updateTimelineTracksSelection();
-        updateCanvasSelection();
+        const id = $(e.currentTarget).data('id');
+        selectElement(id);
     }
     
     function handleDeleteLayer(e) {
@@ -1510,257 +1378,6 @@
         selectElement(id);
         openAnimationModal();
     }
-    
-    // ============================================
-    // GROUP MANAGEMENT
-    // ============================================
-    function createGroup() {
-        const groupName = prompt('Enter group name:', `Group ${groupCounter + 1}`);
-        if (!groupName) return;
-        
-        groupCounter++;
-        const groupId = `group_${groupCounter}`;
-        
-        // Calculate average zIndex for the group, or use highest if no selection
-        let avgZIndex = 0;
-        if (selectedElements.length > 0) {
-            avgZIndex = Math.floor(
-                selectedElements.reduce((sum, elId) => {
-                    const el = elements.find(e => e.id === elId);
-                    return sum + (el ? el.zIndex : 0);
-                }, 0) / selectedElements.length
-            );
-        } else {
-            // If no selection, use highest zIndex + 1
-            avgZIndex = elements.length > 0 
-                ? Math.max(...elements.map(el => el.zIndex)) + 1 
-                : 0;
-        }
-        
-        const newGroup = {
-            id: groupId,
-            name: groupName,
-            elementIds: [...selectedElements],
-            expanded: true,
-            visible: true,
-            zIndex: avgZIndex
-        };
-        
-        groups.push(newGroup);
-        
-        // Assign selected elements to group
-        selectedElements.forEach(elId => {
-            const element = elements.find(el => el.id === elId);
-            if (element) {
-                element.groupId = groupId;
-            }
-        });
-        
-        selectedElements = [];
-        updateTimelineTracks();
-    }
-    
-    function toggleGroup(groupId) {
-        const group = groups.find(g => g.id === groupId);
-        if (group) {
-            group.expanded = !group.expanded;
-            updateTimelineTracks();
-        }
-    }
-    
-    function toggleGroupVisibility(groupId) {
-        const group = groups.find(g => g.id === groupId);
-        if (!group) return;
-        
-        group.visible = group.visible === false ? true : false;
-        
-        // Toggle visibility of all elements in the group
-        elements.forEach(el => {
-            if (el.groupId === groupId) {
-                if (group.visible) {
-                    $(`#${el.id}`).show();
-                    el.hidden = false;
-                } else {
-                    $(`#${el.id}`).hide();
-                    el.hidden = true;
-                }
-            }
-        });
-        
-        updateTimelineTracks();
-    }
-    
-    function ungroupElements(groupId) {
-        const group = groups.find(g => g.id === groupId);
-        if (!group) return;
-        
-        // Remove group association from elements
-        elements.forEach(el => {
-            if (el.groupId === groupId) {
-                el.groupId = null;
-            }
-        });
-        
-        // Clear the group's element IDs but keep the folder
-        group.elementIds = [];
-        updateTimelineTracks();
-    }
-    
-    function deleteGroup(groupId) {
-        const group = groups.find(g => g.id === groupId);
-        if (!group) return;
-        
-        // Find elements that are currently in this group
-        const elementsInGroup = elements.filter(el => el.groupId === groupId);
-        
-        if (elementsInGroup.length > 0) {
-            if (!confirm(`Delete folder "${group.name}" and all ${elementsInGroup.length} layer(s) inside it?`)) return;
-            
-            // Delete only elements currently in the group
-            elementsInGroup.forEach(element => {
-                $(`#${element.id}`).remove();
-            });
-            
-            // Remove elements from array
-            elements = elements.filter(el => el.groupId !== groupId);
-        } else {
-            if (!confirm(`Delete empty folder "${group.name}"?`)) return;
-        }
-        
-        // Remove group
-        groups = groups.filter(g => g.id !== groupId);
-        updateTimelineTracks();
-        rebuildTimeline();
-    }
-    
-    function renameGroup(groupId) {
-        const group = groups.find(g => g.id === groupId);
-        if (!group) return;
-        
-        const newName = prompt('Enter new group name:', group.name);
-        if (newName && newName.trim()) {
-            group.name = newName.trim();
-            updateLayersList();
-        }
-    }
-    
-    function handleGroupDragStart(e) {
-        const groupId = $(e.currentTarget).data('id');
-        e.originalEvent.dataTransfer.effectAllowed = 'move';
-        e.originalEvent.dataTransfer.setData('groupId', groupId);
-        $(e.currentTarget).addClass('opacity-50');
-    }
-    
-    function handleDragOverGroup(e) {
-        e.preventDefault();
-        e.originalEvent.dataTransfer.dropEffect = 'move';
-        $(e.currentTarget).addClass('border-blue-400');
-    }
-    
-    function handleDropOnGroup(e) {
-        e.preventDefault();
-        e.stopPropagation();
-        $(e.currentTarget).removeClass('border-blue-400');
-        
-        const groupId = $(e.currentTarget).data('id');
-        const elementId = e.originalEvent.dataTransfer.getData('elementId');
-        
-        if (elementId && groupId) {
-            // Add element to group
-            const element = elements.find(el => el.id === elementId);
-            const group = groups.find(g => g.id === groupId);
-            
-            if (element && group) {
-                // Remove from old group if any
-                if (element.groupId) {
-                    const oldGroup = groups.find(g => g.id === element.groupId);
-                    if (oldGroup) {
-                        oldGroup.elementIds = oldGroup.elementIds.filter(id => id !== elementId);
-                    }
-                }
-                
-                // Add to new group
-                element.groupId = groupId;
-                if (!group.elementIds.includes(elementId)) {
-                    group.elementIds.push(elementId);
-                }
-                
-                updateLayersList();
-            }
-        }
-    }
-    
-    function updateLayersListSelection() {
-        $('.layer-item').each(function() {
-            const id = $(this).data('id');
-            if (selectedElements.includes(id)) {
-                $(this).addClass('border-blue-400 bg-blue-900 bg-opacity-30');
-            } else {
-                $(this).removeClass('border-blue-400 bg-blue-900 bg-opacity-30').addClass('border-gray-700');
-            }
-        });
-        
-        // Update folder icon button - always enabled
-        const $createGroupBtn = $('#createGroupBtn');
-        if (selectedElements.length >= 1) {
-            $createGroupBtn.removeClass('text-gray-600').addClass('text-yellow-400').attr('title', `Create Group from ${selectedElements.length} Selected Layer${selectedElements.length > 1 ? 's' : ''}`);
-        } else {
-            $createGroupBtn.removeClass('text-yellow-400').addClass('text-gray-600').attr('title', 'Create Empty Group');
-        }
-    }
-    
-    function updateTimelineTracksSelection() {
-        $('.timeline-track').each(function() {
-            const id = $(this).data('element-id');
-            if (selectedElements.includes(id)) {
-                $(this).addClass('selected-multi');
-            } else {
-                $(this).removeClass('selected-multi');
-            }
-        });
-        
-        // Update folder icon button - always enabled
-        const $createGroupBtn = $('#createGroupBtn');
-        if (selectedElements.length >= 1) {
-            $createGroupBtn.removeClass('text-gray-600').addClass('text-yellow-400').attr('title', `Create Group from ${selectedElements.length} Selected Layer${selectedElements.length > 1 ? 's' : ''}`);
-        } else {
-            $createGroupBtn.removeClass('text-yellow-400').addClass('text-gray-600').attr('title', 'Create Empty Group');
-        }
-    }
-    
-    function updateCanvasSelection() {
-        $('.canvas-element').removeClass('selected-multi');
-        selectedElements.forEach(id => {
-            $(`#${id}`).addClass('selected-multi');
-        });
-    }
-    
-    // Add event listeners for group actions
-    $(document).on('click', '.rename-group', function(e) {
-        e.stopPropagation();
-        renameGroup($(this).data('group-id'));
-    });
-    
-    $(document).on('click', '.ungroup-btn, .ungroup-elements', function(e) {
-        e.stopPropagation();
-        ungroupElements($(this).data('group-id'));
-    });
-    
-    $(document).on('click', '.delete-group', function(e) {
-        e.stopPropagation();
-        deleteGroup($(this).data('group-id'));
-    });
-    
-    $(document).on('click', '.group-toggle-btn', function(e) {
-        e.stopPropagation();
-        toggleGroup($(this).data('group-id'));
-    });
-    
-    $(document).on('click', '.toggle-group-visibility', function(e) {
-        e.stopPropagation();
-        const groupId = $(this).data('group-id');
-        toggleGroupVisibility(groupId);
-    });
     
     function toggleLayerVisibility(e) {
         e.stopPropagation();
@@ -2546,425 +2163,120 @@
     }
     
     function updateTimelineTracks() {
-        if (elements.length === 0 && groups.length === 0) {
+        if (elements.length === 0) {
             $timelineTracks.html('<div class="text-center text-gray-500 text-sm py-8">Add elements and animations to see timeline</div>');
             return;
         }
         
         $timelineTracks.empty();
         
-        // Sort groups and ungrouped elements by zIndex
-        const sortedGroups = [...groups].sort((a, b) => b.zIndex - a.zIndex);
-        const ungroupedElements = elements.filter(el => !el.groupId).sort((a, b) => b.zIndex - a.zIndex);
+        // Sort by zIndex (highest first, so top visual layers appear at top of timeline)
+        const sortedElements = [...elements].sort((a, b) => b.zIndex - a.zIndex);
         
-        // Render groups
-        sortedGroups.forEach(group => {
-            renderGroupTrack(group);
-        });
-        
-        // Render ungrouped elements
-        ungroupedElements.forEach(element => {
-            renderElementTrack(element, false);
-        });
-        
-        // Update canvas z-index after rendering
-        updateCanvasZIndex();
-        
-        // Note: Do NOT initialize sortable here - it interferes with custom drag handlers
-    }
-    
-    function updateCanvasZIndex() {
-        // Update canvas element z-index based on element.zIndex
-        // Groups should propagate their z-index to all children
-        groups.forEach(group => {
-            const groupElements = elements.filter(el => el.groupId === group.id);
-            if (groupElements.length > 0) {
-                // Set all group children to have the group's base z-index
-                groupElements.forEach((el, idx) => {
-                    const zIndex = group.zIndex * 100 + idx; // Multiply by 100 to give room for children
-                    $(`#${el.id}`).css('z-index', zIndex);
-                });
+        sortedElements.forEach(element => {
+            let icon, label;
+            
+            if (element.type === 'text') {
+                icon = 'fa-font';
+                label = element.text.substring(0, 15);
+            } else if (element.type === 'clickthrough') {
+                icon = 'fa-mouse-pointer';
+                // Count clickthrough elements to generate click1, click2, etc.
+                const clickthroughElements = elements.filter(el => el.type === 'clickthrough');
+                const clickIndex = clickthroughElements.findIndex(el => el.id === element.id) + 1;
+                label = `Click${clickIndex}`;
+            } else if (element.type === 'shape') {
+                icon = 'fa-shapes';
+                // Count shape elements to generate shape1, shape2, etc.
+                const shapeElements = elements.filter(el => el.type === 'shape');
+                const shapeIndex = shapeElements.findIndex(el => el.id === element.id) + 1;
+                label = `Shape${shapeIndex}`;
+            } else if (element.type === 'video') {
+                icon = 'fa-video';
+                label = element.videoName;
+            } else {
+                icon = 'fa-image';
+                label = (element.filename || 'Image').substring(0, 15);
             }
-        });
-        
-        // Update ungrouped elements
-        elements.filter(el => !el.groupId).forEach(el => {
-            $(`#${el.id}`).css('z-index', el.zIndex);
-        });
-    }
-    
-    function reorderGroups(draggedGroup, targetGroup, dropAbove) {
-        const draggedIndex = groups.indexOf(draggedGroup);
-        const targetIndex = groups.indexOf(targetGroup);
-        
-        if (draggedIndex === -1 || targetIndex === -1) return;
-        
-        // Remove dragged group
-        groups.splice(draggedIndex, 1);
-        
-        // Find new target index after removal
-        const newTargetIndex = groups.indexOf(targetGroup);
-        const insertIndex = dropAbove ? newTargetIndex : newTargetIndex + 1;
-        
-        // Insert at new position
-        groups.splice(insertIndex, 0, draggedGroup);
-        
-        // Update z-index for all groups
-        groups.forEach((g, idx) => {
-            g.zIndex = groups.length - idx;
-        });
-        
-        console.log('Reordered groups');
-        updateTimelineTracks();
-    }
-    
-    function reorderElements(draggedElement, targetElement, dropAbove) {
-        // Get all ungrouped elements
-        const ungroupedElements = elements.filter(el => !el.groupId);
-        
-        const draggedIndex = ungroupedElements.indexOf(draggedElement);
-        const targetIndex = ungroupedElements.indexOf(targetElement);
-        
-        if (draggedIndex === -1 || targetIndex === -1) return;
-        
-        // Remove dragged element
-        ungroupedElements.splice(draggedIndex, 1);
-        
-        // Find new target index after removal
-        const newTargetIndex = ungroupedElements.indexOf(targetElement);
-        const insertIndex = dropAbove ? newTargetIndex : newTargetIndex + 1;
-        
-        // Insert at new position
-        ungroupedElements.splice(insertIndex, 0, draggedElement);
-        
-        // Update z-index for ungrouped elements
-        ungroupedElements.forEach((el, idx) => {
-            el.zIndex = ungroupedElements.length - idx;
-        });
-        
-        console.log('Reordered ungrouped elements');
-        updateTimelineTracks();
-    }
-    
-    function reorderElementsInGroup(draggedElement, targetElement, groupId, dropAbove) {
-        // Get all elements in this group
-        const groupElements = elements.filter(el => el.groupId === groupId);
-        
-        const draggedIndex = groupElements.indexOf(draggedElement);
-        const targetIndex = groupElements.indexOf(targetElement);
-        
-        if (draggedIndex === -1 || targetIndex === -1) return;
-        
-        // Remove dragged element
-        groupElements.splice(draggedIndex, 1);
-        
-        // Find new target index after removal
-        const newTargetIndex = groupElements.indexOf(targetElement);
-        const insertIndex = dropAbove ? newTargetIndex : newTargetIndex + 1;
-        
-        // Insert at new position
-        groupElements.splice(insertIndex, 0, draggedElement);
-        
-        // Update z-index for elements in group
-        groupElements.forEach((el, idx) => {
-            el.zIndex = groupElements.length - idx;
-        });
-        
-        console.log('Reordered elements in group');
-        updateTimelineTracks();
-    }
-    
-    function renderGroupTrack(group) {
-        const isExpanded = group.expanded !== false;
-        const groupElements = elements.filter(el => el.groupId === group.id);
-        
-        // Group header track
-        const $groupTrack = $(`
-            <div class="timeline-track timeline-group-track" 
-                 data-group-id="${group.id}" 
-                 data-type="group" 
-                 draggable="true">
-                <div class="timeline-track-label timeline-group-label">
-                    <div class="flex items-center flex-1">
-                        <button class="group-toggle-btn text-gray-400 hover:text-white mr-1" data-group-id="${group.id}">
-                            <i class="fas ${isExpanded ? 'fa-caret-down' : 'fa-caret-right'} text-sm"></i>
-                        </button>
-                        <i class="fas fa-folder${isExpanded ? '-open' : ''} text-yellow-400 mr-2"></i>
-                        <span class="flex-1 font-semibold">${group.name}</span>
-                        <span class="text-xs text-gray-500 mr-2">(${groupElements.length})</span>
+            
+            const $track = $(`
+                <div class="timeline-track" data-element-id="${element.id}">
+                    <div class="timeline-track-label">
+                        <div class="flex items-center flex-1">
+                            <i class="fas fa-grip-vertical text-gray-600 mr-2"></i>
+                            <i class="fas ${icon} text-blue-400 mr-2"></i>
+                            <span class="truncate flex-1">${label}</span>
+                        </div>
+                        <div class="flex items-center gap-1 ml-2">
+                            <button class="timeline-layer-btn toggle-visibility" data-id="${element.id}" title="Toggle visibility">
+                                <i class="fas ${element.hidden ? 'fa-eye-slash' : 'fa-eye'}"></i>
+                            </button>
+                            <button class="timeline-layer-btn add-layer-anim" data-id="${element.id}" title="Add animation">
+                                <i class="fas fa-plus"></i>
+                            </button>
+                            <button class="timeline-layer-btn delete-layer" data-id="${element.id}" title="Delete layer">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
                     </div>
-                    <div class="flex items-center gap-1 ml-2">
-                        <button class="timeline-layer-btn toggle-group-visibility" data-group-id="${group.id}" title="Toggle folder visibility">
-                            <i class="fas ${group.visible === false ? 'fa-eye-slash' : 'fa-eye'}"></i>
-                        </button>
-                        <button class="timeline-layer-btn rename-group" data-group-id="${group.id}" title="Rename folder">
-                            <i class="fas fa-pen"></i>
-                        </button>
-                        <button class="timeline-layer-btn delete-group" data-group-id="${group.id}" title="Delete folder">
-                            <i class="fas fa-trash"></i>
-                        </button>
+                    <div class="timeline-track-content" id="track_${element.id}">
                     </div>
-                </div>
-                <div class="timeline-track-content group-drop-zone" data-group-id="${group.id}" style="opacity: 0.3; min-height: 20px;">
-                </div>
-            </div>
-        `);
-        
-        // Drag handlers for folder reordering
-        $groupTrack.on('dragstart', function(e) {
-            const $label = $(e.target).closest('.timeline-track-label');
-            if ($label.length === 0) {
-                e.preventDefault();
-                return;
-            }
-            
-            e.stopPropagation();
-            e.originalEvent.dataTransfer.effectAllowed = 'move';
-            e.originalEvent.dataTransfer.setData('text/group-id', group.id);
-            $(this).addClass('dragging');
-            console.log('Drag start folder:', group.name);
-        });
-        
-        $groupTrack.on('dragend', function(e) {
-            $(this).removeClass('dragging');
-            $('.drag-over, .drag-over-top, .drag-over-bottom').removeClass('drag-over drag-over-top drag-over-bottom');
-            console.log('Drag end');
-        });
-        
-        // Accept both elements and folders for dropping
-        $groupTrack.on('dragover', function(e) {
-            e.preventDefault();
-            e.stopPropagation();
-            
-            const types = e.originalEvent.dataTransfer.types;
-            const isDraggingElement = types.includes('text/element-id');
-            const isDraggingFolder = types.includes('text/group-id');
-            
-            if (isDraggingElement) {
-                // Dragging element onto folder - add to folder
-                const $content = $(e.target).closest('.timeline-track-content');
-                if ($content.length > 0) {
-                    $(this).addClass('drag-over');
-                }
-            } else if (isDraggingFolder) {
-                // Dragging folder for reordering
-                const rect = this.getBoundingClientRect();
-                const midpoint = rect.top + rect.height / 2;
-                
-                if (e.originalEvent.clientY < midpoint) {
-                    $(this).removeClass('drag-over-bottom').addClass('drag-over-top');
-                } else {
-                    $(this).removeClass('drag-over-top').addClass('drag-over-bottom');
-                }
-            }
-        });
-        
-        $groupTrack.on('dragleave', function(e) {
-            if (!$(e.relatedTarget).closest(this).length) {
-                $(this).removeClass('drag-over drag-over-top drag-over-bottom');
-            }
-        });
-        
-        $groupTrack.on('drop', function(e) {
-            e.preventDefault();
-            e.stopPropagation();
-            $(this).removeClass('drag-over drag-over-top drag-over-bottom');
-            
-            const draggedElementId = e.originalEvent.dataTransfer.getData('text/element-id');
-            const draggedGroupId = e.originalEvent.dataTransfer.getData('text/group-id');
-            
-            if (draggedElementId) {
-                // Element dropped on folder - add to folder
-                console.log('Drop element on folder:', group.name, 'element:', draggedElementId);
-                const element = elements.find(el => el.id === draggedElementId);
-                if (element && element.groupId !== group.id) {
-                    element.groupId = group.id;
-                    updateTimelineTracks();
-                }
-            } else if (draggedGroupId && draggedGroupId !== group.id) {
-                // Folder dropped on another folder - reorder
-                console.log('Reorder folder');
-                const draggedGroup = groups.find(g => g.id === draggedGroupId);
-                if (draggedGroup) {
-                    // Determine if drop is above or below
-                    const rect = this.getBoundingClientRect();
-                    const midpoint = rect.top + rect.height / 2;
-                    const dropAbove = e.originalEvent.clientY < midpoint;
-                    
-                    reorderGroups(draggedGroup, group, dropAbove);
-                }
-            }
-        });
-        
-        $timelineTracks.append($groupTrack);
-        
-        // Render child elements if expanded
-        if (isExpanded) {
-            groupElements.sort((a, b) => b.zIndex - a.zIndex).forEach(element => {
-                renderElementTrack(element, true, group.id);
-            });
-        }
-    }
-    
-    function renderElementTrack(element, isInGroup, parentGroupId) {
-        if (!element) return;
-        
-        let icon, label;
-        
-        if (element.type === 'text') {
-            icon = 'fa-font';
-            label = element.text.substring(0, 15);
-        } else if (element.type === 'clickthrough') {
-            icon = 'fa-mouse-pointer';
-            const clickthroughElements = elements.filter(el => el.type === 'clickthrough');
-            const clickIndex = clickthroughElements.findIndex(el => el.id === element.id) + 1;
-            label = `Click${clickIndex}`;
-        } else if (element.type === 'shape') {
-            icon = 'fa-shapes';
-            const shapeElements = elements.filter(el => el.type === 'shape');
-            const shapeIndex = shapeElements.findIndex(el => el.id === element.id) + 1;
-            label = `Shape${shapeIndex}`;
-        } else if (element.type === 'video') {
-            icon = 'fa-video';
-            label = element.videoName;
-        } else {
-            icon = 'fa-image';
-            label = (element.filename || 'Image').substring(0, 15);
-        }
-        
-        const indentClass = isInGroup ? 'pl-6' : '';
-        
-        const $track = $(`
-            <div class="timeline-track ${indentClass}" 
-                 data-element-id="${element.id}" 
-                 data-in-group="${isInGroup ? parentGroupId : ''}"
-                 draggable="true">
-                <div class="timeline-track-label">
-                    <div class="flex items-center flex-1">
-                        <i class="fas fa-eye${element.hidden ? '-slash' : ''} text-gray-400 hover:text-white mr-2 cursor-pointer toggle-visibility" data-id="${element.id}"></i>
-                        <i class="fas ${icon} text-blue-400 mr-2"></i>
-                        <span class="truncate flex-1">${label}</span>
-                    </div>
-                    <div class="flex items-center gap-1 ml-2">
-                        <button class="timeline-layer-btn add-layer-anim" data-id="${element.id}" title="Add animation">
-                            <i class="fas fa-plus"></i>
-                        </button>
-                        <button class="timeline-layer-btn delete-layer" data-id="${element.id}" title="Delete layer">
-                            <i class="fas fa-trash"></i>
-                        </button>
-                    </div>
-                </div>
-                <div class="timeline-track-content" id="track_${element.id}">
-                </div>
-            </div>
-        `);
-        
-        // Drag handlers for element
-        $track.on('dragstart', function(e) {
-            const $label = $(e.target).closest('.timeline-track-label');
-            if ($label.length === 0) {
-                e.preventDefault();
-                return;
-            }
-            
-            e.stopPropagation();
-            e.originalEvent.dataTransfer.effectAllowed = 'move';
-            e.originalEvent.dataTransfer.setData('text/element-id', element.id);
-            e.originalEvent.dataTransfer.setData('text/source-group', isInGroup ? parentGroupId : '');
-            $(this).addClass('dragging');
-            console.log('Drag start element:', element.id, 'from group:', parentGroupId || 'none');
-        });
-        
-        $track.on('dragend', function(e) {
-            $(this).removeClass('dragging');
-            $('.drag-over, .drag-over-top, .drag-over-bottom').removeClass('drag-over drag-over-top drag-over-bottom');
-            console.log('Drag end');
-        });
-        
-        // Dragover for reordering
-        $track.on('dragover', function(e) {
-            e.preventDefault();
-            e.stopPropagation();
-            
-            const types = e.originalEvent.dataTransfer.types;
-            if (types.includes('text/element-id')) {
-                // Show drop indicator above or below
-                const rect = this.getBoundingClientRect();
-                const midpoint = rect.top + rect.height / 2;
-                
-                if (e.originalEvent.clientY < midpoint) {
-                    $(this).removeClass('drag-over-bottom').addClass('drag-over-top');
-                } else {
-                    $(this).removeClass('drag-over-top').addClass('drag-over-bottom');
-                }
-            }
-        });
-        
-        $track.on('dragleave', function(e) {
-            if (!$(e.relatedTarget).closest(this).length) {
-                $(this).removeClass('drag-over drag-over-top drag-over-bottom');
-            }
-        });
-        
-        $track.on('drop', function(e) {
-            e.preventDefault();
-            e.stopPropagation();
-            $(this).removeClass('drag-over drag-over-top drag-over-bottom');
-            
-            const draggedElementId = e.originalEvent.dataTransfer.getData('text/element-id');
-            const sourceGroup = e.originalEvent.dataTransfer.getData('text/source-group');
-            
-            if (draggedElementId && draggedElementId !== element.id) {
-                console.log('Drop element for reorder:', draggedElementId, 'target:', element.id);
-                
-                const draggedElement = elements.find(el => el.id === draggedElementId);
-                const targetElement = element;
-                
-                if (draggedElement) {
-                    // Determine drop position
-                    const rect = e.currentTarget.getBoundingClientRect();
-                    const midpoint = rect.top + rect.height / 2;
-                    const dropAbove = e.originalEvent.clientY < midpoint;
-                    
-                    // If dropped on ungrouped area and element is in a group, remove from group
-                    if (!isInGroup && draggedElement.groupId) {
-                        console.log('Remove from group - dropped on ungrouped area');
-                        draggedElement.groupId = null;
-                        updateTimelineTracks();
-                    } else if (isInGroup && parentGroupId) {
-                        // Reorder within the same group
-                        reorderElementsInGroup(draggedElement, targetElement, parentGroupId, dropAbove);
-                    } else if (!isInGroup && !draggedElement.groupId) {
-                        // Reorder in ungrouped area
-                        reorderElements(draggedElement, targetElement, dropAbove);
-                    }
-                }
-            }
-        });
-        
-        $timelineTracks.append($track);
-        
-        // Add animation blocks
-        element.animations.forEach(anim => {
-            const leftPercent = (anim.start / totalDuration) * 100;
-            const widthPercent = (anim.duration / totalDuration) * 100;
-            
-            const types = anim.types || [anim.type];
-            const animLabel = types.length > 1 ? `${types.length} effects` : types[0];
-            
-            const $block = $(`
-                <div class="timeline-block" style="left: ${leftPercent}%; width: ${widthPercent}%;" 
-                     data-anim-id="${anim.id}" data-element-id="${element.id}">
-                    <div class="timeline-block-resize-handle left"></div>
-                    <div class="timeline-block-label">${animLabel}</div>
-                    <button class="delete-anim" data-anim-id="${anim.id}" data-element-id="${element.id}">
-                        <i class="fas fa-times"></i>
-                    </button>
-                    <div class="timeline-block-resize-handle right"></div>
                 </div>
             `);
             
-            $(`#track_${element.id}`).append($block);
+            $timelineTracks.append($track);
+            
+            // Add animation blocks
+            element.animations.forEach(anim => {
+                const leftPercent = (anim.start / totalDuration) * 100;
+                const widthPercent = (anim.duration / totalDuration) * 100;
+                
+                // Get label showing multiple types
+                const types = anim.types || [anim.type];
+                const label = types.length > 1 ? `${types.length} effects` : types[0];
+                
+                const $block = $(`
+                    <div class="timeline-block" style="left: ${leftPercent}%; width: ${widthPercent}%;" 
+                         data-anim-id="${anim.id}" data-element-id="${element.id}">
+                        <div class="timeline-block-resize-handle left"></div>
+                        <div class="timeline-block-label">${label}</div>
+                        <button class="delete-anim" data-anim-id="${anim.id}" data-element-id="${element.id}">
+                            <i class="fas fa-times"></i>
+                        </button>
+                        <div class="timeline-block-resize-handle right"></div>
+                    </div>
+                `);
+                
+                $(`#track_${element.id}`).append($block);
+            });
+        });
+        
+        // Initialize jQuery UI sortable for timeline tracks
+        $timelineTracks.sortable({
+            handle: '.timeline-track-label',
+            axis: 'y',
+            cursor: 'move',
+            tolerance: 'pointer',
+            update: function(event, ui) {
+                // Get new order of elements based on DOM order
+                const newOrder = [];
+                $timelineTracks.find('.timeline-track').each(function() {
+                    const elementId = $(this).data('element-id');
+                    const element = elements.find(el => el.id === elementId);
+                    if (element) {
+                        newOrder.push(element);
+                    }
+                });
+                
+                // Update zIndex based on new order (reverse because top = highest zIndex)
+                newOrder.reverse().forEach((element, index) => {
+                    element.zIndex = index;
+                    $(`#${element.id}`).css('z-index', index);
+                });
+                
+                // Update layers list and rebuild timeline
+                updateLayersList();
+            }
         });
     }
     
@@ -3770,7 +3082,6 @@
         draggedLayerId = $(e.currentTarget).data('id');
         $(e.currentTarget).addClass('dragging');
         e.originalEvent.dataTransfer.effectAllowed = 'move';
-        e.originalEvent.dataTransfer.setData('elementId', draggedLayerId);
     }
     
     function handleDragOverLayer(e) {
