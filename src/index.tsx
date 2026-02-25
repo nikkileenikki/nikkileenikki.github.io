@@ -523,7 +523,7 @@ app.get('/', (c) => {
                                 <div class="flex border-b border-gray-700 sticky top-0 bg-gray-900 z-10">
                                     <div class="w-[200px] p-2 bg-gray-800 border-r border-gray-700 flex items-center justify-between">
                                         <span class="text-xs text-gray-400 font-semibold">LAYER</span>
-                                        <button id="createGroupBtn" class="text-yellow-400 hover:text-yellow-300 px-2 py-1 rounded transition-colors disabled:opacity-30 disabled:cursor-not-allowed" title="Create Group from Selected Layers" disabled>
+                                        <button id="createGroupBtn" class="text-gray-600 hover:text-yellow-300 px-2 py-1 rounded transition-colors" title="Create Empty Group">
                                             <i class="fas fa-folder-plus text-sm"></i>
                                         </button>
                                     </div>
