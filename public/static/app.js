@@ -2251,42 +2251,44 @@
             });
         });
         
-        // Initialize jQuery UI sortable for timeline tracks
-        $timelineTracks.sortable({
-            handle: '.timeline-track-label',
-            axis: 'y',
-            cursor: 'move',
-            tolerance: 'pointer',
-            update: function(event, ui) {
-                // Get new order of elements based on DOM order
-                const newOrder = [];
-                $timelineTracks.find('.timeline-track').each(function() {
-                    const elementId = $(this).data('element-id');
-                    const element = elements.find(el => el.id === elementId);
-                    if (element) {
-                        newOrder.push(element);
-                    }
-                });
-                
-                // Update zIndex based on new order
-                // Timeline shows top = highest z-index, so first in newOrder should get highest z-index
-                const maxIndex = newOrder.length - 1;
-                newOrder.forEach((element, index) => {
-                    element.zIndex = maxIndex - index; // First gets highest, last gets 0
-                    $(`#${element.id}`).css('z-index', element.zIndex);
-                });
-                
-                console.log('Timeline reordered - New z-indexes:', newOrder.map(el => ({
-                    id: el.id,
-                    type: el.type,
-                    filename: el.filename || el.text?.substring(0,20) || el.type,
-                    zIndex: el.zIndex
-                })));
-                
-                // Update layers list and rebuild timeline
-                updateLayersList();
-            }
-        });
+        // Initialize jQuery UI sortable for timeline tracks (only once)
+        if (!$timelineTracks.hasClass('ui-sortable')) {
+            $timelineTracks.sortable({
+                handle: '.timeline-track-label',
+                axis: 'y',
+                cursor: 'move',
+                tolerance: 'pointer',
+                update: function(event, ui) {
+                    // Get new order of elements based on DOM order
+                    const newOrder = [];
+                    $timelineTracks.find('.timeline-track').each(function() {
+                        const elementId = $(this).data('element-id');
+                        const element = elements.find(el => el.id === elementId);
+                        if (element) {
+                            newOrder.push(element);
+                        }
+                    });
+                    
+                    // Update zIndex based on new order
+                    // Timeline shows top = highest z-index, so first in newOrder should get highest z-index
+                    const maxIndex = newOrder.length - 1;
+                    newOrder.forEach((element, index) => {
+                        element.zIndex = maxIndex - index; // First gets highest, last gets 0
+                        $(`#${element.id}`).css('z-index', element.zIndex);
+                    });
+                    
+                    console.log('Timeline reordered - New z-indexes:', newOrder.map(el => ({
+                        id: el.id,
+                        type: el.type,
+                        filename: el.filename || el.text?.substring(0,20) || el.type,
+                        zIndex: el.zIndex
+                    })));
+                    
+                    // Update layers list and rebuild timeline
+                    updateLayersList();
+                }
+            });
+        }
     }
     
     function rebuildTimeline() {
