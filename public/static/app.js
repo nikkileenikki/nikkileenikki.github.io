@@ -2348,15 +2348,22 @@
                 props.scale = 1;
                 break;
             case 'rotate':
+            case 'rotate360':
                 props.rotation = '+=360';
+                break;
+            case 'rotate90':
+                props.rotation = '+=90';
+                break;
+            case 'rotate180':
+                props.rotation = '+=180';
+                break;
+            case 'rotate270':
+                props.rotation = '+=270';
                 break;
             case 'rotateFrom':
                 const rotateFrom = customProps.rotateFrom !== undefined ? customProps.rotateFrom : 0;
                 props.startAt = { rotation: rotateFrom };
                 props.rotation = element.rotation;
-                break;
-            case 'bounce':
-                props.y = '+=50';
                 break;
         }
         
@@ -3002,15 +3009,22 @@
                 props.scale = 1;
                 break;
             case 'rotate':
+            case 'rotate360':
                 props.rotation = '+=360';
+                break;
+            case 'rotate90':
+                props.rotation = '+=90';
+                break;
+            case 'rotate180':
+                props.rotation = '+=180';
+                break;
+            case 'rotate270':
+                props.rotation = '+=270';
                 break;
             case 'rotateFrom':
                 const rotateFrom = customProps.rotateFrom !== undefined ? customProps.rotateFrom : 0;
                 props.startAt = { rotation: rotateFrom };
                 props.rotation = element.rotation;
-                break;
-            case 'bounce':
-                props.y = '+=50';
                 break;
         }
         

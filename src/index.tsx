@@ -570,56 +570,82 @@ app.get('/', (c) => {
                 <div class="space-y-2">
                     <div>
                         <label class="block text-sm text-gray-400 mb-2">Select Animation Effects (Multiple)</label>
-                        <div class="grid grid-cols-2 gap-2 p-2 bg-gray-700 rounded max-h-64 overflow-y-auto">
-                            <!-- Fade -->
-                            <label class="flex items-center space-x-2 p-2 bg-gray-800 rounded hover:bg-gray-750 cursor-pointer">
-                                <input type="checkbox" class="anim-checkbox" value="fadeIn">
-                                <span class="text-sm">Fade In</span>
-                            </label>
-                            <label class="flex items-center space-x-2 p-2 bg-gray-800 rounded hover:bg-gray-750 cursor-pointer">
-                                <input type="checkbox" class="anim-checkbox" value="fadeOut">
-                                <span class="text-sm">Fade Out</span>
-                            </label>
+                        <div class="grid grid-cols-1 gap-2 p-2 bg-gray-700 rounded max-h-64 overflow-y-auto">
+                            <!-- Fade Group -->
+                            <div class="bg-gray-800 rounded p-2">
+                                <div class="text-xs text-gray-400 font-semibold mb-1">FADE</div>
+                                <div class="grid grid-cols-2 gap-2">
+                                    <label class="flex items-center space-x-2 p-2 bg-gray-900 rounded hover:bg-gray-850 cursor-pointer">
+                                        <input type="checkbox" class="anim-checkbox" value="fadeIn">
+                                        <span class="text-sm">Fade In</span>
+                                    </label>
+                                    <label class="flex items-center space-x-2 p-2 bg-gray-900 rounded hover:bg-gray-850 cursor-pointer">
+                                        <input type="checkbox" class="anim-checkbox" value="fadeOut">
+                                        <span class="text-sm">Fade Out</span>
+                                    </label>
+                                </div>
+                            </div>
                             
-                            <!-- Slide -->
-                            <label class="flex items-center space-x-2 p-2 bg-gray-800 rounded hover:bg-gray-750 cursor-pointer">
-                                <input type="checkbox" class="anim-checkbox" value="slideLeft">
-                                <span class="text-sm">Slide from left</span>
-                            </label>
-                            <label class="flex items-center space-x-2 p-2 bg-gray-800 rounded hover:bg-gray-750 cursor-pointer">
-                                <input type="checkbox" class="anim-checkbox" value="slideRight">
-                                <span class="text-sm">Slide from right</span>
-                            </label>
-                            <label class="flex items-center space-x-2 p-2 bg-gray-800 rounded hover:bg-gray-750 cursor-pointer">
-                                <input type="checkbox" class="anim-checkbox" value="slideUp">
-                                <span class="text-sm">Slide from top</span>
-                            </label>
-                            <label class="flex items-center space-x-2 p-2 bg-gray-800 rounded hover:bg-gray-750 cursor-pointer">
-                                <input type="checkbox" class="anim-checkbox" value="slideDown">
-                                <span class="text-sm">Slide from bottom</span>
-                            </label>
+                            <!-- Slide Group -->
+                            <div class="bg-gray-800 rounded p-2">
+                                <div class="text-xs text-gray-400 font-semibold mb-1">SLIDE</div>
+                                <div class="grid grid-cols-2 gap-2">
+                                    <label class="flex items-center space-x-2 p-2 bg-gray-900 rounded hover:bg-gray-850 cursor-pointer">
+                                        <input type="checkbox" class="anim-checkbox" value="slideLeft">
+                                        <span class="text-sm">From Left</span>
+                                    </label>
+                                    <label class="flex items-center space-x-2 p-2 bg-gray-900 rounded hover:bg-gray-850 cursor-pointer">
+                                        <input type="checkbox" class="anim-checkbox" value="slideRight">
+                                        <span class="text-sm">From Right</span>
+                                    </label>
+                                    <label class="flex items-center space-x-2 p-2 bg-gray-900 rounded hover:bg-gray-850 cursor-pointer">
+                                        <input type="checkbox" class="anim-checkbox" value="slideUp">
+                                        <span class="text-sm">From Top</span>
+                                    </label>
+                                    <label class="flex items-center space-x-2 p-2 bg-gray-900 rounded hover:bg-gray-850 cursor-pointer">
+                                        <input type="checkbox" class="anim-checkbox" value="slideDown">
+                                        <span class="text-sm">From Bottom</span>
+                                    </label>
+                                </div>
+                            </div>
                             
-                            <!-- Scale -->
-                            <label class="flex items-center space-x-2 p-2 bg-gray-800 rounded hover:bg-gray-750 cursor-pointer">
-                                <input type="checkbox" class="anim-checkbox" value="scaleIn">
-                                <span class="text-sm">Scale In</span>
-                            </label>
-                            <label class="flex items-center space-x-2 p-2 bg-gray-800 rounded hover:bg-gray-750 cursor-pointer">
-                                <input type="checkbox" class="anim-checkbox" value="scaleOut">
-                                <span class="text-sm">Scale Out</span>
-                            </label>
+                            <!-- Zoom Group -->
+                            <div class="bg-gray-800 rounded p-2">
+                                <div class="text-xs text-gray-400 font-semibold mb-1">ZOOM</div>
+                                <div class="grid grid-cols-2 gap-2">
+                                    <label class="flex items-center space-x-2 p-2 bg-gray-900 rounded hover:bg-gray-850 cursor-pointer">
+                                        <input type="checkbox" class="anim-checkbox" value="scaleIn">
+                                        <span class="text-sm">Zoom In</span>
+                                    </label>
+                                    <label class="flex items-center space-x-2 p-2 bg-gray-900 rounded hover:bg-gray-850 cursor-pointer">
+                                        <input type="checkbox" class="anim-checkbox" value="scaleOut">
+                                        <span class="text-sm">Zoom Out</span>
+                                    </label>
+                                </div>
+                            </div>
                             
-                            <!-- Rotate -->
-                            <label class="flex items-center space-x-2 p-2 bg-gray-800 rounded hover:bg-gray-750 cursor-pointer">
-                                <input type="checkbox" class="anim-checkbox" value="rotate">
-                                <span class="text-sm">Rotate 360°</span>
-                            </label>
-                            
-                            <!-- Special -->
-                            <label class="flex items-center space-x-2 p-2 bg-gray-800 rounded hover:bg-gray-750 cursor-pointer">
-                                <input type="checkbox" class="anim-checkbox" value="bounce">
-                                <span class="text-sm">Bounce</span>
-                            </label>
+                            <!-- Rotate Group -->
+                            <div class="bg-gray-800 rounded p-2">
+                                <div class="text-xs text-gray-400 font-semibold mb-1">ROTATE</div>
+                                <div class="grid grid-cols-2 gap-2">
+                                    <label class="flex items-center space-x-2 p-2 bg-gray-900 rounded hover:bg-gray-850 cursor-pointer">
+                                        <input type="checkbox" class="anim-checkbox" value="rotate90">
+                                        <span class="text-sm">90°</span>
+                                    </label>
+                                    <label class="flex items-center space-x-2 p-2 bg-gray-900 rounded hover:bg-gray-850 cursor-pointer">
+                                        <input type="checkbox" class="anim-checkbox" value="rotate180">
+                                        <span class="text-sm">180°</span>
+                                    </label>
+                                    <label class="flex items-center space-x-2 p-2 bg-gray-900 rounded hover:bg-gray-850 cursor-pointer">
+                                        <input type="checkbox" class="anim-checkbox" value="rotate270">
+                                        <span class="text-sm">270°</span>
+                                    </label>
+                                    <label class="flex items-center space-x-2 p-2 bg-gray-900 rounded hover:bg-gray-850 cursor-pointer">
+                                        <input type="checkbox" class="anim-checkbox" value="rotate360">
+                                        <span class="text-sm">360°</span>
+                                    </label>
+                                </div>
+                            </div>
                         </div>
                     </div>
                     
