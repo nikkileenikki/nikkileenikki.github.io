@@ -2562,31 +2562,10 @@
             renderElementTrack(element, false);
         });
         
-        // Initialize jQuery UI sortable for timeline tracks
-        $timelineTracks.sortable({
-            handle: '.timeline-track-label',
-            axis: 'y',
-            cursor: 'move',
-            tolerance: 'pointer',
-            update: function(event, ui) {
-                // Get new order of elements based on DOM order
-                const newOrder = [];
-                $timelineTracks.find('.timeline-track').each(function() {
-                    const elementId = $(this).data('element-id');
-                    const element = elements.find(el => el.id === elementId);
-                    if (element) {
-                        newOrder.push(element);
-                    }
-                });
-                
-                // Update zIndex based on new order (reverse so top = highest z)
-                newOrder.reverse().forEach((el, index) => {
-                    el.zIndex = index;
-                });
-                
-                updateCanvasZIndex();
-            }
-        });
+        // Update canvas z-index after rendering
+        updateCanvasZIndex();
+        
+        // Note: Do NOT initialize sortable here - it interferes with custom drag handlers
     }
     
     function updateCanvasZIndex() {
@@ -2615,7 +2594,7 @@
         
         // Group header track
         const $groupTrack = $(`
-            <div class="timeline-track timeline-group-track" data-group-id="${group.id}" data-type="group" draggable="true">
+            <div class="timeline-track timeline-group-track" data-group-id="${group.id}" data-type="group">
                 <div class="timeline-track-label timeline-group-label">
                     <div class="flex items-center flex-1">
                         <button class="group-toggle-btn text-gray-400 hover:text-white mr-1" data-group-id="${group.id}">
@@ -2637,35 +2616,30 @@
                         </button>
                     </div>
                 </div>
-                <div class="timeline-track-content" style="opacity: 0.3;">
+                <div class="timeline-track-content group-drop-zone" data-group-id="${group.id}" style="opacity: 0.3;">
                 </div>
             </div>
         `);
         
-        // Add drag and drop handlers for group
-        $groupTrack.on('dragstart', function(e) {
-            e.originalEvent.dataTransfer.effectAllowed = 'move';
-            e.originalEvent.dataTransfer.setData('groupId', group.id);
-            $(this).addClass('dragging');
-        });
+        $timelineTracks.append($groupTrack);
         
-        $groupTrack.on('dragend', function(e) {
-            $(this).removeClass('dragging');
-            $('.drag-over').removeClass('drag-over');
-        });
-        
+        // Add dragover and drop handlers to the entire group track
         $groupTrack.on('dragover', function(e) {
             e.preventDefault();
             e.stopPropagation();
-            const draggedElementId = e.originalEvent.dataTransfer.getData('elementId');
-            if (draggedElementId) {
-                // Allow dropping elements onto group
+            
+            // Check if we're dragging an element (not a group)
+            if (e.originalEvent.dataTransfer.types.includes('text/element-id')) {
                 $(this).addClass('drag-over');
+                console.log('Drag over group:', group.name);
             }
         });
         
         $groupTrack.on('dragleave', function(e) {
-            $(this).removeClass('drag-over');
+            // Only remove if we're actually leaving the group track
+            if (!$(e.relatedTarget).closest(this).length) {
+                $(this).removeClass('drag-over');
+            }
         });
         
         $groupTrack.on('drop', function(e) {
@@ -2673,28 +2647,32 @@
             e.stopPropagation();
             $(this).removeClass('drag-over');
             
-            const draggedElementId = e.originalEvent.dataTransfer.getData('elementId');
+            const draggedElementId = e.originalEvent.dataTransfer.getData('text/element-id');
+            console.log('Drop on group:', group.name, 'element:', draggedElementId);
+            
             if (draggedElementId) {
                 // Move element into this group
                 const element = elements.find(el => el.id === draggedElementId);
-                if (element && element.groupId !== group.id) {
+                if (element) {
                     element.groupId = group.id;
+                    if (!group.elementIds.includes(draggedElementId)) {
+                        group.elementIds.push(draggedElementId);
+                    }
+                    console.log('Element moved to group');
                     updateTimelineTracks();
                 }
             }
         });
         
-        $timelineTracks.append($groupTrack);
-        
         // Render child elements if expanded
         if (isExpanded) {
             groupElements.sort((a, b) => b.zIndex - a.zIndex).forEach(element => {
-                renderElementTrack(element, true);
+                renderElementTrack(element, true, group.id);
             });
         }
     }
     
-    function renderElementTrack(element, isInGroup) {
+    function renderElementTrack(element, isInGroup, parentGroupId) {
         if (!element) return;
         
         let icon, label;
@@ -2746,46 +2724,65 @@
         
         // Add drag handlers for element
         $track.on('dragstart', function(e) {
+            e.stopPropagation(); // Prevent parent handlers
             e.originalEvent.dataTransfer.effectAllowed = 'move';
-            e.originalEvent.dataTransfer.setData('elementId', element.id);
+            e.originalEvent.dataTransfer.setData('text/element-id', element.id);
+            e.originalEvent.dataTransfer.setData('text/plain', element.id); // Fallback
             $(this).addClass('dragging');
+            console.log('Drag start:', element.id);
         });
         
         $track.on('dragend', function(e) {
             $(this).removeClass('dragging');
             $('.drag-over').removeClass('drag-over');
+            console.log('Drag end');
         });
         
-        $track.on('dragover', function(e) {
-            e.preventDefault();
-            e.stopPropagation();
-            // Only allow dropping if dragging an element (not a group)
-            const draggedElementId = e.originalEvent.dataTransfer.types.includes('elementid');
-            if (draggedElementId && !isInGroup) {
-                // Allow reordering outside of groups
-                $(this).addClass('drag-over');
-            }
-        });
-        
-        $track.on('dragleave', function(e) {
-            $(this).removeClass('drag-over');
-        });
-        
-        $track.on('drop', function(e) {
-            e.preventDefault();
-            e.stopPropagation();
-            $(this).removeClass('drag-over');
-            
-            const draggedElementId = e.originalEvent.dataTransfer.getData('elementId');
-            if (draggedElementId && draggedElementId !== element.id && !isInGroup) {
-                // Remove from group if dropped on ungrouped area
-                const draggedElement = elements.find(el => el.id === draggedElementId);
-                if (draggedElement && draggedElement.groupId) {
-                    draggedElement.groupId = null;
-                    updateTimelineTracks();
+        // Allow dropping onto ungrouped area to remove from group
+        if (!isInGroup) {
+            $track.on('dragover', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                
+                // Only highlight if dragging a different element
+                const draggedId = e.originalEvent.dataTransfer.getData('text/element-id');
+                if (draggedId && draggedId !== element.id) {
+                    $(this).addClass('drag-over');
                 }
-            }
-        });
+            });
+            
+            $track.on('dragleave', function(e) {
+                if (!$(e.relatedTarget).closest(this).length) {
+                    $(this).removeClass('drag-over');
+                }
+            });
+            
+            $track.on('drop', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                $(this).removeClass('drag-over');
+                
+                const draggedElementId = e.originalEvent.dataTransfer.getData('text/element-id');
+                console.log('Drop on ungrouped element:', draggedElementId);
+                
+                if (draggedElementId && draggedElementId !== element.id) {
+                    // Remove from group
+                    const draggedElement = elements.find(el => el.id === draggedElementId);
+                    if (draggedElement && draggedElement.groupId) {
+                        draggedElement.groupId = null;
+                        
+                        // Remove from group's elementIds
+                        const group = groups.find(g => g.id === draggedElement.groupId);
+                        if (group) {
+                            group.elementIds = group.elementIds.filter(id => id !== draggedElementId);
+                        }
+                        
+                        console.log('Element removed from group');
+                        updateTimelineTracks();
+                    }
+                }
+            });
+        }
         
         $timelineTracks.append($track);
         
