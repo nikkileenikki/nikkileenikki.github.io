@@ -1442,6 +1442,8 @@
         const id = $(e.currentTarget).data('id');
         const isGroup = $(e.currentTarget).data('type') === 'group';
         
+        console.log('Layer clicked:', id, 'Ctrl:', e.ctrlKey, 'Meta:', e.metaKey, 'Shift:', e.shiftKey);
+        
         // Handle group toggle
         if (isGroup && $(e.target).closest('.group-toggle').length) {
             toggleGroup(id);
@@ -1458,6 +1460,7 @@
                 selectedElements.push(id);
             }
             selectedElement = selectedElements[selectedElements.length - 1] || null;
+            console.log('Multi-select (toggle):', selectedElements);
         } else if (e.shiftKey && selectedElements.length > 0) {
             // Shift+Click: Range selection
             const lastSelected = selectedElements[selectedElements.length - 1];
@@ -1467,11 +1470,13 @@
             const range = allIds.slice(Math.min(start, end), Math.max(start, end) + 1);
             selectedElements = [...new Set([...selectedElements, ...range])];
             selectedElement = id;
+            console.log('Multi-select (range):', selectedElements);
         } else {
             // Single selection
             selectedElements = [id];
             selectedElement = id;
             selectElement(id);
+            console.log('Single select:', id);
             return;
         }
         
@@ -1659,6 +1664,14 @@
                 $(this).removeClass('border-blue-400 bg-blue-900 bg-opacity-30').addClass('border-gray-700');
             }
         });
+        
+        // Update folder icon button state
+        const $createGroupBtn = $('#createGroupBtn');
+        if (selectedElements.length >= 2) {
+            $createGroupBtn.prop('disabled', false).removeClass('text-gray-600').addClass('text-yellow-400').attr('title', `Create Group from ${selectedElements.length} Selected Layers`);
+        } else {
+            $createGroupBtn.prop('disabled', true).removeClass('text-yellow-400').addClass('text-gray-600').attr('title', 'Select 2 or more layers to create a group');
+        }
     }
     
     function updateCanvasSelection() {
