@@ -2268,10 +2268,12 @@
                     }
                 });
                 
-                // Update zIndex based on new order (reverse because top = highest zIndex)
-                newOrder.reverse().forEach((element, index) => {
-                    element.zIndex = index;
-                    $(`#${element.id}`).css('z-index', index);
+                // Update zIndex based on new order
+                // Timeline shows top = highest z-index, so first in newOrder should get highest z-index
+                const maxIndex = newOrder.length - 1;
+                newOrder.forEach((element, index) => {
+                    element.zIndex = maxIndex - index; // First gets highest, last gets 0
+                    $(`#${element.id}`).css('z-index', element.zIndex);
                 });
                 
                 // Update layers list and rebuild timeline
