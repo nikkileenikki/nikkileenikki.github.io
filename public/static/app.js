@@ -2617,7 +2617,9 @@
         let animationsJs = '';
         let clickthroughJs = '';
         
-        const sortedElements = [...elements].sort((a, b) => a.zIndex - b.zIndex);
+        // Sort by z-index DESCENDING (highest z-index first in HTML)
+        // This matches the timeline visual order where top layer = highest z-index
+        const sortedElements = [...elements].sort((a, b) => b.zIndex - a.zIndex);
         let imageCounter = 0;
         
         sortedElements.forEach((element) => {
