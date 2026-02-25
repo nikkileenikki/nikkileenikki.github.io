@@ -395,35 +395,3 @@
     box-shadow: 0 0 12px rgba(255, 255, 255, 0.5);
 }
 
-
-/* jQuery UI Sortable Placeholder */
-.timeline-track-placeholder {
-    background: rgba(59, 130, 246, 0.2);
-    border: 2px dashed rgb(59, 130, 246);
-    visibility: visible !important;
-    height: 40px;
-    margin: 2px 0;
-}
-
-/* jQuery UI Sortable Helper (clone being dragged) */
-.ui-sortable-helper {
-    opacity: 0.8 !important;
-    background: rgb(30, 41, 59) !important;
-    box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.3);
-    z-index: 9999 !important;
-}
-
-/* Drop zone styles */
-.group-drop-zone {
-    transition: all 0.2s ease;
-}
-
-.group-drop-zone.drag-over {
-    background: rgba(59, 130, 246, 0.2) !important;
-    border: 2px dashed rgb(59, 130, 246) !important;
-}
-
-.group-drop-zone.ui-droppable-hover {
-    background: rgba(59, 130, 246, 0.2) !important;
-    border: 2px dashed rgb(59, 130, 246) !important;
-}
