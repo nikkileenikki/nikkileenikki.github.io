@@ -2682,10 +2682,10 @@
         const $groupTrack = $(`
             <div class="timeline-track timeline-group-track" 
                  data-group-id="${group.id}" 
-                 data-type="group" 
-                 draggable="true">
+                 data-type="group">
                 <div class="timeline-track-label timeline-group-label">
                     <div class="flex items-center flex-1">
+                        <i class="fas fa-grip-vertical drag-handle text-gray-500 hover:text-white mr-2 cursor-move" draggable="true"></i>
                         <button class="group-toggle-btn text-gray-400 hover:text-white mr-1" data-group-id="${group.id}">
                             <i class="fas ${isExpanded ? 'fa-caret-down' : 'fa-caret-right'} text-sm"></i>
                         </button>
@@ -2711,18 +2711,20 @@
         `);
         
         // Drag handlers for folder reordering
-        $groupTrack.on('dragstart', function(e) {
-            const $label = $(e.target).closest('.timeline-track-label');
-            if ($label.length === 0) {
-                e.preventDefault();
-                return;
-            }
-            
+        $groupTrack.find('.drag-handle').on('dragstart', function(e) {
             e.stopPropagation();
             e.originalEvent.dataTransfer.effectAllowed = 'move';
             e.originalEvent.dataTransfer.setData('text/group-id', group.id);
-            $(this).addClass('dragging');
+            $groupTrack.addClass('dragging');
             console.log('Drag start folder:', group.name);
+        });
+        
+        $groupTrack.on('dragstart', function(e) {
+            // Prevent drag from anywhere except drag handle
+            if (!$(e.target).hasClass('drag-handle')) {
+                e.preventDefault();
+                return false;
+            }
         });
         
         $groupTrack.on('dragend', function(e) {
@@ -2837,10 +2839,10 @@
         const $track = $(`
             <div class="timeline-track ${indentClass}" 
                  data-element-id="${element.id}" 
-                 data-in-group="${isInGroup ? parentGroupId : ''}"
-                 draggable="true">
+                 data-in-group="${isInGroup ? parentGroupId : ''}">
                 <div class="timeline-track-label">
                     <div class="flex items-center flex-1">
+                        <i class="fas fa-grip-vertical drag-handle text-gray-500 hover:text-white mr-2 cursor-move" draggable="true"></i>
                         <i class="fas fa-eye${element.hidden ? '-slash' : ''} text-gray-400 hover:text-white mr-2 cursor-pointer toggle-visibility" data-id="${element.id}"></i>
                         <i class="fas ${icon} text-blue-400 mr-2"></i>
                         <span class="truncate flex-1">${label}</span>
@@ -2860,19 +2862,21 @@
         `);
         
         // Drag handlers for element
-        $track.on('dragstart', function(e) {
-            const $label = $(e.target).closest('.timeline-track-label');
-            if ($label.length === 0) {
-                e.preventDefault();
-                return;
-            }
-            
+        $track.find('.drag-handle').on('dragstart', function(e) {
             e.stopPropagation();
             e.originalEvent.dataTransfer.effectAllowed = 'move';
             e.originalEvent.dataTransfer.setData('text/element-id', element.id);
             e.originalEvent.dataTransfer.setData('text/source-group', isInGroup ? parentGroupId : '');
-            $(this).addClass('dragging');
+            $track.addClass('dragging');
             console.log('Drag start element:', element.id, 'from group:', parentGroupId || 'none');
+        });
+        
+        $track.on('dragstart', function(e) {
+            // Prevent drag from anywhere except drag handle
+            if (!$(e.target).hasClass('drag-handle')) {
+                e.preventDefault();
+                return false;
+            }
         });
         
         $track.on('dragend', function(e) {
