@@ -129,6 +129,7 @@
     min-height: 38px;
     user-select: none; /* Disable text selection */
     cursor: pointer;
+    transition: all 0.2s;
 }
 
 .timeline-group-track {
@@ -159,6 +160,14 @@
 .timeline-track.drag-over {
     background: rgba(59, 130, 246, 0.2);
     border: 2px solid rgb(59, 130, 246);
+}
+
+.timeline-track.drag-over-top {
+    border-top: 3px solid rgb(59, 130, 246);
+}
+
+.timeline-track.drag-over-bottom {
+    border-bottom: 3px solid rgb(59, 130, 246);
 }
 
 .timeline-track.dragging {
