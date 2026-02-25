@@ -521,8 +521,11 @@ app.get('/', (c) => {
                             <div class="min-w-[800px]">
                                 <!-- Timeline Header -->
                                 <div class="flex border-b border-gray-700 sticky top-0 bg-gray-900 z-10">
-                                    <div class="w-[200px] p-2 bg-gray-800 border-r border-gray-700">
+                                    <div class="w-[200px] p-2 bg-gray-800 border-r border-gray-700 flex items-center justify-between">
                                         <span class="text-xs text-gray-400 font-semibold">LAYER</span>
+                                        <button id="createGroupBtn" class="text-yellow-400 hover:text-yellow-300 px-2 py-1 rounded transition-colors disabled:opacity-30 disabled:cursor-not-allowed" title="Create Group from Selected Layers" disabled>
+                                            <i class="fas fa-folder-plus text-sm"></i>
+                                        </button>
                                     </div>
                                     <div class="flex-1 relative h-8">
                                         <div id="timelineRuler" class="absolute inset-0 flex user-select-none">

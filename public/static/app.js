@@ -71,6 +71,9 @@
         $dropzone.on('drop', handleDrop);
         $fileInput.on('change', handleFileSelect);
         
+        // Group management
+        $('#createGroupBtn').on('click', createGroupFromSelection);
+        
         // Text
         $('#addTextBtn').on('click', openTextModal);
         $('#closeTextModal').on('click', closeTextModal);
@@ -1279,27 +1282,21 @@
     // LAYER MANAGEMENT
     // ============================================
     function updateLayersList() {
+        // Update Create Group button state
+        const $createGroupBtn = $('#createGroupBtn');
+        if (selectedElements.length >= 2) {
+            $createGroupBtn.prop('disabled', false).attr('title', `Create Group from ${selectedElements.length} Selected Layers`);
+        } else {
+            $createGroupBtn.prop('disabled', true).attr('title', 'Select 2 or more layers to create a group');
+        }
+        
         if (elements.length === 0 && groups.length === 0) {
-            $layersList.html(`
-                <p class="text-sm text-gray-500 text-center py-4">No layers yet</p>
-                <button id="createGroupBtn" class="hidden w-full bg-blue-600 hover:bg-blue-700 text-white py-2 rounded text-sm transition-colors mt-2">
-                    <i class="fas fa-folder-plus mr-1"></i>Create Group
-                </button>
-            `);
+            $layersList.html('<p class="text-sm text-gray-500 text-center py-4">No layers yet</p>');
             updateTimelineTracks();
             return;
         }
         
         $layersList.empty();
-        
-        // Add Create Group button at top
-        const $groupBtn = $(`
-            <button id="createGroupBtn" class="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 rounded text-sm transition-colors mb-2 ${selectedElements.length < 2 ? 'opacity-50 cursor-not-allowed' : ''}">
-                <i class="fas fa-folder-plus mr-1"></i>Create Group (${selectedElements.length} selected)
-            </button>
-        `);
-        $groupBtn.on('click', createGroupFromSelection);
-        $layersList.append($groupBtn);
         
         // Get ungrouped elements
         const ungroupedElements = elements.filter(el => !el.groupId);
