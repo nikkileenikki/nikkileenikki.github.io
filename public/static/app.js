@@ -6,6 +6,7 @@
     // STATE MANAGEMENT
     // ============================================
     let elements = [];
+    let groups = [];
     let selectedElement = null;
     let dragOffset = { x: 0, y: 0 };
     let isDragging = false;
@@ -559,7 +560,10 @@
     function handleFileSelect(e) {
         const files = e.target.files;
         if (files.length > 0) {
-            uploadFile(files[0]);
+            // Upload all selected files
+            Array.from(files).forEach(file => {
+                uploadFile(file);
+            });
         }
     }
     

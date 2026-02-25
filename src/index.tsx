@@ -108,10 +108,10 @@ app.get('/', (c) => {
                         <div class="space-y-2">
                             <div id="dropzone" class="border-2 border-dashed border-gray-600 rounded-lg p-4 text-center cursor-pointer hover:border-blue-400 transition-colors">
                                 <i class="fas fa-cloud-upload-alt text-3xl text-gray-500 mb-1"></i>
-                                <p class="text-sm text-gray-400">Upload Image</p>
-                                <p class="text-xs text-gray-500 mt-1">JPG, PNG, GIF</p>
+                                <p class="text-sm text-gray-400">Upload Images</p>
+                                <p class="text-xs text-gray-500 mt-1">JPG, PNG, GIF (Multiple files supported)</p>
                             </div>
-                            <input type="file" id="fileInput" accept="image/jpeg,image/png,image/gif" class="hidden">
+                            <input type="file" id="fileInput" accept="image/jpeg,image/png,image/gif" multiple class="hidden">
                             
                             <div class="grid grid-cols-2 gap-2">
                                 <button id="addTextBtn" class="bg-blue-600 hover:bg-blue-700 text-white py-2 rounded transition-colors">
