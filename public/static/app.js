@@ -2558,8 +2558,11 @@
         const manifest = generateManifest();
         zip.file('manifest.js', manifest);
         
-        // Add images to root folder (no subfolders)
-        const imageElements = elements.filter(el => el.type === 'image');
+        // Add images to root folder in z-index order (matching HTML generation)
+        const imageElements = elements
+            .filter(el => el.type === 'image')
+            .sort((a, b) => a.zIndex - b.zIndex); // Same sort as HTML generation
+        
         for (let i = 0; i < imageElements.length; i++) {
             const element = imageElements[i];
             try {
@@ -2567,6 +2570,7 @@
                 const blob = await response.blob();
                 // Place images in root folder (same level as index.html)
                 zip.file(`image_${i}.${getExtensionFromDataUrl(element.src)}`, blob);
+                console.log(`Saved image_${i}.png - element: ${element.id}, zIndex: ${element.zIndex}`);
             } catch (error) {
                 console.error('Error adding image to zip:', error);
             }
