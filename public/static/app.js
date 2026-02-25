@@ -2589,6 +2589,7 @@
             tolerance: 'pointer',
             helper: 'clone',
             opacity: 0.8,
+            items: '> .timeline-track, > .timeline-group-track',
             start: function(event, ui) {
                 ui.placeholder.height(ui.item.height());
                 console.log('Sortable start');
@@ -2655,6 +2656,32 @@
             }
         });
         
+        // Make folder drop zones droppable
+        $('.group-drop-zone').each(function() {
+            const $dropZone = $(this);
+            const groupId = $dropZone.attr('data-group-id');
+            
+            $dropZone.droppable({
+                accept: '.timeline-track:not([data-in-group])',
+                tolerance: 'pointer',
+                hoverClass: 'drag-over',
+                drop: function(event, ui) {
+                    const $draggedItem = ui.draggable;
+                    const elementId = $draggedItem.attr('data-element-id');
+                    
+                    console.log('Drop element into folder:', elementId, 'groupId:', groupId);
+                    
+                    if (elementId) {
+                        const element = elements.find(el => el.id === elementId);
+                        if (element && element.groupId !== groupId) {
+                            element.groupId = groupId;
+                            updateTimelineTracks();
+                        }
+                    }
+                }
+            });
+        });
+        
         // Make group children sortable within their container
         $('.timeline-group-track').each(function() {
             const $groupTrack = $(this);
@@ -2678,6 +2705,7 @@
                     tolerance: 'pointer',
                     helper: 'clone',
                     opacity: 0.8,
+                    connectWith: '.group-children-container',
                     stop: function(event, ui) {
                         const $item = ui.item;
                         const elementId = $item.attr('data-element-id');
@@ -2841,37 +2869,11 @@
                         </button>
                     </div>
                 </div>
-                <div class="timeline-track-content group-drop-zone" data-group-id="${group.id}" style="opacity: 0.3; min-height: 20px;">
+                <div class="timeline-track-content group-drop-zone" data-group-id="${group.id}" style="background: rgba(59, 130, 246, 0.05); border: 1px dashed rgba(59, 130, 246, 0.3); min-height: 30px; border-radius: 4px; margin: 4px 8px;">
+                    <div class="text-xs text-gray-500 text-center py-1">Drop layer here to add to folder</div>
                 </div>
             </div>
         `);
-        
-        // Add drop zone for dragging elements into folder
-        $groupTrack.find('.group-drop-zone').on('dragover', function(e) {
-            e.preventDefault();
-            e.stopPropagation();
-            $(this).addClass('drag-over');
-        });
-        
-        $groupTrack.find('.group-drop-zone').on('dragleave', function(e) {
-            $(this).removeClass('drag-over');
-        });
-        
-        $groupTrack.find('.group-drop-zone').on('drop', function(e) {
-            e.preventDefault();
-            e.stopPropagation();
-            $(this).removeClass('drag-over');
-            
-            const draggedElementId = $(ui.helper).attr('data-element-id');
-            if (draggedElementId) {
-                const element = elements.find(el => el.id === draggedElementId);
-                if (element && element.groupId !== group.id) {
-                    console.log('Add element to folder:', element.id, '->', group.name);
-                    element.groupId = group.id;
-                    updateTimelineTracks();
-                }
-            }
-        });
         
         $timelineTracks.append($groupTrack);
         
