@@ -2710,35 +2710,6 @@
             $(`#track_${element.id}`).append($block);
         });
     }
-        
-        // Initialize jQuery UI sortable for timeline tracks
-        $timelineTracks.sortable({
-            handle: '.timeline-track-label',
-            axis: 'y',
-            cursor: 'move',
-            tolerance: 'pointer',
-            update: function(event, ui) {
-                // Get new order of elements based on DOM order
-                const newOrder = [];
-                $timelineTracks.find('.timeline-track').each(function() {
-                    const elementId = $(this).data('element-id');
-                    const element = elements.find(el => el.id === elementId);
-                    if (element) {
-                        newOrder.push(element);
-                    }
-                });
-                
-                // Update zIndex based on new order (reverse because top = highest zIndex)
-                newOrder.reverse().forEach((element, index) => {
-                    element.zIndex = index;
-                    $(`#${element.id}`).css('z-index', index);
-                });
-                
-                // Update layers list and rebuild timeline
-                updateLayersList();
-            }
-        });
-    }
     
     function rebuildTimeline() {
         timeline.clear();
