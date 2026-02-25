@@ -2625,9 +2625,11 @@
             zIndex: el.zIndex
         })));
         
-        // Sort by z-index DESCENDING (highest z-index first in HTML)
-        // This matches the timeline visual order where top layer = highest z-index
-        const sortedElements = [...elements].sort((a, b) => b.zIndex - a.zIndex);
+        // Sort by z-index ASCENDING (lowest z-index first in HTML)
+        // Lower z-index = behind visually, so render first in HTML
+        // Higher z-index = on top visually, so render last in HTML
+        // This ensures HTML order is reversed from canvas visual order
+        const sortedElements = [...elements].sort((a, b) => a.zIndex - b.zIndex);
         
         console.log('Export - Elements after sort:', sortedElements.map(el => ({
             id: el.id,
