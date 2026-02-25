@@ -72,7 +72,7 @@
         $fileInput.on('change', handleFileSelect);
         
         // Group management
-        $('#createGroupBtn').on('click', createGroupFromSelection);
+        $('#createGroupBtn').on('click', createGroup);
         
         // Text
         $('#addTextBtn').on('click', openTextModal);
@@ -1288,12 +1288,12 @@
     // LAYER MANAGEMENT
     // ============================================
     function updateLayersList() {
-        // Update Create Group button state
+        // Update Create Group button - always enabled
         const $createGroupBtn = $('#createGroupBtn');
-        if (selectedElements.length >= 2) {
-            $createGroupBtn.prop('disabled', false).attr('title', `Create Group from ${selectedElements.length} Selected Layers`);
+        if (selectedElements.length >= 1) {
+            $createGroupBtn.removeClass('text-gray-600').addClass('text-yellow-400').attr('title', `Create Group from ${selectedElements.length} Selected Layer${selectedElements.length > 1 ? 's' : ''}`);
         } else {
-            $createGroupBtn.prop('disabled', true).attr('title', 'Select 2 or more layers to create a group');
+            $createGroupBtn.removeClass('text-yellow-400').addClass('text-gray-600').attr('title', 'Create Empty Group');
         }
         
         if (elements.length === 0 && groups.length === 0) {
@@ -1514,37 +1514,41 @@
     // ============================================
     // GROUP MANAGEMENT
     // ============================================
-    function createGroupFromSelection() {
-        if (selectedElements.length < 2) {
-            alert('Please select at least 2 layers to create a group');
-            return;
-        }
-        
+    function createGroup() {
         const groupName = prompt('Enter group name:', `Group ${groupCounter + 1}`);
         if (!groupName) return;
         
         groupCounter++;
         const groupId = `group_${groupCounter}`;
         
-        // Calculate average zIndex for the group
-        const avgZIndex = Math.floor(
-            selectedElements.reduce((sum, elId) => {
-                const el = elements.find(e => e.id === elId);
-                return sum + (el ? el.zIndex : 0);
-            }, 0) / selectedElements.length
-        );
+        // Calculate average zIndex for the group, or use highest if no selection
+        let avgZIndex = 0;
+        if (selectedElements.length > 0) {
+            avgZIndex = Math.floor(
+                selectedElements.reduce((sum, elId) => {
+                    const el = elements.find(e => e.id === elId);
+                    return sum + (el ? el.zIndex : 0);
+                }, 0) / selectedElements.length
+            );
+        } else {
+            // If no selection, use highest zIndex + 1
+            avgZIndex = elements.length > 0 
+                ? Math.max(...elements.map(el => el.zIndex)) + 1 
+                : 0;
+        }
         
         const newGroup = {
             id: groupId,
             name: groupName,
             elementIds: [...selectedElements],
             expanded: true,
+            visible: true,
             zIndex: avgZIndex
         };
         
         groups.push(newGroup);
         
-        // Assign elements to group
+        // Assign selected elements to group
         selectedElements.forEach(elId => {
             const element = elements.find(el => el.id === elId);
             if (element) {
@@ -1553,15 +1557,37 @@
         });
         
         selectedElements = [];
-        updateLayersList();
+        updateTimelineTracks();
     }
     
     function toggleGroup(groupId) {
         const group = groups.find(g => g.id === groupId);
         if (group) {
             group.expanded = !group.expanded;
-            updateLayersList();
+            updateTimelineTracks();
         }
+    }
+    
+    function toggleGroupVisibility(groupId) {
+        const group = groups.find(g => g.id === groupId);
+        if (!group) return;
+        
+        group.visible = group.visible === false ? true : false;
+        
+        // Toggle visibility of all elements in the group
+        elements.forEach(el => {
+            if (el.groupId === groupId) {
+                if (group.visible) {
+                    $(`#${el.id}`).show();
+                    el.hidden = false;
+                } else {
+                    $(`#${el.id}`).hide();
+                    el.hidden = true;
+                }
+            }
+        });
+        
+        updateTimelineTracks();
     }
     
     function ungroupElements(groupId) {
@@ -1669,12 +1695,12 @@
             }
         });
         
-        // Update folder icon button state
+        // Update folder icon button - always enabled
         const $createGroupBtn = $('#createGroupBtn');
-        if (selectedElements.length >= 2) {
-            $createGroupBtn.prop('disabled', false).removeClass('text-gray-600').addClass('text-yellow-400').attr('title', `Create Group from ${selectedElements.length} Selected Layers`);
+        if (selectedElements.length >= 1) {
+            $createGroupBtn.removeClass('text-gray-600').addClass('text-yellow-400').attr('title', `Create Group from ${selectedElements.length} Selected Layer${selectedElements.length > 1 ? 's' : ''}`);
         } else {
-            $createGroupBtn.prop('disabled', true).removeClass('text-yellow-400').addClass('text-gray-600').attr('title', 'Select 2 or more layers to create a group');
+            $createGroupBtn.removeClass('text-yellow-400').addClass('text-gray-600').attr('title', 'Create Empty Group');
         }
     }
     
@@ -1688,12 +1714,12 @@
             }
         });
         
-        // Update folder icon button state
+        // Update folder icon button - always enabled
         const $createGroupBtn = $('#createGroupBtn');
-        if (selectedElements.length >= 2) {
-            $createGroupBtn.prop('disabled', false).removeClass('text-gray-600').addClass('text-yellow-400').attr('title', `Create Group from ${selectedElements.length} Selected Layers`);
+        if (selectedElements.length >= 1) {
+            $createGroupBtn.removeClass('text-gray-600').addClass('text-yellow-400').attr('title', `Create Group from ${selectedElements.length} Selected Layer${selectedElements.length > 1 ? 's' : ''}`);
         } else {
-            $createGroupBtn.prop('disabled', true).removeClass('text-yellow-400').addClass('text-gray-600').attr('title', 'Select 2 or more layers to create a group');
+            $createGroupBtn.removeClass('text-yellow-400').addClass('text-gray-600').attr('title', 'Create Empty Group');
         }
     }
     
@@ -1710,7 +1736,7 @@
         renameGroup($(this).data('group-id'));
     });
     
-    $(document).on('click', '.ungroup-btn', function(e) {
+    $(document).on('click', '.ungroup-btn, .ungroup-elements', function(e) {
         e.stopPropagation();
         ungroupElements($(this).data('group-id'));
     });
@@ -1718,6 +1744,17 @@
     $(document).on('click', '.delete-group', function(e) {
         e.stopPropagation();
         deleteGroup($(this).data('group-id'));
+    });
+    
+    $(document).on('click', '.group-toggle-btn', function(e) {
+        e.stopPropagation();
+        toggleGroup($(this).data('group-id'));
+    });
+    
+    $(document).on('click', '.toggle-group-visibility', function(e) {
+        e.stopPropagation();
+        const groupId = $(this).data('group-id');
+        toggleGroupVisibility(groupId);
     });
     
     function toggleLayerVisibility(e) {
@@ -2504,93 +2541,175 @@
     }
     
     function updateTimelineTracks() {
-        if (elements.length === 0) {
+        if (elements.length === 0 && groups.length === 0) {
             $timelineTracks.html('<div class="text-center text-gray-500 text-sm py-8">Add elements and animations to see timeline</div>');
             return;
         }
         
         $timelineTracks.empty();
         
-        // Sort by zIndex (highest first, so top visual layers appear at top of timeline)
-        const sortedElements = [...elements].sort((a, b) => b.zIndex - a.zIndex);
+        // Sort groups and ungrouped elements by zIndex
+        const sortedGroups = [...groups].sort((a, b) => b.zIndex - a.zIndex);
+        const ungroupedElements = elements.filter(el => !el.groupId).sort((a, b) => b.zIndex - a.zIndex);
         
-        sortedElements.forEach(element => {
-            let icon, label;
-            
-            if (element.type === 'text') {
-                icon = 'fa-font';
-                label = element.text.substring(0, 15);
-            } else if (element.type === 'clickthrough') {
-                icon = 'fa-mouse-pointer';
-                // Count clickthrough elements to generate click1, click2, etc.
-                const clickthroughElements = elements.filter(el => el.type === 'clickthrough');
-                const clickIndex = clickthroughElements.findIndex(el => el.id === element.id) + 1;
-                label = `Click${clickIndex}`;
-            } else if (element.type === 'shape') {
-                icon = 'fa-shapes';
-                // Count shape elements to generate shape1, shape2, etc.
-                const shapeElements = elements.filter(el => el.type === 'shape');
-                const shapeIndex = shapeElements.findIndex(el => el.id === element.id) + 1;
-                label = `Shape${shapeIndex}`;
-            } else if (element.type === 'video') {
-                icon = 'fa-video';
-                label = element.videoName;
-            } else {
-                icon = 'fa-image';
-                label = (element.filename || 'Image').substring(0, 15);
+        // Render groups
+        sortedGroups.forEach(group => {
+            renderGroupTrack(group);
+        });
+        
+        // Render ungrouped elements
+        ungroupedElements.forEach(element => {
+            renderElementTrack(element, false);
+        });
+        
+        // Initialize jQuery UI sortable for timeline tracks
+        $timelineTracks.sortable({
+            handle: '.timeline-track-label',
+            axis: 'y',
+            cursor: 'move',
+            tolerance: 'pointer',
+            update: function(event, ui) {
+                // Get new order of elements based on DOM order
+                const newOrder = [];
+                $timelineTracks.find('.timeline-track').each(function() {
+                    const elementId = $(this).data('element-id');
+                    const element = elements.find(el => el.id === elementId);
+                    if (element) {
+                        newOrder.push(element);
+                    }
+                });
+                
+                // Update zIndex based on new order (reverse so top = highest z)
+                newOrder.reverse().forEach((el, index) => {
+                    el.zIndex = index;
+                });
+                
+                updateCanvasZIndex();
             }
+        });
+    }
+    
+    function renderGroupTrack(group) {
+        const isExpanded = group.expanded !== false;
+        const groupElements = elements.filter(el => el.groupId === group.id);
+        
+        // Group header track
+        const $groupTrack = $(`
+            <div class="timeline-track timeline-group-track" data-group-id="${group.id}" data-type="group">
+                <div class="timeline-track-label timeline-group-label">
+                    <div class="flex items-center flex-1">
+                        <button class="group-toggle-btn text-gray-400 hover:text-white mr-1" data-group-id="${group.id}">
+                            <i class="fas ${isExpanded ? 'fa-caret-down' : 'fa-caret-right'} text-sm"></i>
+                        </button>
+                        <i class="fas fa-folder${isExpanded ? '-open' : ''} text-yellow-400 mr-2"></i>
+                        <span class="flex-1 font-semibold">${group.name}</span>
+                        <span class="text-xs text-gray-500 mr-2">(${groupElements.length})</span>
+                    </div>
+                    <div class="flex items-center gap-1 ml-2">
+                        <button class="timeline-layer-btn toggle-group-visibility" data-group-id="${group.id}" title="Toggle group visibility">
+                            <i class="fas ${group.visible === false ? 'fa-eye-slash' : 'fa-eye'}"></i>
+                        </button>
+                        <button class="timeline-layer-btn rename-group" data-group-id="${group.id}" title="Rename group">
+                            <i class="fas fa-pen"></i>
+                        </button>
+                        <button class="timeline-layer-btn ungroup-elements" data-group-id="${group.id}" title="Ungroup">
+                            <i class="fas fa-object-ungroup"></i>
+                        </button>
+                        <button class="timeline-layer-btn delete-group" data-group-id="${group.id}" title="Delete group">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
+                </div>
+                <div class="timeline-track-content" style="opacity: 0.3;">
+                </div>
+            </div>
+        `);
+        
+        $timelineTracks.append($groupTrack);
+        
+        // Render child elements if expanded
+        if (isExpanded) {
+            groupElements.sort((a, b) => b.zIndex - a.zIndex).forEach(element => {
+                renderElementTrack(element, true);
+            });
+        }
+    }
+    
+    function renderElementTrack(element, isInGroup) {
+        if (!element) return;
+        
+        let icon, label;
+        
+        if (element.type === 'text') {
+            icon = 'fa-font';
+            label = element.text.substring(0, 15);
+        } else if (element.type === 'clickthrough') {
+            icon = 'fa-mouse-pointer';
+            const clickthroughElements = elements.filter(el => el.type === 'clickthrough');
+            const clickIndex = clickthroughElements.findIndex(el => el.id === element.id) + 1;
+            label = `Click${clickIndex}`;
+        } else if (element.type === 'shape') {
+            icon = 'fa-shapes';
+            const shapeElements = elements.filter(el => el.type === 'shape');
+            const shapeIndex = shapeElements.findIndex(el => el.id === element.id) + 1;
+            label = `Shape${shapeIndex}`;
+        } else if (element.type === 'video') {
+            icon = 'fa-video';
+            label = element.videoName;
+        } else {
+            icon = 'fa-image';
+            label = (element.filename || 'Image').substring(0, 15);
+        }
+        
+        const indentClass = isInGroup ? 'pl-6' : '';
+        
+        const $track = $(`
+            <div class="timeline-track ${indentClass}" data-element-id="${element.id}">
+                <div class="timeline-track-label">
+                    <div class="flex items-center flex-1">
+                        <i class="fas fa-eye${element.hidden ? '-slash' : ''} text-gray-400 hover:text-white mr-2 cursor-pointer toggle-visibility" data-id="${element.id}"></i>
+                        <i class="fas ${icon} text-blue-400 mr-2"></i>
+                        <span class="truncate flex-1">${label}</span>
+                    </div>
+                    <div class="flex items-center gap-1 ml-2">
+                        <button class="timeline-layer-btn add-layer-anim" data-id="${element.id}" title="Add animation">
+                            <i class="fas fa-plus"></i>
+                        </button>
+                        <button class="timeline-layer-btn delete-layer" data-id="${element.id}" title="Delete layer">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
+                </div>
+                <div class="timeline-track-content" id="track_${element.id}">
+                </div>
+            </div>
+        `);
+        
+        $timelineTracks.append($track);
+        
+        // Add animation blocks
+        element.animations.forEach(anim => {
+            const leftPercent = (anim.start / totalDuration) * 100;
+            const widthPercent = (anim.duration / totalDuration) * 100;
             
-            const $track = $(`
-                <div class="timeline-track" data-element-id="${element.id}">
-                    <div class="timeline-track-label">
-                        <div class="flex items-center flex-1">
-                            <i class="fas fa-grip-vertical text-gray-600 mr-2"></i>
-                            <i class="fas ${icon} text-blue-400 mr-2"></i>
-                            <span class="truncate flex-1">${label}</span>
-                        </div>
-                        <div class="flex items-center gap-1 ml-2">
-                            <button class="timeline-layer-btn toggle-visibility" data-id="${element.id}" title="Toggle visibility">
-                                <i class="fas ${element.hidden ? 'fa-eye-slash' : 'fa-eye'}"></i>
-                            </button>
-                            <button class="timeline-layer-btn add-layer-anim" data-id="${element.id}" title="Add animation">
-                                <i class="fas fa-plus"></i>
-                            </button>
-                            <button class="timeline-layer-btn delete-layer" data-id="${element.id}" title="Delete layer">
-                                <i class="fas fa-trash"></i>
-                            </button>
-                        </div>
-                    </div>
-                    <div class="timeline-track-content" id="track_${element.id}">
-                    </div>
+            const types = anim.types || [anim.type];
+            const animLabel = types.length > 1 ? `${types.length} effects` : types[0];
+            
+            const $block = $(`
+                <div class="timeline-block" style="left: ${leftPercent}%; width: ${widthPercent}%;" 
+                     data-anim-id="${anim.id}" data-element-id="${element.id}">
+                    <div class="timeline-block-resize-handle left"></div>
+                    <div class="timeline-block-label">${animLabel}</div>
+                    <button class="delete-anim" data-anim-id="${anim.id}" data-element-id="${element.id}">
+                        <i class="fas fa-times"></i>
+                    </button>
+                    <div class="timeline-block-resize-handle right"></div>
                 </div>
             `);
             
-            $timelineTracks.append($track);
-            
-            // Add animation blocks
-            element.animations.forEach(anim => {
-                const leftPercent = (anim.start / totalDuration) * 100;
-                const widthPercent = (anim.duration / totalDuration) * 100;
-                
-                // Get label showing multiple types
-                const types = anim.types || [anim.type];
-                const label = types.length > 1 ? `${types.length} effects` : types[0];
-                
-                const $block = $(`
-                    <div class="timeline-block" style="left: ${leftPercent}%; width: ${widthPercent}%;" 
-                         data-anim-id="${anim.id}" data-element-id="${element.id}">
-                        <div class="timeline-block-resize-handle left"></div>
-                        <div class="timeline-block-label">${label}</div>
-                        <button class="delete-anim" data-anim-id="${anim.id}" data-element-id="${element.id}">
-                            <i class="fas fa-times"></i>
-                        </button>
-                        <div class="timeline-block-resize-handle right"></div>
-                    </div>
-                `);
-                
-                $(`#track_${element.id}`).append($block);
-            });
+            $(`#track_${element.id}`).append($block);
         });
+    }
         
         // Initialize jQuery UI sortable for timeline tracks
         $timelineTracks.sortable({

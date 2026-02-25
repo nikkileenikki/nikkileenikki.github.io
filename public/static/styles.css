@@ -128,7 +128,28 @@
     border-bottom: 1px solid rgb(55, 65, 81);
     min-height: 38px;
     user-select: none; /* Disable text selection */
-    cursor: move; /* Show move cursor on track */
+    cursor: pointer;
+}
+
+.timeline-group-track {
+    background: rgba(31, 41, 55, 0.5);
+}
+
+.timeline-group-label {
+    background: rgb(45, 55, 72) !important;
+    font-weight: 600;
+}
+
+.group-toggle-btn {
+    background: none;
+    border: none;
+    padding: 0;
+    cursor: pointer;
+    transition: color 0.2s;
+}
+
+.group-toggle-btn:hover {
+    color: white !important;
 }
 
 .timeline-track.dragging {
