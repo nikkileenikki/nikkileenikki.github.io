@@ -553,7 +553,10 @@
         
         const files = e.originalEvent.dataTransfer.files;
         if (files.length > 0) {
-            uploadFile(files[0]);
+            // Upload all dropped files
+            Array.from(files).forEach(file => {
+                uploadFile(file);
+            });
         }
     }
     
