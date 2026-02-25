@@ -2276,6 +2276,13 @@
                     $(`#${element.id}`).css('z-index', element.zIndex);
                 });
                 
+                console.log('Timeline reordered - New z-indexes:', newOrder.map(el => ({
+                    id: el.id,
+                    type: el.type,
+                    filename: el.filename || el.text?.substring(0,20) || el.type,
+                    zIndex: el.zIndex
+                })));
+                
                 // Update layers list and rebuild timeline
                 updateLayersList();
             }
