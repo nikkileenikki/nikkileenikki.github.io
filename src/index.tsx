@@ -228,10 +228,6 @@ app.get('/', (c) => {
                                             <label class="text-xs text-gray-500">Color</label>
                                         </div>
                                     </div>
-                                    <label class="flex items-center cursor-pointer mt-2">
-                                        <input type="checkbox" id="propTextShadowHover" class="w-4 h-4 mr-2">
-                                        <span class="text-xs text-gray-300">On Hover</span>
-                                    </label>
                                 </div>
                                 <div>
                                     <label class="text-sm text-gray-400">Glow Effect</label>
@@ -257,10 +253,6 @@ app.get('/', (c) => {
                                             <label class="text-xs text-gray-500">Color</label>
                                         </div>
                                     </div>
-                                    <label class="flex items-center cursor-pointer mt-2">
-                                        <input type="checkbox" id="propTextGlowHover" class="w-4 h-4 mr-2">
-                                        <span class="text-xs text-gray-300">On Hover</span>
-                                    </label>
                                 </div>
                             </div>
                             
@@ -319,10 +311,6 @@ app.get('/', (c) => {
                                             <label class="text-xs text-gray-500">Color</label>
                                         </div>
                                     </div>
-                                    <label class="flex items-center cursor-pointer mt-2">
-                                        <input type="checkbox" id="propShapeShadowHover" class="w-4 h-4 mr-2">
-                                        <span class="text-xs text-gray-300">On Hover</span>
-                                    </label>
                                 </div>
                                 <div>
                                     <label class="text-sm text-gray-400">Glow Effect</label>
@@ -348,10 +336,6 @@ app.get('/', (c) => {
                                             <label class="text-xs text-gray-500">Color</label>
                                         </div>
                                     </div>
-                                    <label class="flex items-center cursor-pointer mt-2">
-                                        <input type="checkbox" id="propShapeGlowHover" class="w-4 h-4 mr-2">
-                                        <span class="text-xs text-gray-300">On Hover</span>
-                                    </label>
                                 </div>
                             </div>
                             
@@ -444,6 +428,7 @@ app.get('/', (c) => {
                                                 <option value="toggleAnimation">Toggle Animation</option>
                                                 <option value="addShadow">Add Shadow</option>
                                                 <option value="addGlow">Add Glow</option>
+                                                <option value="scale">Scale</option>
                                                 <option value="hide">Hide Element</option>
                                                 <option value="show">Show Element</option>
                                             </select>
@@ -465,6 +450,10 @@ app.get('/', (c) => {
                                                 <input type="number" id="clickGlowBlur" class="bg-gray-700 rounded px-2 py-1 text-xs" placeholder="Blur" value="10">
                                                 <input type="color" id="clickGlowColor" class="w-full h-7 bg-gray-700 rounded" value="#00ff00">
                                             </div>
+                                        </div>
+                                        <div id="clickScaleSettings" class="hidden">
+                                            <label class="text-xs text-gray-400">Scale Amount</label>
+                                            <input type="number" id="clickScaleAmount" class="w-full bg-gray-700 rounded px-2 py-1 text-sm" placeholder="1.1" step="0.1" value="1.1">
                                         </div>
                                     </div>
                                 </div>
@@ -488,7 +477,7 @@ app.get('/', (c) => {
                                                 <option value="addShadow">Add Shadow</option>
                                                 <option value="addGlow">Add Glow</option>
                                                 <option value="pauseAnimation">Pause Animation</option>
-                                                <option value="scale">Scale Up</option>
+                                                <option value="scale">Scale</option>
                                             </select>
                                         </div>
                                         <div id="hoverShadowSettings" class="hidden">
