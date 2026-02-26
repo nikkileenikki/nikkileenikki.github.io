@@ -1083,8 +1083,7 @@
         
         // Click settings
         $('#enableClickInteraction').prop('checked', interactions.click.enabled);
-        // Always default to 'self' in UI when selecting a layer
-        $('#clickTargetElement').val('self');
+        $('#clickTargetElement').val(interactions.click.targetElement);
         $('#clickAction').val(interactions.click.action);
         $('#clickShadowX').val(interactions.click.shadowX);
         $('#clickShadowY').val(interactions.click.shadowY);
@@ -1098,8 +1097,7 @@
         
         // Hover settings
         $('#enableHoverInteraction').prop('checked', interactions.hover.enabled);
-        // Always default to 'self' in UI when selecting a layer
-        $('#hoverTargetElement').val('self');
+        $('#hoverTargetElement').val(interactions.hover.targetElement);
         $('#hoverAction').val(interactions.hover.action);
         $('#hoverShadowX').val(interactions.hover.shadowX);
         $('#hoverShadowY').val(interactions.hover.shadowY);
@@ -1128,6 +1126,10 @@
         const clickSelect = $('#clickTargetElement');
         const hoverSelect = $('#hoverTargetElement');
         
+        // Save current values that should be preserved
+        const clickValue = clickSelect.val() || 'self';
+        const hoverValue = hoverSelect.val() || 'self';
+        
         // Clear existing options except "self"
         clickSelect.find('option:not([value="self"])').remove();
         hoverSelect.find('option:not([value="self"])').remove();
@@ -1140,9 +1142,9 @@
             hoverSelect.append(option);
         });
         
-        // Always reset to 'self' after rebuilding options
-        clickSelect.val('self');
-        hoverSelect.val('self');
+        // Restore the saved values
+        clickSelect.val(clickValue);
+        hoverSelect.val(hoverValue);
     }
     
     // Get human-readable label for element
