@@ -670,7 +670,6 @@
                 font-style: ${element.italic ? 'italic' : 'normal'};
                 text-decoration: ${element.underline ? 'underline' : 'none'};
                 text-align: ${element.textAlign};
-                padding: 5px;
                 line-height: 1.2;
                 word-wrap: break-word;
                 z-index: ${element.zIndex};
