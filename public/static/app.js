@@ -268,6 +268,24 @@
         $('#propShapeShadowX, #propShapeShadowY, #propShapeShadowBlur, #propShapeShadowSpread, #propShapeShadowColor, #propShapeShadowHover').on('change input', updateShapeShadow);
         $('#propShapeGlowX, #propShapeGlowY, #propShapeGlowBlur, #propShapeGlowSpread, #propShapeGlowColor, #propShapeGlowHover').on('change input', updateShapeGlow);
         
+        // Interactions
+        $('#enableClickInteraction').on('change', function() {
+            $('#clickInteractionSettings').toggleClass('hidden', !$(this).is(':checked'));
+            saveInteractionSettings();
+        });
+        $('#enableHoverInteraction').on('change', function() {
+            $('#hoverInteractionSettings').toggleClass('hidden', !$(this).is(':checked'));
+            saveInteractionSettings();
+        });
+        $('#clickTargetElement, #clickAction, #clickShadowX, #clickShadowY, #clickShadowBlur, #clickShadowColor, #clickGlowX, #clickGlowY, #clickGlowBlur, #clickGlowColor').on('change input', saveInteractionSettings);
+        $('#hoverTargetElement, #hoverAction, #hoverShadowX, #hoverShadowY, #hoverShadowBlur, #hoverShadowColor, #hoverGlowX, #hoverGlowY, #hoverGlowBlur, #hoverGlowColor, #hoverScaleAmount').on('change input', saveInteractionSettings);
+        $('#clickAction').on('change', function() {
+            updateClickActionSettings($(this).val());
+        });
+        $('#hoverAction').on('change', function() {
+            updateHoverActionSettings($(this).val());
+        });
+        
         // Animation
         $('#addAnimBtn').on('click', openAnimationModal);
         $('#closeModal').on('click', closeAnimationModal);
@@ -654,7 +672,8 @@
             glowColor: '#ffffff',
             glowHover: false,
             zIndex: elements.length,
-            animations: []
+            animations: [],
+            interactions: initInteractionProperties()
         };
         
         elements.push(element);
@@ -765,7 +784,8 @@
             glowColor: '#ffffff',
             glowHover: false,
             zIndex: elements.length,
-            animations: []
+            animations: [],
+            interactions: initInteractionProperties()
         };
         
         elements.push(element);
@@ -855,7 +875,8 @@
             rotation: 0,
             opacity: 1,
             zIndex: elements.length,
-            animations: []
+            animations: [],
+            interactions: initInteractionProperties()
         };
         
         elements.push(element);
@@ -924,7 +945,8 @@
             rotation: 0,
             opacity: 0.3,
             zIndex: 9999,
-            animations: []
+            animations: [],
+            interactions: initInteractionProperties()
         };
         
         elements.push(element);
@@ -973,7 +995,8 @@
             rotation: 0,
             opacity: 1,
             zIndex: elements.length,
-            animations: []
+            animations: [],
+            interactions: initInteractionProperties()
         };
         
         elements.push(element);
@@ -1013,6 +1036,196 @@
     }
     
     // ============================================
+    // INTERACTIONS SYSTEM
+    // ============================================
+    
+    // Initialize interaction properties for an element
+    function initInteractionProperties() {
+        return {
+            click: {
+                enabled: false,
+                targetElement: 'self',
+                action: 'pauseAnimation',
+                shadowX: 2,
+                shadowY: 2,
+                shadowBlur: 5,
+                shadowColor: '#000000',
+                glowX: 0,
+                glowY: 0,
+                glowBlur: 10,
+                glowColor: '#00ff00'
+            },
+            hover: {
+                enabled: false,
+                targetElement: 'self',
+                action: 'addShadow',
+                shadowX: 2,
+                shadowY: 2,
+                shadowBlur: 5,
+                shadowColor: '#000000',
+                glowX: 0,
+                glowY: 0,
+                glowBlur: 10,
+                glowColor: '#00ff00',
+                scaleAmount: 1.1
+            }
+        };
+    }
+    
+    // Update interaction UI when element is selected
+    function updateInteractionUI(element) {
+        if (!element.interactions) {
+            element.interactions = initInteractionProperties();
+        }
+        
+        const interactions = element.interactions;
+        
+        // Click settings
+        $('#enableClickInteraction').prop('checked', interactions.click.enabled);
+        $('#clickTargetElement').val(interactions.click.targetElement);
+        $('#clickAction').val(interactions.click.action);
+        $('#clickShadowX').val(interactions.click.shadowX);
+        $('#clickShadowY').val(interactions.click.shadowY);
+        $('#clickShadowBlur').val(interactions.click.shadowBlur);
+        $('#clickShadowColor').val(interactions.click.shadowColor);
+        $('#clickGlowX').val(interactions.click.glowX);
+        $('#clickGlowY').val(interactions.click.glowY);
+        $('#clickGlowBlur').val(interactions.click.glowBlur);
+        $('#clickGlowColor').val(interactions.click.glowColor);
+        
+        // Hover settings
+        $('#enableHoverInteraction').prop('checked', interactions.hover.enabled);
+        $('#hoverTargetElement').val(interactions.hover.targetElement);
+        $('#hoverAction').val(interactions.hover.action);
+        $('#hoverShadowX').val(interactions.hover.shadowX);
+        $('#hoverShadowY').val(interactions.hover.shadowY);
+        $('#hoverShadowBlur').val(interactions.hover.shadowBlur);
+        $('#hoverShadowColor').val(interactions.hover.shadowColor);
+        $('#hoverGlowX').val(interactions.hover.glowX);
+        $('#hoverGlowY').val(interactions.hover.glowY);
+        $('#hoverGlowBlur').val(interactions.hover.glowBlur);
+        $('#hoverGlowColor').val(interactions.hover.glowColor);
+        $('#hoverScaleAmount').val(interactions.hover.scaleAmount);
+        
+        // Show/hide settings based on enabled state
+        $('#clickInteractionSettings').toggleClass('hidden', !interactions.click.enabled);
+        $('#hoverInteractionSettings').toggleClass('hidden', !interactions.hover.enabled);
+        
+        // Show/hide action-specific settings
+        updateClickActionSettings(interactions.click.action);
+        updateHoverActionSettings(interactions.hover.action);
+        
+        // Update target element dropdowns
+        updateTargetElementDropdowns();
+    }
+    
+    // Update target element dropdowns with available elements
+    function updateTargetElementDropdowns() {
+        const clickSelect = $('#clickTargetElement');
+        const hoverSelect = $('#hoverTargetElement');
+        
+        // Clear existing options except "self"
+        clickSelect.find('option:not([value="self"])').remove();
+        hoverSelect.find('option:not([value="self"])').remove();
+        
+        // Add all elements as options
+        elements.forEach(el => {
+            const label = getElementLabel(el);
+            const option = `<option value="${el.id}">${label}</option>`;
+            clickSelect.append(option);
+            hoverSelect.append(option);
+        });
+    }
+    
+    // Get human-readable label for element
+    function getElementLabel(element) {
+        if (element.type === 'text') {
+            return `Text: ${element.text.substring(0, 15)}`;
+        } else if (element.type === 'clickthrough') {
+            const clickIndex = elements.filter(el => el.type === 'clickthrough').findIndex(el => el.id === element.id) + 1;
+            return `Click${clickIndex}`;
+        } else if (element.type === 'invisible') {
+            const invisibleIndex = elements.filter(el => el.type === 'invisible').findIndex(el => el.id === element.id) + 1;
+            return `Invisible${invisibleIndex}`;
+        } else if (element.type === 'shape') {
+            const shapeIndex = elements.filter(el => el.type === 'shape').findIndex(el => el.id === element.id) + 1;
+            return `Shape${shapeIndex}`;
+        } else if (element.type === 'video') {
+            return `Video: ${element.videoName}`;
+        } else {
+            return element.filename || 'Image';
+        }
+    }
+    
+    // Update click action-specific settings visibility
+    function updateClickActionSettings(action) {
+        $('#clickShadowSettings').addClass('hidden');
+        $('#clickGlowSettings').addClass('hidden');
+        
+        if (action === 'addShadow') {
+            $('#clickShadowSettings').removeClass('hidden');
+        } else if (action === 'addGlow') {
+            $('#clickGlowSettings').removeClass('hidden');
+        }
+    }
+    
+    // Update hover action-specific settings visibility
+    function updateHoverActionSettings(action) {
+        $('#hoverShadowSettings').addClass('hidden');
+        $('#hoverGlowSettings').addClass('hidden');
+        $('#hoverScaleSettings').addClass('hidden');
+        
+        if (action === 'addShadow') {
+            $('#hoverShadowSettings').removeClass('hidden');
+        } else if (action === 'addGlow') {
+            $('#hoverGlowSettings').removeClass('hidden');
+        } else if (action === 'scale') {
+            $('#hoverScaleSettings').removeClass('hidden');
+        }
+    }
+    
+    // Save interaction settings to selected element
+    function saveInteractionSettings() {
+        if (!selectedElement) return;
+        
+        const element = elements.find(el => el.id === selectedElement);
+        if (!element) return;
+        
+        if (!element.interactions) {
+            element.interactions = initInteractionProperties();
+        }
+        
+        // Save click settings
+        element.interactions.click.enabled = $('#enableClickInteraction').is(':checked');
+        element.interactions.click.targetElement = $('#clickTargetElement').val();
+        element.interactions.click.action = $('#clickAction').val();
+        element.interactions.click.shadowX = parseFloat($('#clickShadowX').val()) || 0;
+        element.interactions.click.shadowY = parseFloat($('#clickShadowY').val()) || 0;
+        element.interactions.click.shadowBlur = parseFloat($('#clickShadowBlur').val()) || 0;
+        element.interactions.click.shadowColor = $('#clickShadowColor').val();
+        element.interactions.click.glowX = parseFloat($('#clickGlowX').val()) || 0;
+        element.interactions.click.glowY = parseFloat($('#clickGlowY').val()) || 0;
+        element.interactions.click.glowBlur = parseFloat($('#clickGlowBlur').val()) || 0;
+        element.interactions.click.glowColor = $('#clickGlowColor').val();
+        
+        // Save hover settings
+        element.interactions.hover.enabled = $('#enableHoverInteraction').is(':checked');
+        element.interactions.hover.targetElement = $('#hoverTargetElement').val();
+        element.interactions.hover.action = $('#hoverAction').val();
+        element.interactions.hover.shadowX = parseFloat($('#hoverShadowX').val()) || 0;
+        element.interactions.hover.shadowY = parseFloat($('#hoverShadowY').val()) || 0;
+        element.interactions.hover.shadowBlur = parseFloat($('#hoverShadowBlur').val()) || 0;
+        element.interactions.hover.shadowColor = $('#hoverShadowColor').val();
+        element.interactions.hover.glowX = parseFloat($('#hoverGlowX').val()) || 0;
+        element.interactions.hover.glowY = parseFloat($('#hoverGlowY').val()) || 0;
+        element.interactions.hover.glowBlur = parseFloat($('#hoverGlowBlur').val()) || 0;
+        element.interactions.hover.glowColor = $('#hoverGlowColor').val();
+        element.interactions.hover.scaleAmount = parseFloat($('#hoverScaleAmount').val()) || 1.1;
+        
+        console.log('Interaction settings saved:', element.interactions);
+    }
+    
+    // ============================================
     // CANVAS MANAGEMENT
     // ============================================
     function addImageToCanvas(url, filename) {
@@ -1042,7 +1255,9 @@
                 rotation: 0,
                 opacity: 1,
                 zIndex: elements.length,
-                animations: []
+                animations: [],
+            interactions: initInteractionProperties(),
+                interactions: initInteractionProperties()
             };
             
             elements.push(element);
@@ -1567,6 +1782,9 @@
         $('#propRotation').val(element.rotation);
         $('#propOpacity').val(element.opacity);
         $('#opacityValue').text(Math.round(element.opacity * 100) + '%');
+        
+        // Update interaction UI
+        updateInteractionUI(element);
     }
     
     // Common property updates
@@ -2949,6 +3167,96 @@
             });
         });
         
+        // Generate interaction JavaScript
+        let interactionsJs = '';
+        sortedElements.forEach((element) => {
+            if (!element.interactions) return;
+            
+            const elemId = element.id;
+            const interactions = element.interactions;
+            
+            // Click interactions
+            if (interactions.click.enabled) {
+                const target = interactions.click.targetElement === 'self' ? elemId : interactions.click.targetElement;
+                const action = interactions.click.action;
+                
+                interactionsJs += `\n        document.getElementById('${elemId}').addEventListener('click', function() {`;
+                
+                if (action === 'pauseAnimation') {
+                    interactionsJs += `\n            if (window.mainTimeline) window.mainTimeline.pause();`;
+                } else if (action === 'playAnimation') {
+                    interactionsJs += `\n            if (window.mainTimeline) window.mainTimeline.play();`;
+                } else if (action === 'toggleAnimation') {
+                    interactionsJs += `\n            if (window.mainTimeline) window.mainTimeline.paused() ? window.mainTimeline.play() : window.mainTimeline.pause();`;
+                } else if (action === 'addShadow') {
+                    const shadow = `${interactions.click.shadowX}px ${interactions.click.shadowY}px ${interactions.click.shadowBlur}px ${interactions.click.shadowColor}`;
+                    if (element.type === 'text') {
+                        interactionsJs += `\n            document.getElementById('${target}').style.textShadow = '${shadow}';`;
+                    } else {
+                        interactionsJs += `\n            document.getElementById('${target}').style.boxShadow = '${shadow}';`;
+                    }
+                } else if (action === 'addGlow') {
+                    const glow = `${interactions.click.glowX}px ${interactions.click.glowY}px ${interactions.click.glowBlur}px ${interactions.click.glowColor}`;
+                    if (element.type === 'text') {
+                        interactionsJs += `\n            document.getElementById('${target}').style.textShadow = '${glow}';`;
+                    } else {
+                        interactionsJs += `\n            document.getElementById('${target}').style.boxShadow = '${glow}';`;
+                    }
+                } else if (action === 'hide') {
+                    interactionsJs += `\n            document.getElementById('${target}').style.opacity = '0';`;
+                } else if (action === 'show') {
+                    interactionsJs += `\n            document.getElementById('${target}').style.opacity = '1';`;
+                }
+                
+                interactionsJs += `\n        });`;
+            }
+            
+            // Hover interactions
+            if (interactions.hover.enabled) {
+                const target = interactions.hover.targetElement === 'self' ? elemId : interactions.hover.targetElement;
+                const action = interactions.hover.action;
+                
+                interactionsJs += `\n        document.getElementById('${elemId}').addEventListener('mouseenter', function() {`;
+                
+                if (action === 'pauseAnimation') {
+                    interactionsJs += `\n            if (window.mainTimeline) window.mainTimeline.pause();`;
+                } else if (action === 'addShadow') {
+                    const shadow = `${interactions.hover.shadowX}px ${interactions.hover.shadowY}px ${interactions.hover.shadowBlur}px ${interactions.hover.shadowColor}`;
+                    if (element.type === 'text') {
+                        interactionsJs += `\n            document.getElementById('${target}').style.textShadow = '${shadow}';`;
+                    } else {
+                        interactionsJs += `\n            document.getElementById('${target}').style.boxShadow = '${shadow}';`;
+                    }
+                } else if (action === 'addGlow') {
+                    const glow = `${interactions.hover.glowX}px ${interactions.hover.glowY}px ${interactions.hover.glowBlur}px ${interactions.hover.glowColor}`;
+                    if (element.type === 'text') {
+                        interactionsJs += `\n            document.getElementById('${target}').style.textShadow = '${glow}';`;
+                    } else {
+                        interactionsJs += `\n            document.getElementById('${target}').style.boxShadow = '${glow}';`;
+                    }
+                } else if (action === 'scale') {
+                    interactionsJs += `\n            document.getElementById('${target}').style.transform = 'scale(${interactions.hover.scaleAmount})';`;
+                }
+                
+                interactionsJs += `\n        });`;
+                
+                // Mouse leave to restore
+                interactionsJs += `\n        document.getElementById('${elemId}').addEventListener('mouseleave', function() {`;
+                
+                if (action === 'addShadow' || action === 'addGlow') {
+                    if (element.type === 'text') {
+                        interactionsJs += `\n            document.getElementById('${target}').style.textShadow = '';`;
+                    } else {
+                        interactionsJs += `\n            document.getElementById('${target}').style.boxShadow = '';`;
+                    }
+                } else if (action === 'scale') {
+                    interactionsJs += `\n            document.getElementById('${target}').style.transform = 'scale(1)';`;
+                }
+                
+                interactionsJs += `\n        });`;
+            }
+        });
+        
         return `<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -3095,9 +3403,11 @@
                 // autoplay is handled by the autoplay attribute
             });
             ${clickthroughJs}
+            ${interactionsJs}
             
             // GSAP Timeline Animation
-            const tl = gsap.timeline({ repeat: ${animLoop} });
+            window.mainTimeline = gsap.timeline({ repeat: ${animLoop} });
+            const tl = window.mainTimeline;
             ${animationsJs}
         }
         ${usePoliteLoad ? `

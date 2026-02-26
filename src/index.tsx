@@ -416,6 +416,106 @@ app.get('/', (c) => {
                                     </div>
                                 </div>
                             </div>
+                            
+                            <!-- Interactions Section -->
+                            <div id="interactionsSection" class="mt-4 pt-4 border-t border-gray-700">
+                                <h3 class="text-sm font-semibold text-gray-300 mb-3">
+                                    <i class="fas fa-hand-pointer mr-2"></i>Interactions
+                                </h3>
+                                
+                                <!-- Click Interaction -->
+                                <div class="mb-4 p-3 bg-gray-800 rounded">
+                                    <label class="flex items-center cursor-pointer mb-2">
+                                        <input type="checkbox" id="enableClickInteraction" class="w-4 h-4 mr-2">
+                                        <span class="text-sm text-gray-300 font-medium">Enable Click Interaction</span>
+                                    </label>
+                                    <div id="clickInteractionSettings" class="hidden space-y-2 mt-2">
+                                        <div>
+                                            <label class="text-xs text-gray-400">Target Element</label>
+                                            <select id="clickTargetElement" class="w-full bg-gray-700 rounded px-2 py-1 text-sm">
+                                                <option value="self">Self</option>
+                                            </select>
+                                        </div>
+                                        <div>
+                                            <label class="text-xs text-gray-400">Action</label>
+                                            <select id="clickAction" class="w-full bg-gray-700 rounded px-2 py-1 text-sm">
+                                                <option value="pauseAnimation">Pause Animation</option>
+                                                <option value="playAnimation">Play Animation</option>
+                                                <option value="toggleAnimation">Toggle Animation</option>
+                                                <option value="addShadow">Add Shadow</option>
+                                                <option value="addGlow">Add Glow</option>
+                                                <option value="hide">Hide Element</option>
+                                                <option value="show">Show Element</option>
+                                            </select>
+                                        </div>
+                                        <div id="clickShadowSettings" class="hidden">
+                                            <label class="text-xs text-gray-400">Shadow Settings</label>
+                                            <div class="grid grid-cols-4 gap-1">
+                                                <input type="number" id="clickShadowX" class="bg-gray-700 rounded px-2 py-1 text-xs" placeholder="X" value="2">
+                                                <input type="number" id="clickShadowY" class="bg-gray-700 rounded px-2 py-1 text-xs" placeholder="Y" value="2">
+                                                <input type="number" id="clickShadowBlur" class="bg-gray-700 rounded px-2 py-1 text-xs" placeholder="Blur" value="5">
+                                                <input type="color" id="clickShadowColor" class="w-full h-7 bg-gray-700 rounded" value="#000000">
+                                            </div>
+                                        </div>
+                                        <div id="clickGlowSettings" class="hidden">
+                                            <label class="text-xs text-gray-400">Glow Settings</label>
+                                            <div class="grid grid-cols-4 gap-1">
+                                                <input type="number" id="clickGlowX" class="bg-gray-700 rounded px-2 py-1 text-xs" placeholder="X" value="0">
+                                                <input type="number" id="clickGlowY" class="bg-gray-700 rounded px-2 py-1 text-xs" placeholder="Y" value="0">
+                                                <input type="number" id="clickGlowBlur" class="bg-gray-700 rounded px-2 py-1 text-xs" placeholder="Blur" value="10">
+                                                <input type="color" id="clickGlowColor" class="w-full h-7 bg-gray-700 rounded" value="#00ff00">
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <!-- Hover Interaction -->
+                                <div class="mb-3 p-3 bg-gray-800 rounded">
+                                    <label class="flex items-center cursor-pointer mb-2">
+                                        <input type="checkbox" id="enableHoverInteraction" class="w-4 h-4 mr-2">
+                                        <span class="text-sm text-gray-300 font-medium">Enable Hover Interaction</span>
+                                    </label>
+                                    <div id="hoverInteractionSettings" class="hidden space-y-2 mt-2">
+                                        <div>
+                                            <label class="text-xs text-gray-400">Target Element</label>
+                                            <select id="hoverTargetElement" class="w-full bg-gray-700 rounded px-2 py-1 text-sm">
+                                                <option value="self">Self</option>
+                                            </select>
+                                        </div>
+                                        <div>
+                                            <label class="text-xs text-gray-400">Action</label>
+                                            <select id="hoverAction" class="w-full bg-gray-700 rounded px-2 py-1 text-sm">
+                                                <option value="addShadow">Add Shadow</option>
+                                                <option value="addGlow">Add Glow</option>
+                                                <option value="pauseAnimation">Pause Animation</option>
+                                                <option value="scale">Scale Up</option>
+                                            </select>
+                                        </div>
+                                        <div id="hoverShadowSettings" class="hidden">
+                                            <label class="text-xs text-gray-400">Shadow Settings</label>
+                                            <div class="grid grid-cols-4 gap-1">
+                                                <input type="number" id="hoverShadowX" class="bg-gray-700 rounded px-2 py-1 text-xs" placeholder="X" value="2">
+                                                <input type="number" id="hoverShadowY" class="bg-gray-700 rounded px-2 py-1 text-xs" placeholder="Y" value="2">
+                                                <input type="number" id="hoverShadowBlur" class="bg-gray-700 rounded px-2 py-1 text-xs" placeholder="Blur" value="5">
+                                                <input type="color" id="hoverShadowColor" class="w-full h-7 bg-gray-700 rounded" value="#000000">
+                                            </div>
+                                        </div>
+                                        <div id="hoverGlowSettings" class="hidden">
+                                            <label class="text-xs text-gray-400">Glow Settings</label>
+                                            <div class="grid grid-cols-4 gap-1">
+                                                <input type="number" id="hoverGlowX" class="bg-gray-700 rounded px-2 py-1 text-xs" placeholder="X" value="0">
+                                                <input type="number" id="hoverGlowY" class="bg-gray-700 rounded px-2 py-1 text-xs" placeholder="Y" value="0">
+                                                <input type="number" id="hoverGlowBlur" class="bg-gray-700 rounded px-2 py-1 text-xs" placeholder="Blur" value="10">
+                                                <input type="color" id="hoverGlowColor" class="w-full h-7 bg-gray-700 rounded" value="#00ff00">
+                                            </div>
+                                        </div>
+                                        <div id="hoverScaleSettings" class="hidden">
+                                            <label class="text-xs text-gray-400">Scale Amount</label>
+                                            <input type="number" id="hoverScaleAmount" class="w-full bg-gray-700 rounded px-2 py-1 text-sm" placeholder="1.1" step="0.1" value="1.1">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
 
