@@ -127,6 +127,10 @@ app.get('/', (c) => {
                                 <i class="fas fa-video mr-2"></i>Add Video
                             </button>
                             
+                            <button id="addInvisibleBtn" class="w-full bg-gray-600 hover:bg-gray-700 text-white py-2 rounded transition-colors">
+                                <i class="fas fa-eye-slash mr-2"></i>Add Invisible Layer
+                            </button>
+                            
                             <button id="addClickthroughBtn" class="w-full bg-purple-600 hover:bg-purple-700 text-white py-2 rounded transition-colors">
                                 <i class="fas fa-mouse-pointer mr-2"></i>Add Clickthrough
                             </button>

@@ -91,6 +91,10 @@
         $('#addClickthroughBtn').on('click', openClickthroughModal);
         $('#closeClickthroughModal').on('click', closeClickthroughModal);
         $('#saveClickthroughBtn').on('click', saveClickthrough);
+        
+        // Invisible Layer
+        $('#addInvisibleBtn').on('click', addInvisibleLayer);
+        
         // Enter key support for clickthrough
         $('#clickthroughUrl, #clickthroughTarget').on('keypress', function(e) {
             if (e.which === 13) { // Enter key
@@ -939,6 +943,62 @@
                     <i class="fas fa-mouse-pointer text-2xl mb-2"></i>
                     <div class="text-xs">Clickthrough</div>
                     <div class="text-xs font-bold">${url}</div>
+                </div>
+                <div class="resize-handle nw"></div>
+                <div class="resize-handle ne"></div>
+                <div class="resize-handle sw"></div>
+                <div class="resize-handle se"></div>
+            </div>
+        `);
+        
+        $canvas.append($element);
+        updateLayersList();
+        selectElement(id);
+    }
+    
+    // ============================================
+    // INVISIBLE LAYER
+    // ============================================
+    function addInvisibleLayer() {
+        elementCounter++;
+        const id = `element_${elementCounter}`;
+        
+        const element = {
+            id: id,
+            type: 'invisible',
+            x: 50,
+            y: 50,
+            width: 200,
+            height: 150,
+            rotation: 0,
+            opacity: 1,
+            zIndex: elements.length,
+            animations: []
+        };
+        
+        elements.push(element);
+        
+        const $element = $(`
+            <div class="canvas-element invisible-element" id="${id}" style="
+                left: ${element.x}px;
+                top: ${element.y}px;
+                width: ${element.width}px;
+                height: ${element.height}px;
+                opacity: 0.3;
+                transform: rotate(${element.rotation}deg);
+                z-index: ${element.zIndex};
+                background: repeating-linear-gradient(
+                    45deg,
+                    rgba(200, 200, 200, 0.3),
+                    rgba(200, 200, 200, 0.3) 10px,
+                    rgba(150, 150, 150, 0.3) 10px,
+                    rgba(150, 150, 150, 0.3) 20px
+                );
+                border: 2px dashed rgba(100, 100, 100, 0.5);
+            ">
+                <div style="text-align: center; color: rgba(100, 100, 100, 0.8); pointer-events: none; padding-top: 40%;">
+                    <i class="fas fa-eye-slash text-2xl mb-2"></i>
+                    <div class="text-xs">Invisible Layer</div>
                 </div>
                 <div class="resize-handle nw"></div>
                 <div class="resize-handle ne"></div>
@@ -2184,6 +2244,12 @@
                 const clickthroughElements = elements.filter(el => el.type === 'clickthrough');
                 const clickIndex = clickthroughElements.findIndex(el => el.id === element.id) + 1;
                 label = `Click${clickIndex}`;
+            } else if (element.type === 'invisible') {
+                icon = 'fa-eye-slash';
+                // Count invisible elements to generate invisible1, invisible2, etc.
+                const invisibleElements = elements.filter(el => el.type === 'invisible');
+                const invisibleIndex = invisibleElements.findIndex(el => el.id === element.id) + 1;
+                label = `Invisible${invisibleIndex}`;
             } else if (element.type === 'shape') {
                 icon = 'fa-shapes';
                 // Count shape elements to generate shape1, shape2, etc.
@@ -2667,6 +2733,8 @@
             opacity: ${element.opacity};
             transform: rotate(${element.rotation}deg);
             z-index: ${element.zIndex};
+            user-select: none;
+            cursor: pointer;
         ">`;
                 imageCounter++;
             } else if (element.type === 'text') {
@@ -2726,6 +2794,8 @@
             word-wrap: break-word;
             ${textShadowStyle}
             z-index: ${element.zIndex};
+            user-select: none;
+            cursor: pointer;
         ">${element.text}</div>`;
                 
                 // Add hover CSS if needed
@@ -2751,6 +2821,21 @@
             height: ${element.height}px;
             opacity: 0;
             z-index: ${element.zIndex};
+            cursor: pointer;
+        "></div>`;
+            } else if (element.type === 'invisible') {
+                // Invisible layer - render as an empty div with opacity 0
+                elementsHtml += `
+        <div id="${element.id}" style="
+            position: absolute;
+            left: ${element.x}px;
+            top: ${element.y}px;
+            width: ${element.width}px;
+            height: ${element.height}px;
+            opacity: 0;
+            transform: rotate(${element.rotation}deg);
+            z-index: ${element.zIndex};
+            user-select: none;
             cursor: pointer;
         "></div>`;
             } else if (element.type === 'shape') {
@@ -2797,6 +2882,8 @@
             border-radius: ${borderRadius};
             ${boxShadowStyle}
             z-index: ${element.zIndex};
+            user-select: none;
+            cursor: pointer;
         "></div>`;
                 
                 // Add hover CSS if needed
