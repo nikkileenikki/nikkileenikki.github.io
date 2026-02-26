@@ -1081,18 +1081,10 @@
         
         const interactions = element.interactions;
         
-        // Reset target to 'self' if the stored target is the currently selected element
-        // This ensures when switching between elements, target resets to self
-        if (interactions.click.targetElement === element.id) {
-            interactions.click.targetElement = 'self';
-        }
-        if (interactions.hover.targetElement === element.id) {
-            interactions.hover.targetElement = 'self';
-        }
-        
         // Click settings
         $('#enableClickInteraction').prop('checked', interactions.click.enabled);
-        $('#clickTargetElement').val(interactions.click.targetElement);
+        // Always default to 'self' in UI when selecting a layer
+        $('#clickTargetElement').val('self');
         $('#clickAction').val(interactions.click.action);
         $('#clickShadowX').val(interactions.click.shadowX);
         $('#clickShadowY').val(interactions.click.shadowY);
@@ -1106,7 +1098,8 @@
         
         // Hover settings
         $('#enableHoverInteraction').prop('checked', interactions.hover.enabled);
-        $('#hoverTargetElement').val(interactions.hover.targetElement);
+        // Always default to 'self' in UI when selecting a layer
+        $('#hoverTargetElement').val('self');
         $('#hoverAction').val(interactions.hover.action);
         $('#hoverShadowX').val(interactions.hover.shadowX);
         $('#hoverShadowY').val(interactions.hover.shadowY);
@@ -1146,6 +1139,10 @@
             clickSelect.append(option);
             hoverSelect.append(option);
         });
+        
+        // Always reset to 'self' after rebuilding options
+        clickSelect.val('self');
+        hoverSelect.val('self');
     }
     
     // Get human-readable label for element
