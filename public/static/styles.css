@@ -199,9 +199,11 @@ input, select, button, textarea, label {
 /* Canvas container with overflow visible to show elements outside */
 #canvasContainer {
     position: relative;
-    padding: 100px !important; /* Reduced from 200px for better fit */
+    padding: 100px !important; /* Padding for overflow area */
     background: rgba(30, 41, 59, 0.7); /* Dark background for overflow area */
-    overflow: visible !important; /* Allow overflow elements to show */
+    overflow: auto !important; /* Make it scrollable when content is large */
+    max-width: calc(100vw - 40rem) !important; /* Subtract left (16rem) + right (24rem) panels */
+    max-height: calc(100vh - 100px) !important; /* Don't exceed viewport height */
 }
 
 /* Add semi-transparent overlay around canvas using box-shadow on wrapper */
