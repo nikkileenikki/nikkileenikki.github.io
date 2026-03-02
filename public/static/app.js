@@ -1415,12 +1415,18 @@
         selectElement(id);
         
         isDragging = true;
-        const offset = $element.offset();
-        const canvasOffset = $canvas.offset();
+        const element = elements.find(el => el.id === id);
+        if (!element) return;
         
+        const canvasOffset = $canvas.offset();
+        const $canvasContainer = $('#canvasContainer').parent();
+        const scrollLeft = $canvasContainer.scrollLeft() || 0;
+        const scrollTop = $canvasContainer.scrollTop() || 0;
+        
+        // Store the offset between mouse position and element position (accounting for zoom)
         dragOffset = {
-            x: e.pageX - offset.left,
-            y: e.pageY - offset.top
+            x: (e.pageX + scrollLeft - canvasOffset.left) / stageZoom - element.x,
+            y: (e.pageY + scrollTop - canvasOffset.top) / stageZoom - element.y
         };
     }
     
@@ -1443,10 +1449,14 @@
         
         const $element = $(`#${selectedElement}`);
         const canvasOffset = $canvas.offset();
+        const $canvasContainer = $('#canvasContainer').parent();
+        const scrollLeft = $canvasContainer.scrollLeft() || 0;
+        const scrollTop = $canvasContainer.scrollTop() || 0;
         
         if (isDragging) {
-            let newX = e.pageX - canvasOffset.left - dragOffset.x;
-            let newY = e.pageY - canvasOffset.top - dragOffset.y;
+            // Account for zoom, scroll, and canvas offset
+            let newX = (e.pageX + scrollLeft - canvasOffset.left) / stageZoom - dragOffset.x;
+            let newY = (e.pageY + scrollTop - canvasOffset.top) / stageZoom - dragOffset.y;
             
             // No clamping - allow elements to move freely anywhere
             // Elements can go outside canvas boundaries
@@ -1460,8 +1470,9 @@
             
             updatePropertiesPanel();
         } else if (isResizing) {
-            const mouseX = e.pageX - canvasOffset.left;
-            const mouseY = e.pageY - canvasOffset.top;
+            // Account for zoom and scroll when resizing
+            const mouseX = (e.pageX + scrollLeft - canvasOffset.left) / stageZoom;
+            const mouseY = (e.pageY + scrollTop - canvasOffset.top) / stageZoom;
             
             let newWidth = element.width;
             let newHeight = element.height;

@@ -21,12 +21,18 @@
     max-height: 100vh !important;
 }
 
-/* Canvas area - take remaining space and be scrollable while centering content */
+/* Middle section containing canvas and timeline - constrain to screen height */
+.flex-1.flex.flex-col.overflow-hidden.bg-gray-900 {
+    max-height: 100vh !important;
+    display: flex !important;
+    flex-direction: column !important;
+}
+
+/* Canvas area - scrollable and centered, takes remaining space */
 .flex-1.flex.items-center.justify-center {
     overflow: auto !important;
     min-width: 0 !important;
     max-width: 100% !important;
-    max-height: 60vh !important; /* Limit to 60% of viewport height, leave room for timeline */
     flex: 1 1 0 !important;
     display: flex !important;
     align-items: center !important;
@@ -40,6 +46,9 @@
     background: rgba(30, 41, 59, 0.7); /* Dark background for overflow area */
     overflow: visible !important; /* Allow overflow elements to show beyond container */
     flex-shrink: 0 !important; /* Don't shrink, let parent scroll instead */
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
 }
 .text-xs { font-size: 10px !important; }  /* Was 12px */
 .text-sm { font-size: 12px !important; }  /* Was 14px */
