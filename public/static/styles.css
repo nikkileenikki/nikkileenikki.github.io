@@ -1,7 +1,23 @@
 /* Custom Styles */
 
-/* Remove global font size scaling - let Tailwind handle it naturally */
-/* Base font size is 16px which meets accessibility requirements */
+/* Reduce all font sizes by 2px */
+.text-xs { font-size: 10px !important; }  /* Was 12px */
+.text-sm { font-size: 12px !important; }  /* Was 14px */
+.text-base { font-size: 14px !important; } /* Was 16px */
+.text-lg { font-size: 16px !important; }  /* Was 18px */
+.text-xl { font-size: 18px !important; }  /* Was 20px */
+.text-2xl { font-size: 22px !important; } /* Was 24px */
+.text-3xl { font-size: 28px !important; } /* Was 30px */
+
+/* Apply base font size reduction to all elements */
+body, html {
+    font-size: 14px !important; /* Base reduced from 16px to 14px */
+}
+
+/* Form elements */
+input, select, button, textarea, label {
+    font-size: 12px !important; /* Reduced from 14px to 12px */
+}
 
 /* Adjust base spacing and sizing to be more compact */
 .p-1 { padding: 0.2rem !important; }
@@ -49,9 +65,6 @@
 
 .w-80 { width: 16rem !important; }
 .w-full { width: 100% !important; }
-
-/* Tailwind text sizes remain at default (base is 16px) */
-/* .text-xs = 12px, .text-sm = 14px, .text-base = 16px, etc. */
 
 /* Hide scrollbar but keep scrollable in left sidebar */
 .overflow-y-auto::-webkit-scrollbar {
