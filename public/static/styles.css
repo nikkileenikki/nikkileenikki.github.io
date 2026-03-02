@@ -202,7 +202,6 @@ input, select, button, textarea, label {
     padding: 100px !important; /* Reduced from 200px for better fit */
     background: rgba(30, 41, 59, 0.7); /* Dark background for overflow area */
     overflow: visible !important; /* Allow overflow elements to show */
-    display: inline-block !important; /* Shrink to content size */
 }
 
 /* Add semi-transparent overlay around canvas using box-shadow on wrapper */
