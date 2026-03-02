@@ -202,7 +202,6 @@ input, select, button, textarea, label {
     padding: 100px !important; /* Padding for overflow area */
     background: rgba(30, 41, 59, 0.7); /* Dark background for overflow area */
     overflow: auto !important; /* Make it scrollable when content is large */
-    max-width: calc(100vw - 40rem) !important; /* Subtract left (16rem) + right (24rem) panels */
     max-height: calc(100vh - 100px) !important; /* Don't exceed viewport height */
 }
 
