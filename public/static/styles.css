@@ -1,5 +1,16 @@
 /* Custom Styles */
 
+/* Ensure main layout doesn't overflow */
+.flex.h-screen {
+    overflow: hidden !important;
+}
+
+/* Make canvas container area scrollable and constrained */
+.flex-1.flex.items-center.justify-center {
+    overflow: auto !important;
+    min-width: 0 !important; /* Allow flex item to shrink below content size */
+}
+
 /* Reduce all font sizes by 2px */
 .text-xs { font-size: 10px !important; }  /* Was 12px */
 .text-sm { font-size: 12px !important; }  /* Was 14px */
@@ -172,6 +183,9 @@ input, select, button, textarea, label {
     position: relative;
     padding: 200px !important; /* Generous padding for overflow area */
     background: rgba(30, 41, 59, 0.7); /* Dark background for overflow area */
+    overflow: auto !important; /* Make it scrollable for large canvases */
+    max-width: 100% !important; /* Don't exceed viewport width */
+    max-height: 100vh !important; /* Don't exceed viewport height */
 }
 
 /* Add semi-transparent overlay around canvas using box-shadow on wrapper */
