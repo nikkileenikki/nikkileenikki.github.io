@@ -324,8 +324,26 @@
             // Don't select if clicking on a button
             if ($(e.target).closest('button').length > 0) return;
             
+            e.stopPropagation(); // Prevent folder from capturing the event
+            
             const elementId = $(e.currentTarget).closest('.timeline-track').data('element-id');
             if (elementId) {
+                console.log('Timeline track clicked, selecting element:', elementId);
+                selectElement(elementId);
+            }
+        });
+        
+        // Also handle clicks on tracks inside folders explicitly
+        $timelineTracks.on('click', '.timeline-folder-children .timeline-track-label', function(e) {
+            // Don't select if clicking on a button
+            if ($(e.target).closest('button').length > 0) return;
+            
+            e.stopPropagation(); // Prevent folder from capturing the event
+            e.preventDefault();
+            
+            const elementId = $(e.currentTarget).closest('.timeline-track').data('element-id');
+            if (elementId) {
+                console.log('Folder child track clicked, selecting element:', elementId);
                 selectElement(elementId);
             }
         });
