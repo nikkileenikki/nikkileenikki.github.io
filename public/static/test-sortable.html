@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8" />
+<title>Timeline Sortable Test</title>
+<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+<script src="https://code.jquery.com/ui/1.13.3/jquery-ui.min.js"></script>
+<style>
+  body { background: #1e1e22; font-family: sans-serif; padding: 20px; color: #fff; }
+  .timeline-container { width: 400px; background: #2a2a30; padding: 10px; border-radius: 10px; }
+  ul { list-style: none; padding: 0; margin: 0; }
+
+  .timeline-track {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: #3a3a42;
+    color: #fff;
+    padding: 8px;
+    margin: 6px 0;
+    border-radius: 8px;
+    font-size: 13px;
+  }
+  
+  .handle { width: 18px; text-align: center; opacity: .85; cursor: grab; user-select: none; }
+  .layer-name { flex: 1; }
+  
+  .folder-track { margin: 6px 0; }
+  .folder-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: #4a4a52;
+    color: #fff;
+    padding: 8px;
+    border-radius: 8px;
+    font-size: 13px;
+  }
+  
+  .toggle { width: 18px; text-align: center; cursor: pointer; user-select: none; opacity: .9; }
+  
+  .folder-children {
+    margin-left: 18px;
+    min-height: 40px;
+    padding: 4px 0;
+    border-radius: 8px;
+  }
+  
+  .folder-children:empty { border: 1px dashed rgba(255,255,255,.18); }
+  .collapsed .folder-children { display: none; }
+
+  .ui-sortable-placeholder {
+    height: 36px;
+    background: #555;
+    border-radius: 8px;
+    margin: 6px 0;
+  }
+  
+  .btn-small {
+    background: #4a5568;
+    border: none;
+    color: white;
+    padding: 4px 8px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 11px;
+  }
+  .btn-small:hover { background: #5a6578; }
+</style>
+</head>
+<body>
+
+<div style="margin-bottom: 20px;">
+  <button class="btn-small" onclick="addLayer()">Add Layer</button>
+  <button class="btn-small" onclick="addFolder()">Add Folder</button>
+</div>
+
+<div class="timeline-container">
+  <ul id="timeline-root">
+    <li class="timeline-track layer">
+      <span class="handle">⋮⋮</span>
+      <i class="fas fa-image"></i>
+      <span class="layer-name">Background</span>
+    </li>
+
+    <li class="folder-track collapsed">
+      <div class="folder-header">
+        <span class="handle">⋮⋮</span>
+        <span class="toggle">▸</span>
+        <i class="fas fa-folder"></i>
+        <span class="layer-name">Effects</span>
+      </div>
+      <ul class="folder-children"></ul>
+    </li>
+
+    <li class="timeline-track layer">
+      <span class="handle">⋮⋮</span>
+      <i class="fas fa-font"></i>
+      <span class="layer-name">Title Text</span>
+    </li>
+  </ul>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js"></script>
+<script>
+  let layerCount = 1;
+  let folderCount = 1;
+
+  function initSortable() {
+    // Root: folders + layers can be rearranged together
+    $("#timeline-root").sortable({
+      items: "> .layer, > .folder-track",
+      connectWith: ".folder-children",  // layers can move out of folders
+      handle: ".handle",
+      placeholder: "ui-sortable-placeholder",
+      tolerance: "pointer",
+      forcePlaceholderSize: true
+    });
+
+    // Children: only layers, can move between folders and back to root
+    $(".folder-children").sortable({
+      items: "> .layer",
+      connectWith: "#timeline-root, .folder-children",
+      handle: ".handle",
+      placeholder: "ui-sortable-placeholder",
+      tolerance: "pointer",
+      forcePlaceholderSize: true,
+      receive: function(e, ui) {
+        // Prevent folders from being moved into folders
+        if (ui.item.hasClass("folder-track")) {
+          $(this).sortable("cancel");
+        }
+      }
+    });
+  }
+
+  // Initialize on load
+  initSortable();
+
+  // Toggle folder expand/collapse
+  $(document).on("click", ".folder-track .toggle", function(e) {
+    e.stopPropagation();
+    const $folder = $(this).closest(".folder-track").toggleClass("collapsed");
+    $(this).text($folder.hasClass("collapsed") ? "▸" : "▾");
+  });
+
+  // Add new layer
+  function addLayer() {
+    const $layer = $(`
+      <li class="timeline-track layer">
+        <span class="handle">⋮⋮</span>
+        <i class="fas fa-image"></i>
+        <span class="layer-name">Layer ${layerCount++}</span>
+      </li>
+    `);
+    $("#timeline-root").prepend($layer);
+  }
+
+  // Add new folder
+  function addFolder() {
+    const $folder = $(`
+      <li class="folder-track">
+        <div class="folder-header">
+          <span class="handle">⋮⋮</span>
+          <span class="toggle">▾</span>
+          <i class="fas fa-folder"></i>
+          <span class="layer-name">Folder ${folderCount++}</span>
+        </div>
+        <ul class="folder-children"></ul>
+      </li>
+    `);
+    $("#timeline-root").prepend($folder);
+    
+    // Initialize sortable for new folder children
+    $folder.find(".folder-children").sortable({
+      items: "> .layer",
+      connectWith: "#timeline-root, .folder-children",
+      handle: ".handle",
+      placeholder: "ui-sortable-placeholder",
+      tolerance: "pointer",
+      forcePlaceholderSize: true,
+      receive: function(e, ui) {
+        if (ui.item.hasClass("folder-track")) {
+          $(this).sortable("cancel");
+        }
+      }
+    });
+  }
+</script>
+</body>
+</html>

@@ -7,12 +7,17 @@
     // ============================================
     let elements = [];
     let groups = [];
+    let undoStack = [];
+    let redoStack = [];
+    const MAX_UNDO_STACK = 50;
     let selectedElement = null;
+    let selectedFolder = null; // NEW: Track selected folder
     let dragOffset = { x: 0, y: 0 };
     let isDragging = false;
     let isResizing = false;
     let resizeHandle = null;
     let elementCounter = 0;
+    let folderCounter = 0;
     let timeline = gsap.timeline({ paused: true });
     let totalDuration = 5;
     let isPlaying = false;
@@ -137,6 +142,12 @@
         $('#addVideoBtn').on('click', openVideoModal);
         $('#closeVideoModal').on('click', closeVideoModal);
         $('#saveVideoBtn').on('click', saveVideo);
+        
+        // Folder creation
+        $('#createGroupBtn').on('click', createFolder);
+        $(document).on('click', '.timeline-folder-toggle', toggleFolder);
+        $(document).on('click', '.delete-folder', deleteFolder);
+        
         // Enter key support for video
         $('#videoUrl, #videoName').on('keypress', function(e) {
             if (e.which === 13) { // Enter key
@@ -319,6 +330,17 @@
             }
         });
         
+        // Folder header click to select folder
+        $timelineTracks.on('click', '.timeline-folder-header', function(e) {
+            // Don't select if clicking on toggle or buttons
+            if ($(e.target).closest('.timeline-folder-toggle, button').length > 0) return;
+            
+            const folderId = $(this).closest('.timeline-folder').data('folder-id');
+            if (folderId) {
+                selectFolder(folderId);
+            }
+        });
+        
         $timelineTracks.on('click', '.toggle-visibility', function(e) {
             e.stopPropagation();
             toggleLayerVisibility(e);
@@ -364,6 +386,24 @@
         $('#stageZoomIn').on('click', stageZoomIn);
         $('#stageZoomOut').on('click', stageZoomOut);
         $('#stageZoomReset').on('click', stageZoomReset);
+        
+        // Keyboard shortcuts
+        $(document).on('keydown', function(e) {
+            // Check if focused on input/textarea
+            const $focused = $(':focus');
+            const isInputFocused = $focused.is('input, textarea');
+            
+            // Ctrl+Z / Cmd+Z for Undo
+            if ((e.ctrlKey || e.metaKey) && e.key === 'z' && !e.shiftKey && !isInputFocused) {
+                e.preventDefault();
+                undo();
+            }
+            // Ctrl+Shift+Z / Cmd+Shift+Z for Redo
+            else if ((e.ctrlKey || e.metaKey) && e.key === 'z' && e.shiftKey && !isInputFocused) {
+                e.preventDefault();
+                redo();
+            }
+        });
     }
     
     // ============================================
@@ -705,7 +745,8 @@
             </div>
         `);
         
-        $canvas.append($element);
+        appendElementToCanvas($element, element);
+        saveState(); // Save state for undo
         updateLayersList();
         selectElement(id);
     }
@@ -817,7 +858,8 @@
             </div>
         `);
         
-        $canvas.append($element);
+        appendElementToCanvas($element, element);
+        saveState(); // Save state for undo
         updateLayersList();
         selectElement(id);
         updateTimelineTracks();
@@ -923,7 +965,8 @@
             </div>
         `);
         
-        $canvas.append($element);
+        appendElementToCanvas($element, element);
+        saveState(); // Save state for undo
         updateLayersList();
         selectElement(id);
         updateTimelineTracks();
@@ -973,7 +1016,7 @@
             </div>
         `);
         
-        $canvas.append($element);
+        appendElementToCanvas($element, element);
         updateLayersList();
         selectElement(id);
     }
@@ -1030,7 +1073,8 @@
             </div>
         `);
         
-        $canvas.append($element);
+        appendElementToCanvas($element, element);
+        saveState(); // Save state for undo
         updateLayersList();
         selectElement(id);
     }
@@ -1294,7 +1338,8 @@
                 </div>
             `);
             
-            $canvas.append($element);
+            appendElementToCanvas($element, element);
+            saveState(); // Save state for undo
             updateLayersList();
             selectElement(id);
         };
@@ -1446,6 +1491,9 @@
     }
     
     function handleMouseUp() {
+        if (isDragging || isResizing) {
+            saveState(); // Save state after drag/resize
+        }
         isDragging = false;
         isResizing = false;
         resizeHandle = null;
@@ -1548,6 +1596,7 @@
     // ============================================
     function selectElement(id) {
         selectedElement = id;
+        selectedFolder = null; // Clear folder selection
         
         $('.canvas-element').removeClass('selected');
         $(`#${id}`).addClass('selected');
@@ -1558,7 +1607,24 @@
         $('.timeline-track').removeClass('selected');
         $(`.timeline-track[data-element-id="${id}"]`).addClass('selected');
         
+        $('.timeline-folder').removeClass('selected');
+        
         updatePropertiesPanel();
+    }
+    
+    // Select folder
+    function selectFolder(folderId) {
+        selectedFolder = folderId;
+        selectedElement = null; // Clear element selection
+        
+        $('.canvas-element').removeClass('selected');
+        $('.layer-item').removeClass('selected');
+        $('.timeline-track').removeClass('selected');
+        
+        $('.timeline-folder').removeClass('selected');
+        $(`.timeline-folder[data-folder-id="${folderId}"]`).addClass('selected');
+        
+        updateFolderPropertiesPanel();
     }
     
     // ============================================
@@ -1648,6 +1714,7 @@
         e.stopPropagation();
         const id = $(e.currentTarget).data('id');
         
+        saveState(); // Save state before deletion
         elements = elements.filter(el => el.id !== id);
         $(`#${id}`).remove();
         
@@ -1663,7 +1730,14 @@
     function handleAddLayerAnimation(e) {
         e.stopPropagation();
         const id = $(e.currentTarget).data('id');
-        selectElement(id);
+        
+        // Check if it's a folder or element
+        if (id && id.startsWith('folder_')) {
+            selectFolder(id);
+        } else {
+            selectElement(id);
+        }
+        
         openAnimationModal();
     }
     
@@ -1801,12 +1875,45 @@
         updateInteractionUI(element);
     }
     
+    // Update properties panel for folders
+    function updateFolderPropertiesPanel() {
+        if (!selectedFolder) {
+            $propertiesPanel.addClass('hidden');
+            return;
+        }
+        
+        const folder = groups.find(g => g.id === selectedFolder);
+        if (!folder) {
+            $propertiesPanel.addClass('hidden');
+            return;
+        }
+        
+        // Show properties panel with folder info
+        $propertiesPanel.removeClass('hidden');
+        
+        // Hide all type-specific properties
+        $textProps.addClass('hidden');
+        $('#clickthroughProps').addClass('hidden');
+        $('#shapeProps').addClass('hidden');
+        $('#videoProps').addClass('hidden');
+        $('#interactionProps').addClass('hidden');
+        
+        // Hide size/position properties (folders don't have canvas presence yet)
+        $('#propWidth, #propHeight, #propX, #propY, #propRotation, #propOpacity').closest('div').addClass('hidden');
+        
+        // Show folder name in a label or heading
+        $('#propertiesPanel h3').text(`Folder: ${folder.name}`);
+        
+        console.log('Folder selected:', folder);
+    }
+    
     // Common property updates
     function updateElementWidth() {
         if (!selectedElement) return;
         const element = elements.find(el => el.id === selectedElement);
         element.width = parseInt($(this).val()) || 100;
         $(`#${selectedElement}`).css('width', element.width + 'px');
+        saveState();
     }
     
     function updateElementHeight() {
@@ -1814,6 +1921,7 @@
         const element = elements.find(el => el.id === selectedElement);
         element.height = parseInt($(this).val()) || 100;
         $(`#${selectedElement}`).css('height', element.height + 'px');
+        saveState();
     }
     
     function updateElementX() {
@@ -1821,6 +1929,7 @@
         const element = elements.find(el => el.id === selectedElement);
         element.x = parseInt($(this).val()) || 0;
         $(`#${selectedElement}`).css('left', element.x + 'px');
+        saveState();
     }
     
     function updateElementY() {
@@ -1828,6 +1937,7 @@
         const element = elements.find(el => el.id === selectedElement);
         element.y = parseInt($(this).val()) || 0;
         $(`#${selectedElement}`).css('top', element.y + 'px');
+        saveState();
     }
     
     function updateElementRotation() {
@@ -1835,6 +1945,7 @@
         const element = elements.find(el => el.id === selectedElement);
         element.rotation = parseInt($(this).val()) || 0;
         $(`#${selectedElement}`).css('transform', `rotate(${element.rotation}deg)`);
+        saveState();
     }
     
     function updateElementOpacity() {
@@ -2310,9 +2421,13 @@
     }
     
     function saveAnimation() {
-        if (!selectedElement) return;
+        // Check if we're editing a folder or element
+        const isFolder = selectedFolder !== null;
+        const target = isFolder ? 
+            groups.find(g => g.id === selectedFolder) : 
+            elements.find(el => el.id === selectedElement);
         
-        const element = elements.find(el => el.id === selectedElement);
+        if (!target) return;
         
         // Get all selected animation types from dropdowns
         const selectedTypes = [];
@@ -2336,8 +2451,8 @@
         const ease = $('#animEase').val();
         
         if (editingAnimation) {
-            // Update existing animation - only one type allowed when editing
-            const anim = element.animations.find(a => a.id === editingAnimation.animId);
+            // Update existing animation
+            const anim = target.animations.find(a => a.id === editingAnimation.animId);
             if (anim && selectedTypes.length > 0) {
                 anim.type = selectedTypes[0];
                 anim.start = start;
@@ -2358,9 +2473,10 @@
                 customProps: {}
             };
             
-            element.animations.push(animation);
+            target.animations.push(animation);
         }
         
+        saveState(); // Save state for undo
         rebuildTimeline();
         updateTimelineTracks();
         closeAnimationModal();
@@ -2369,9 +2485,15 @@
     function deleteEditingAnimation() {
         if (!editingAnimation) return;
         
-        const element = elements.find(el => el.id === editingAnimation.elementId);
-        if (element) {
-            element.animations = element.animations.filter(a => a.id !== editingAnimation.animId);
+        // Check if it's a folder or element animation
+        const isFolderAnim = editingAnimation.folderId !== undefined;
+        const target = isFolderAnim ? 
+            groups.find(g => g.id === editingAnimation.folderId) :
+            elements.find(el => el.id === editingAnimation.elementId);
+        
+        if (target) {
+            saveState(); // Save state for undo
+            target.animations = target.animations.filter(a => a.id !== editingAnimation.animId);
             rebuildTimeline();
             updateTimelineTracks();
         }
@@ -2382,12 +2504,26 @@
     function handleDeleteAnimation(e) {
         const animId = $(e.currentTarget).data('anim-id');
         const elementId = $(e.currentTarget).data('element-id');
+        const folderId = $(e.currentTarget).data('folder-id');
         
-        const element = elements.find(el => el.id === elementId);
-        if (element) {
-            element.animations = element.animations.filter(a => a.id !== animId);
-            rebuildTimeline();
-            updateTimelineTracks();
+        if (folderId) {
+            // Delete folder animation
+            const folder = groups.find(g => g.id === folderId);
+            if (folder) {
+                saveState(); // Save state for undo
+                folder.animations = folder.animations.filter(a => a.id !== animId);
+                rebuildTimeline();
+                updateTimelineTracks();
+            }
+        } else if (elementId) {
+            // Delete element animation
+            const element = elements.find(el => el.id === elementId);
+            if (element) {
+                saveState(); // Save state for undo
+                element.animations = element.animations.filter(a => a.id !== animId);
+                rebuildTimeline();
+                updateTimelineTracks();
+            }
         }
     }
     
@@ -2454,17 +2590,15 @@
     }
     
     function updateTimelineTracks() {
-        if (elements.length === 0) {
+        if (elements.length === 0 && groups.length === 0) {
             $timelineTracks.html('<div class="text-center text-gray-500 text-sm py-8">Add elements and animations to see timeline</div>');
             return;
         }
         
         $timelineTracks.empty();
         
-        // Sort by zIndex (highest first, so top visual layers appear at top of timeline)
-        const sortedElements = [...elements].sort((a, b) => b.zIndex - a.zIndex);
-        
-        sortedElements.forEach(element => {
+        // Helper function to get element icon and label
+        function getElementIconAndLabel(element) {
             let icon, label;
             
             if (element.type === 'text') {
@@ -2472,19 +2606,16 @@
                 label = element.text.substring(0, 15);
             } else if (element.type === 'clickthrough') {
                 icon = 'fa-mouse-pointer';
-                // Count clickthrough elements to generate click1, click2, etc.
                 const clickthroughElements = elements.filter(el => el.type === 'clickthrough');
                 const clickIndex = clickthroughElements.findIndex(el => el.id === element.id) + 1;
                 label = `Click${clickIndex}`;
             } else if (element.type === 'invisible') {
                 icon = 'fa-eye-slash';
-                // Count invisible elements to generate invisible1, invisible2, etc.
                 const invisibleElements = elements.filter(el => el.type === 'invisible');
                 const invisibleIndex = invisibleElements.findIndex(el => el.id === element.id) + 1;
                 label = `Invisible${invisibleIndex}`;
             } else if (element.type === 'shape') {
                 icon = 'fa-shapes';
-                // Count shape elements to generate shape1, shape2, etc.
                 const shapeElements = elements.filter(el => el.type === 'shape');
                 const shapeIndex = shapeElements.findIndex(el => el.id === element.id) + 1;
                 label = `Shape${shapeIndex}`;
@@ -2496,47 +2627,48 @@
                 label = (element.filename || 'Image').substring(0, 15);
             }
             
+            return { icon, label };
+        }
+        
+        // Helper function to render a timeline track for an element
+        function renderTrack(element) {
+            const { icon, label } = getElementIconAndLabel(element);
+            
             const $track = $(`
-                <div class="timeline-track" data-element-id="${element.id}">
+                <li class="timeline-track layer" data-element-id="${element.id}">
                     <div class="timeline-track-label">
-                        <div class="flex items-center flex-1">
-                            <i class="fas fa-grip-vertical text-gray-600 mr-2"></i>
-                            <i class="fas ${icon} text-blue-400 mr-2"></i>
-                            <span class="truncate flex-1">${label}</span>
-                        </div>
+                        <span class="timeline-handle">⋮⋮</span>
+                        <i class="fas ${icon} text-blue-400 mr-2"></i>
+                        <span class="truncate flex-1">${label}</span>
                         <div class="flex items-center gap-1 ml-2">
                             <button class="timeline-layer-btn toggle-visibility" data-id="${element.id}" title="Toggle visibility">
-                                <i class="fas ${element.hidden ? 'fa-eye-slash' : 'fa-eye'}"></i>
+                                <i class="fas ${element.hidden ? 'fa-eye-slash' : 'fa-eye'} text-xs"></i>
                             </button>
                             <button class="timeline-layer-btn add-layer-anim" data-id="${element.id}" title="Add animation">
-                                <i class="fas fa-plus"></i>
+                                <i class="fas fa-plus text-xs"></i>
                             </button>
                             <button class="timeline-layer-btn delete-layer" data-id="${element.id}" title="Delete layer">
-                                <i class="fas fa-trash"></i>
+                                <i class="fas fa-trash text-xs"></i>
                             </button>
                         </div>
                     </div>
-                    <div class="timeline-track-content" id="track_${element.id}">
-                    </div>
-                </div>
+                    <div class="timeline-track-content" id="track_${element.id}"></div>
+                </li>
             `);
-            
-            $timelineTracks.append($track);
             
             // Add animation blocks
             element.animations.forEach(anim => {
                 const leftPercent = (anim.start / totalDuration) * 100;
                 const widthPercent = (anim.duration / totalDuration) * 100;
                 
-                // Get label showing multiple types
                 const types = anim.types || [anim.type];
-                const label = types.length > 1 ? `${types.length} effects` : types[0];
+                const animLabel = types.length > 1 ? `${types.length} effects` : types[0];
                 
                 const $block = $(`
                     <div class="timeline-block" style="left: ${leftPercent}%; width: ${widthPercent}%;" 
                          data-anim-id="${anim.id}" data-element-id="${element.id}">
                         <div class="timeline-block-resize-handle left"></div>
-                        <div class="timeline-block-label">${label}</div>
+                        <div class="timeline-block-label">${animLabel}</div>
                         <button class="delete-anim" data-anim-id="${anim.id}" data-element-id="${element.id}">
                             <i class="fas fa-times"></i>
                         </button>
@@ -2544,54 +2676,660 @@
                     </div>
                 `);
                 
-                $(`#track_${element.id}`).append($block);
+                $track.find('.timeline-track-content').append($block);
+            });
+            
+            return $track;
+        }
+        
+        // Combine folders and root elements, sort by zIndex (highest first)
+        const elementsInFolders = new Set();
+        
+        // Create array of items with their type and zIndex for sorting
+        const timelineItems = [];
+        
+        // Add folders
+        groups.forEach(group => {
+            timelineItems.push({
+                type: 'folder',
+                data: group,
+                zIndex: group.zIndex
             });
         });
         
-        // Initialize jQuery UI sortable for timeline tracks (only once)
-        if (!$timelineTracks.hasClass('ui-sortable')) {
-            $timelineTracks.sortable({
-                handle: '.timeline-track-label',
-                axis: 'y',
-                cursor: 'move',
-                tolerance: 'pointer',
-                update: function(event, ui) {
-                    // Get new order of elements based on DOM order
-                    const newOrder = [];
-                    $timelineTracks.find('.timeline-track').each(function() {
+        // Add root elements (not in folders)
+        elements.forEach(element => {
+            if (!element.folderId) {
+                timelineItems.push({
+                    type: 'element',
+                    data: element,
+                    zIndex: element.zIndex
+                });
+            }
+        });
+        
+        // Sort all items by zIndex (highest first) to maintain proper order
+        timelineItems.sort((a, b) => b.zIndex - a.zIndex);
+        
+        // Render items in sorted order (folders and elements mixed)
+        timelineItems.forEach(item => {
+            if (item.type === 'folder') {
+                const group = item.data;
+                const $folder = $(`
+                    <li class="timeline-folder${group.collapsed ? ' collapsed' : ''}" data-folder-id="${group.id}">
+                        <div class="timeline-folder-row">
+                            <div class="timeline-folder-header">
+                                <span class="timeline-handle">⋮⋮</span>
+                                <span class="timeline-folder-toggle">${group.collapsed ? '▸' : '▾'}</span>
+                                <i class="fas fa-folder text-yellow-400 mr-2"></i>
+                                <span class="flex-1">${group.name}</span>
+                                <div class="flex items-center gap-1 ml-2">
+                                    <button class="timeline-layer-btn add-layer-anim" data-id="${group.id}" title="Add animation to folder">
+                                        <i class="fas fa-plus text-xs"></i>
+                                    </button>
+                                    <button class="timeline-layer-btn delete-folder" data-id="${group.id}" title="Delete folder">
+                                        <i class="fas fa-trash text-xs"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="timeline-track-content folder-track-content" id="track_${group.id}"></div>
+                        </div>
+                        <ul class="timeline-folder-children"></ul>
+                    </li>
+                `);
+                
+                // Add folder animation blocks
+                if (group.animations && group.animations.length > 0) {
+                    group.animations.forEach(anim => {
+                        const leftPercent = (anim.start / totalDuration) * 100;
+                        const widthPercent = (anim.duration / totalDuration) * 100;
+                        
+                        const types = anim.types || [anim.type];
+                        const animLabel = types.length > 1 ? `${types.length} effects` : types[0];
+                        
+                        const $block = $(`
+                            <div class="timeline-block folder-anim-block" style="left: ${leftPercent}%; width: ${widthPercent}%; background-color: #fbbf24;" 
+                                 data-anim-id="${anim.id}" data-folder-id="${group.id}">
+                                <div class="timeline-block-resize-handle left"></div>
+                                <div class="timeline-block-label">${animLabel}</div>
+                                <button class="delete-anim" data-anim-id="${anim.id}" data-folder-id="${group.id}">
+                                    <i class="fas fa-times"></i>
+                                </button>
+                                <div class="timeline-block-resize-handle right"></div>
+                            </div>
+                        `);
+                        
+                        $folder.find('.folder-track-content').append($block);
+                    });
+                }
+                
+                // Add elements that belong to this folder
+                const folderElements = elements.filter(el => el.folderId === group.id);
+                folderElements.sort((a, b) => b.zIndex - a.zIndex);
+                
+                folderElements.forEach(element => {
+                    elementsInFolders.add(element.id);
+                    $folder.find('.timeline-folder-children').append(renderTrack(element));
+                });
+                
+                $timelineTracks.append($folder);
+            } else {
+                // Render root element
+                $timelineTracks.append(renderTrack(item.data));
+            }
+        });
+        
+        // Initialize jQuery UI sortable
+        initTimelineSortable();
+    }
+    
+    // Initialize timeline sortable system
+    function initTimelineSortable() {
+        // Destroy existing sortables
+        if ($timelineTracks.hasClass('ui-sortable')) {
+            $timelineTracks.sortable('destroy');
+        }
+        $('.timeline-folder-children').each(function() {
+            if ($(this).hasClass('ui-sortable')) {
+                $(this).sortable('destroy');
+            }
+        });
+        
+        // Root sortable: accepts both layers and folders, they can be mixed
+        $timelineTracks.sortable({
+            items: '> .layer, > .timeline-folder',
+            connectWith: '.timeline-folder-children',  // Allow layers to move into folders
+            handle: '.timeline-handle',
+            placeholder: 'ui-sortable-placeholder',
+            tolerance: 'pointer',
+            forcePlaceholderSize: true,
+            update: function(e, ui) {
+                updateStructureFromDOM();
+            }
+        });
+        
+        // Folder children sortable: only accepts layers
+        $('.timeline-folder-children').sortable({
+            items: '> .layer',
+            connectWith: '#timelineTracks, .timeline-folder-children',  // Can move back to root OR other folders
+            handle: '.timeline-handle',
+            placeholder: 'ui-sortable-placeholder',
+            tolerance: 'pointer',
+            forcePlaceholderSize: true,
+            receive: function(e, ui) {
+                // Block folders from being moved into folders
+                if (ui.item.hasClass('timeline-folder')) {
+                    $(this).sortable('cancel');
+                }
+            },
+            update: function(e, ui) {
+                updateStructureFromDOM();
+            }
+        });
+    }
+    
+    // Update element and folder data from DOM structure
+    function updateStructureFromDOM() {
+        const maxZIndex = elements.length + groups.length;
+        let currentZIndex = maxZIndex;
+        
+        // Process folders and elements in DOM order (they can be mixed)
+        $('#timelineTracks > li').each(function(index) {
+            if ($(this).hasClass('timeline-folder')) {
+                // Update folder zIndex
+                const folderId = $(this).data('folder-id');
+                const group = groups.find(g => g.id === folderId);
+                if (group) {
+                    group.zIndex = currentZIndex--;
+                    
+                    // Update elements in this folder
+                    let folderZIndex = group.zIndex * 100; // Offset for folder children
+                    $(this).find('.timeline-folder-children > li').each(function() {
                         const elementId = $(this).data('element-id');
                         const element = elements.find(el => el.id === elementId);
                         if (element) {
-                            newOrder.push(element);
+                            element.folderId = folderId;
+                            element.zIndex = folderZIndex--;
+                            
+                            // Move DOM element into folder wrapper
+                            const $element = $(`#${element.id}`);
+                            let $folderWrapper = $(`#${folderId}`);
+                            
+                            // Create folder wrapper if it doesn't exist
+                            if ($folderWrapper.length === 0) {
+                                $folderWrapper = $(`
+                                    <div class="canvas-folder" id="${folderId}" style="
+                                        position: absolute;
+                                        left: 0;
+                                        top: 0;
+                                        width: 100%;
+                                        height: 100%;
+                                        pointer-events: none;
+                                        z-index: ${group.zIndex};
+                                    "></div>
+                                `);
+                                $canvas.append($folderWrapper);
+                            }
+                            
+                            // Move element into folder wrapper
+                            if ($element.parent().attr('id') !== folderId) {
+                                $folderWrapper.append($element);
+                            }
+                            
+                            $element.css('z-index', element.zIndex);
                         }
                     });
-                    
-                    // Update zIndex based on new order
-                    // Timeline shows top = highest z-index, so first in newOrder should get highest z-index
-                    const maxIndex = newOrder.length - 1;
-                    newOrder.forEach((element, index) => {
-                        element.zIndex = maxIndex - index; // First gets highest, last gets 0
-                        $(`#${element.id}`).css('z-index', element.zIndex);
-                    });
-                    
-                    console.log('Timeline reordered - New z-indexes:', newOrder.map(el => ({
-                        id: el.id,
-                        type: el.type,
-                        filename: el.filename || el.text?.substring(0,20) || el.type,
-                        zIndex: el.zIndex
-                    })));
-                    
-                    // Update layers list and rebuild timeline
-                    updateLayersList();
                 }
-            });
+            } else {
+                // Update root element
+                const elementId = $(this).data('element-id');
+                const element = elements.find(el => el.id === elementId);
+                if (element) {
+                    element.folderId = null; // Remove from folder
+                    element.zIndex = currentZIndex--;
+                    
+                    // Move DOM element back to canvas root
+                    const $element = $(`#${element.id}`);
+                    if ($element.parent().hasClass('canvas-folder')) {
+                        $canvas.append($element);
+                    }
+                    
+                    $element.css('z-index', element.zIndex);
+                }
+            }
+        });
+        
+        console.log('Structure updated from DOM');
+        updateLayersList();
+    }
+    
+    // ============================================
+    // FOLDER MANAGEMENT
+    // ============================================
+    
+    // Create new folder
+    function createFolder() {
+        folderCounter++;
+        const folderId = `folder_${folderCounter}`;
+        
+        const folder = {
+            id: folderId,
+            name: `Folder ${folderCounter}`,
+            zIndex: elements.length + groups.length,
+            collapsed: false,
+            x: 0, // Folder position offset
+            y: 0,
+            animations: [] // Folder can have animations
+        };
+        
+        groups.push(folder);
+        saveState(); // Save state for undo
+        updateTimelineTracks();
+        
+        console.log('Folder created:', folder);
+    }
+    
+    // Toggle folder expand/collapse
+    function toggleFolder(e) {
+        e.stopPropagation();
+        const $folder = $(this).closest('.timeline-folder');
+        const folderId = $folder.data('folder-id');
+        const group = groups.find(g => g.id === folderId);
+        
+        if (group) {
+            group.collapsed = !group.collapsed;
+            $folder.toggleClass('collapsed');
+            $(this).text(group.collapsed ? '▸' : '▾');
         }
     }
+    
+    // Delete folder
+    function deleteFolder(e) {
+        e.stopPropagation();
+        const folderId = $(this).data('id');
+        const group = groups.find(g => g.id === folderId);
+        
+        if (!group) return;
+        
+        saveState(); // Save state before deletion
+        
+        // Move elements out of folder back to root
+        elements.forEach(element => {
+            if (element.folderId === folderId) {
+                element.folderId = null;
+            }
+        });
+        
+        // Remove folder
+        groups = groups.filter(g => g.id !== folderId);
+        
+        updateTimelineTracks();
+        updateLayersList();
+        
+        console.log('Folder deleted:', folderId);
+    }
+    
+    // ============================================
+    // UNDO/REDO SYSTEM
+    // ============================================
+    
+    // Save current state to undo stack
+    function saveState() {
+        const state = {
+            elements: JSON.parse(JSON.stringify(elements)),
+            groups: JSON.parse(JSON.stringify(groups))
+        };
+        
+        undoStack.push(state);
+        
+        // Limit stack size
+        if (undoStack.length > MAX_UNDO_STACK) {
+            undoStack.shift();
+        }
+        
+        // Clear redo stack when new action is performed
+        redoStack = [];
+        
+        console.log('State saved. Undo stack:', undoStack.length);
+    }
+    
+    // Undo last action
+    function undo() {
+        if (undoStack.length === 0) {
+            console.log('Nothing to undo');
+            return;
+        }
+        
+        // Save current state to redo stack
+        const currentState = {
+            elements: JSON.parse(JSON.stringify(elements)),
+            groups: JSON.parse(JSON.stringify(groups))
+        };
+        redoStack.push(currentState);
+        
+        // Restore previous state
+        const previousState = undoStack.pop();
+        elements = previousState.elements;
+        groups = previousState.groups;
+        
+        // Update UI
+        updateCanvas();
+        updateTimelineTracks();
+        updateLayersList();
+        
+        console.log('Undo performed. Undo stack:', undoStack.length, 'Redo stack:', redoStack.length);
+    }
+    
+    // Redo last undone action
+    function redo() {
+        if (redoStack.length === 0) {
+            console.log('Nothing to redo');
+            return;
+        }
+        
+        // Save current state to undo stack
+        const currentState = {
+            elements: JSON.parse(JSON.stringify(elements)),
+            groups: JSON.parse(JSON.stringify(groups))
+        };
+        undoStack.push(currentState);
+        
+        // Restore redo state
+        const nextState = redoStack.pop();
+        elements = nextState.elements;
+        groups = nextState.groups;
+        
+        // Update UI
+        updateCanvas();
+        updateTimelineTracks();
+        updateLayersList();
+        
+        console.log('Redo performed. Undo stack:', undoStack.length, 'Redo stack:', redoStack.length);
+    }
+    
+    // Update canvas elements from state
+    function updateCanvas() {
+        $canvas.find('.canvas-element, .canvas-folder').remove();
+        
+        // Create folder wrappers first
+        groups.forEach(folder => {
+            const $folderWrapper = $(`
+                <div class="canvas-folder" id="${folder.id}" style="
+                    position: absolute;
+                    left: 0;
+                    top: 0;
+                    width: 100%;
+                    height: 100%;
+                    pointer-events: none;
+                    z-index: ${folder.zIndex};
+                "></div>
+            `);
+            $canvas.append($folderWrapper);
+        });
+        
+        // Restore elements and place them in folders or root
+        elements.forEach(element => {
+            const $element = createElementDOM(element);
+            
+            if (element.folderId) {
+                // Append to folder wrapper
+                $(`#${element.folderId}`).append($element);
+            } else {
+                // Append to canvas root
+                $canvas.append($element);
+            }
+        });
+    }
+    
+    // Create DOM element from element data
+    function createElementDOM(element) {
+        let $element;
+        
+        if (element.type === 'text') {
+            $element = $(`
+                <div class="canvas-element text-element" id="${element.id}" style="
+                    left: ${element.x}px;
+                    top: ${element.y}px;
+                    width: ${element.width}px;
+                    height: ${element.height}px;
+                    opacity: ${element.opacity};
+                    transform: rotate(${element.rotation}deg);
+                    font-size: ${element.fontSize}px;
+                    font-family: ${element.fontFamily};
+                    color: ${element.color};
+                    font-weight: ${element.bold ? 'bold' : 'normal'};
+                    font-style: ${element.italic ? 'italic' : 'normal'};
+                    text-decoration: ${element.underline ? 'underline' : 'none'};
+                    text-align: ${element.textAlign};
+                    line-height: 1.2;
+                    word-wrap: break-word;
+                    z-index: ${element.zIndex};
+                ">
+                    ${element.text}
+                    <div class="resize-handle nw"></div>
+                    <div class="resize-handle ne"></div>
+                    <div class="resize-handle sw"></div>
+                    <div class="resize-handle se"></div>
+                </div>
+            `);
+        } else if (element.type === 'shape') {
+            let shapeStyle = `background-color: ${element.fillColor};`;
+            if (element.shapeType === 'circle') {
+                shapeStyle += ' border-radius: 50%;';
+            } else if (element.shapeType === 'rounded-rectangle') {
+                shapeStyle += ' border-radius: 12px;';
+            } else if (element.borderRadius > 0) {
+                shapeStyle += ` border-radius: ${element.borderRadius}px;`;
+            }
+            
+            $element = $(`
+                <div class="canvas-element" id="${element.id}" style="
+                    left: ${element.x}px;
+                    top: ${element.y}px;
+                    width: ${element.width}px;
+                    height: ${element.height}px;
+                    opacity: ${element.opacity};
+                    transform: rotate(${element.rotation}deg);
+                    z-index: ${element.zIndex};
+                    ${shapeStyle}
+                ">
+                    <div class="resize-handle nw"></div>
+                    <div class="resize-handle ne"></div>
+                    <div class="resize-handle sw"></div>
+                    <div class="resize-handle se"></div>
+                </div>
+            `);
+        } else if (element.type === 'clickthrough') {
+            $element = $(`
+                <div class="canvas-element clickthrough-element" id="${element.id}" style="
+                    left: ${element.x}px;
+                    top: ${element.y}px;
+                    width: ${element.width}px;
+                    height: ${element.height}px;
+                    opacity: ${element.opacity};
+                    transform: rotate(${element.rotation}deg);
+                    z-index: ${element.zIndex};
+                ">
+                    <div style="text-align: center; color: rgba(168, 85, 247, 0.8); pointer-events: none;">
+                        <i class="fas fa-mouse-pointer text-2xl mb-2"></i>
+                        <div class="text-xs">Clickthrough</div>
+                        <div class="text-xs font-bold">${element.url}</div>
+                    </div>
+                    <div class="resize-handle nw"></div>
+                    <div class="resize-handle ne"></div>
+                    <div class="resize-handle sw"></div>
+                    <div class="resize-handle se"></div>
+                </div>
+            `);
+        } else if (element.type === 'invisible') {
+            $element = $(`
+                <div class="canvas-element invisible-element" id="${element.id}" style="
+                    left: ${element.x}px;
+                    top: ${element.y}px;
+                    width: ${element.width}px;
+                    height: ${element.height}px;
+                    opacity: 0.3;
+                    transform: rotate(${element.rotation}deg);
+                    z-index: ${element.zIndex};
+                    background: repeating-linear-gradient(
+                        45deg,
+                        rgba(200, 200, 200, 0.3),
+                        rgba(200, 200, 200, 0.3) 10px,
+                        rgba(150, 150, 150, 0.3) 10px,
+                        rgba(150, 150, 150, 0.3) 20px
+                    );
+                    border: 2px dashed rgba(100, 100, 100, 0.5);
+                ">
+                    <div style="text-align: center; color: rgba(100, 100, 100, 0.8); pointer-events: none; padding-top: 40%;">
+                        <i class="fas fa-eye-slash text-2xl mb-2"></i>
+                        <div class="text-xs">Invisible Layer</div>
+                    </div>
+                    <div class="resize-handle nw"></div>
+                    <div class="resize-handle ne"></div>
+                    <div class="resize-handle sw"></div>
+                    <div class="resize-handle se"></div>
+                </div>
+            `);
+        } else if (element.type === 'image') {
+            $element = $(`
+                <div class="canvas-element" id="${element.id}" style="
+                    left: ${element.x}px;
+                    top: ${element.y}px;
+                    width: ${element.width}px;
+                    height: ${element.height}px;
+                    opacity: ${element.opacity};
+                    transform: rotate(${element.rotation}deg);
+                    z-index: ${element.zIndex};
+                ">
+                    <img src="${element.src}" style="width: 100%; height: 100%; object-fit: contain; pointer-events: none;" />
+                    <div class="resize-handle nw"></div>
+                    <div class="resize-handle ne"></div>
+                    <div class="resize-handle sw"></div>
+                    <div class="resize-handle se"></div>
+                </div>
+            `);
+        } else if (element.type === 'video') {
+            const playText = element.playTrigger === 'autoplay' ? '▶ Autoplay' : 
+                           element.playTrigger === 'onclick' ? '👆 Click to Play' : 
+                           '👁 On View';
+            
+            $element = $(`
+                <div class="canvas-element" id="${element.id}" style="
+                    left: ${element.x}px;
+                    top: ${element.y}px;
+                    width: ${element.width}px;
+                    height: ${element.height}px;
+                    opacity: ${element.opacity};
+                    transform: rotate(${element.rotation}deg);
+                    z-index: ${element.zIndex};
+                    background-color: #000;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    color: #fff;
+                    font-size: 14px;
+                    border: 2px solid #e53e3e;
+                ">
+                    <div style="text-align: center;">
+                        <i class="fas fa-video" style="font-size: 32px; margin-bottom: 8px;"></i>
+                        <div>${element.videoName}</div>
+                        <div style="font-size: 11px; opacity: 0.7;">${element.videoUrl}</div>
+                        <div style="font-size: 11px; margin-top: 4px;">
+                            ${playText} ${element.muted ? '🔇 Muted' : '🔊 Sound'} ${element.controls ? '⚙ Controls' : ''}
+                        </div>
+                    </div>
+                    <div class="resize-handle nw"></div>
+                    <div class="resize-handle ne"></div>
+                    <div class="resize-handle sw"></div>
+                    <div class="resize-handle se"></div>
+                </div>
+            `);
+        }
+        
+        return $element;
+    }
+    
+    // Helper function to append element to canvas or folder
+    function appendElementToCanvas($element, element) {
+        if (!$element) return;
+        
+        if (element.folderId) {
+            // Check if folder wrapper exists, create if not
+            let $folder = $(`#${element.folderId}`);
+            if ($folder.length === 0) {
+                const folder = groups.find(g => g.id === element.folderId);
+                if (folder) {
+                    $folder = $(`
+                        <div class="canvas-folder" id="${folder.id}" style="
+                            position: absolute;
+                            left: 0;
+                            top: 0;
+                            width: 100%;
+                            height: 100%;
+                            pointer-events: none;
+                            z-index: ${folder.zIndex};
+                        "></div>
+                    `);
+                    $canvas.append($folder);
+                }
+            }
+            $folder.append($element);
+        } else {
+            $canvas.append($element);
+        }
+    }
+    
+    // ============================================
+    // REBUILD TIMELINE
+    // ============================================
     
     function rebuildTimeline() {
         timeline.clear();
         timeline.repeat(0); // Reset repeat, will be set in playTimeline
         
+        // Process folder animations first
+        groups.forEach(folder => {
+            if (!folder.animations || folder.animations.length === 0) return;
+            
+            folder.animations.forEach(anim => {
+                const types = anim.types || [anim.type];
+                
+                // Get all elements in this folder
+                const folderElements = elements.filter(el => el.folderId === folder.id);
+                
+                // Apply animation to each element in the folder
+                folderElements.forEach(element => {
+                    let mergedProps = {};
+                    let startAt = null;
+                    
+                    types.forEach(type => {
+                        const props = getAnimationProps(type, element, anim.customProps);
+                        
+                        if (props.startAt) {
+                            startAt = startAt || {};
+                            Object.assign(startAt, props.startAt);
+                            delete props.startAt;
+                        }
+                        
+                        Object.assign(mergedProps, props);
+                    });
+                    
+                    // Apply startAt if any
+                    if (startAt) {
+                        gsap.set(`#${element.id}`, startAt);
+                    }
+                    
+                    // Add merged animation to timeline
+                    timeline.to(`#${element.id}`, {
+                        ...mergedProps,
+                        duration: anim.duration,
+                        ease: anim.ease
+                    }, anim.start);
+                });
+            });
+        });
+        
+        // Process individual element animations
         elements.forEach(element => {
             element.animations.forEach(anim => {
                 const types = anim.types || [anim.type]; // Support multi-animation

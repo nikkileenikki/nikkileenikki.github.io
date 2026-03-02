@@ -631,11 +631,11 @@ app.get('/', (c) => {
                                 </div>
                                 
                                 <!-- Timeline Tracks (scrollable) -->
-                                <div id="timelineTracks" class="overflow-y-auto" style="max-height: 150px;">
+                                <ul id="timelineTracks" class="overflow-y-auto" style="max-height: 150px; list-style: none; padding: 0; margin: 0;">
                                     <div class="text-center text-gray-500 text-sm py-8">
                                         Add elements and animations to see timeline
                                     </div>
-                                </div>
+                                </ul>
                             </div>
                             
                             <!-- Zoom Controls -->

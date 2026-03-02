@@ -346,3 +346,118 @@
     box-shadow: 0 0 12px rgba(255, 255, 255, 0.5);
 }
 
+
+/* Folder Timeline Styles */
+.timeline-folder {
+    margin: 6px 0;
+}
+
+.timeline-folder-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: #4a4a52;
+    color: #fff;
+    padding: 8px;
+    border-radius: 8px;
+    font-size: 13px;
+    cursor: pointer;
+    max-width: 300px; /* Limit width so it doesn't cover whole timeline */
+    position: relative;
+    z-index: 10;
+}
+
+.timeline-folder-header:hover {
+    background: #5a5a62;
+}
+
+.timeline-folder-toggle {
+    width: 18px;
+    text-align: center;
+    cursor: pointer;
+    user-select: none;
+    opacity: 0.9;
+    font-size: 14px;
+}
+
+.timeline-folder-children {
+    margin-left: 18px;
+    min-height: 40px;
+    padding: 4px 0;
+    border-radius: 8px;
+}
+
+.timeline-folder-children:empty {
+    border: 1px dashed rgba(255, 255, 255, 0.18);
+}
+
+.timeline-folder.collapsed .timeline-folder-children {
+    display: none;
+}
+
+.ui-sortable-placeholder {
+    height: 36px;
+    background: #555;
+    border-radius: 8px;
+    margin: 6px 0;
+    visibility: visible !important;
+}
+
+.timeline-track.layer {
+    list-style: none;
+}
+
+.timeline-folder-handle {
+    width: 18px;
+    text-align: center;
+    opacity: 0.85;
+    cursor: grab;
+    user-select: none;
+}
+
+.timeline-folder-handle:active {
+    cursor: grabbing;
+}
+
+/* Folder selection and animation styles */
+.timeline-folder.selected {
+    background-color: #5a5a62;
+    box-shadow: 0 0 0 2px #3b82f6;
+}
+
+.timeline-folder.collapsed .folder-track-content {
+    display: none;
+}
+
+.timeline-folder {
+    display: flex;
+    flex-direction: column;
+}
+
+.timeline-folder-row {
+    display: flex;
+    align-items: stretch;
+}
+
+.folder-track-content {
+    position: relative;
+    height: 40px;
+    flex: 1;
+    background-color: rgba(0, 0, 0, 0.2);
+    border-radius: 3px;
+    margin-left: 8px;
+}
+
+.folder-anim-block {
+    background-color: #fbbf24 !important;
+}
+
+/* Canvas folder wrapper */
+.canvas-folder {
+    position: absolute !important;
+    pointer-events: none;
+}
+
+.canvas-folder > .canvas-element {
+    pointer-events: auto;
+}
