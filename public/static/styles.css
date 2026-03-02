@@ -26,6 +26,7 @@
     overflow: auto !important;
     min-width: 0 !important;
     max-width: 100% !important;
+    max-height: calc(100vh - 300px) !important; /* Leave room for timeline at bottom */
     flex: 1 1 0 !important;
     display: flex !important;
     align-items: center !important;
