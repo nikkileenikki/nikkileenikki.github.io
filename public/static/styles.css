@@ -118,9 +118,9 @@
     bottom: 0;
     pointer-events: none;
     z-index: 2;
-    /* Create a frame effect with inset shadows */
+    /* Create a frame effect with larger shadow spread */
     box-shadow: 
-        0 0 0 200px rgba(30, 41, 59, 0.5), /* Semi-transparent overlay outside */
+        0 0 0 2000px rgba(30, 41, 59, 0.5), /* Large semi-transparent overlay outside */
         inset 0 0 0 1px rgba(255, 255, 255, 0.1); /* Subtle inner border */
 }
 
