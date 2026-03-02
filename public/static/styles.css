@@ -1,14 +1,32 @@
 /* Custom Styles */
 
-/* Ensure main layout doesn't overflow */
+/* Ensure main layout doesn't overflow and sidebars stay fixed */
 .flex.h-screen {
     overflow: hidden !important;
+    width: 100vw !important;
+    max-width: 100vw !important;
 }
 
-/* Make canvas container area scrollable and constrained */
+/* Left sidebar - fixed width, scrollable */
+.w-80.bg-gray-800 {
+    flex-shrink: 0 !important;
+    overflow-y: auto !important;
+    max-height: 100vh !important;
+}
+
+/* Right sidebar - fixed width, scrollable */
+.w-96.bg-gray-800 {
+    flex-shrink: 0 !important;
+    overflow-y: auto !important;
+    max-height: 100vh !important;
+}
+
+/* Canvas area - take remaining space and be scrollable */
 .flex-1.flex.items-center.justify-center {
     overflow: auto !important;
-    min-width: 0 !important; /* Allow flex item to shrink below content size */
+    min-width: 0 !important;
+    max-width: 100% !important;
+    flex: 1 1 0 !important;
 }
 
 /* Reduce all font sizes by 2px */
@@ -181,11 +199,10 @@ input, select, button, textarea, label {
 /* Canvas container with overflow visible to show elements outside */
 #canvasContainer {
     position: relative;
-    padding: 200px !important; /* Generous padding for overflow area */
+    padding: 100px !important; /* Reduced from 200px for better fit */
     background: rgba(30, 41, 59, 0.7); /* Dark background for overflow area */
-    overflow: auto !important; /* Make it scrollable for large canvases */
-    max-width: 100% !important; /* Don't exceed viewport width */
-    max-height: 100vh !important; /* Don't exceed viewport height */
+    overflow: visible !important; /* Allow overflow elements to show */
+    display: inline-block !important; /* Shrink to content size */
 }
 
 /* Add semi-transparent overlay around canvas using box-shadow on wrapper */
