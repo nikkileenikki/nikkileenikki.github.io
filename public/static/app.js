@@ -1448,8 +1448,24 @@
             let newX = e.pageX - canvasOffset.left - dragOffset.x;
             let newY = e.pageY - canvasOffset.top - dragOffset.y;
             
-            newX = Math.max(0, Math.min(newX, canvasWidth - element.width));
-            newY = Math.max(0, Math.min(newY, canvasHeight - element.height));
+            // Only clamp if element is smaller than canvas
+            // Allow larger elements to move freely
+            const maxX = canvasWidth - element.width;
+            const maxY = canvasHeight - element.height;
+            
+            if (maxX >= 0) {
+                newX = Math.max(0, Math.min(newX, maxX));
+            } else {
+                // Element is wider than canvas, allow it to move left (negative values)
+                newX = Math.max(maxX, Math.min(newX, 0));
+            }
+            
+            if (maxY >= 0) {
+                newY = Math.max(0, Math.min(newY, maxY));
+            } else {
+                // Element is taller than canvas, allow it to move up (negative values)
+                newY = Math.max(maxY, Math.min(newY, 0));
+            }
             
             element.x = newX;
             element.y = newY;
