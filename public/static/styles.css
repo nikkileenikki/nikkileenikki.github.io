@@ -1,75 +1,57 @@
 /* Custom Styles */
 
-/* Global UI scaling - 95% of original size with minimum 16px font */
-* {
-    font-size: max(16px, 95%) !important;
-}
+/* Remove global font size scaling - let Tailwind handle it naturally */
+/* Base font size is 16px which meets accessibility requirements */
 
-/* Ensure minimum font sizes for text elements */
-body, p, span, div, label {
-    font-size: max(16px, 0.95rem) !important;
-}
+/* Adjust base spacing and sizing to be more compact */
+.p-1 { padding: 0.2rem !important; }
+.p-2 { padding: 0.4rem !important; }
+.p-3 { padding: 0.6rem !important; }
+.p-4 { padding: 0.8rem !important; }
+.p-6 { padding: 1.2rem !important; }
+.p-8 { padding: 1.6rem !important; }
 
-/* Form elements with minimum 16px */
-input, select, button, textarea {
-    font-size: max(16px, 95%) !important;
-}
+.px-1 { padding-left: 0.2rem !important; padding-right: 0.2rem !important; }
+.px-2 { padding-left: 0.4rem !important; padding-right: 0.4rem !important; }
+.px-3 { padding-left: 0.6rem !important; padding-right: 0.6rem !important; }
+.px-4 { padding-left: 0.8rem !important; padding-right: 0.8rem !important; }
 
-/* Specific Tailwind text size overrides with 16px minimum */
-.text-xs { font-size: max(16px, 0.75rem) !important; }
-.text-sm { font-size: max(16px, 0.875rem) !important; }
-.text-base { font-size: max(16px, 1rem) !important; }
-.text-lg { font-size: max(16px, 1.125rem) !important; }
-.text-xl { font-size: max(16px, 1.25rem) !important; }
-.text-2xl { font-size: max(16px, 1.5rem) !important; }
-.text-3xl { font-size: max(16px, 1.875rem) !important; }
+.py-1 { padding-top: 0.2rem !important; padding-bottom: 0.2rem !important; }
+.py-2 { padding-top: 0.4rem !important; padding-bottom: 0.4rem !important; }
+.py-3 { padding-top: 0.6rem !important; padding-bottom: 0.6rem !important; }
+.py-4 { padding-top: 0.8rem !important; padding-bottom: 0.8rem !important; }
 
-/* Adjust base spacing and sizing */
-.p-1 { padding: 0.2375rem !important; }
-.p-2 { padding: 0.475rem !important; }
-.p-3 { padding: 0.7125rem !important; }
-.p-4 { padding: 0.95rem !important; }
-.p-6 { padding: 1.425rem !important; }
-.p-8 { padding: 1.9rem !important; }
+.m-1 { margin: 0.2rem !important; }
+.m-2 { margin: 0.4rem !important; }
+.m-3 { margin: 0.6rem !important; }
+.m-4 { margin: 0.8rem !important; }
 
-.px-1 { padding-left: 0.2375rem !important; padding-right: 0.2375rem !important; }
-.px-2 { padding-left: 0.475rem !important; padding-right: 0.475rem !important; }
-.px-3 { padding-left: 0.7125rem !important; padding-right: 0.7125rem !important; }
-.px-4 { padding-left: 0.95rem !important; padding-right: 0.95rem !important; }
+.mb-1 { margin-bottom: 0.2rem !important; }
+.mb-2 { margin-bottom: 0.4rem !important; }
+.mb-3 { margin-bottom: 0.6rem !important; }
+.mb-4 { margin-bottom: 0.8rem !important; }
+.mb-6 { margin-bottom: 1.2rem !important; }
 
-.py-1 { padding-top: 0.2375rem !important; padding-bottom: 0.2375rem !important; }
-.py-2 { padding-top: 0.475rem !important; padding-bottom: 0.475rem !important; }
-.py-3 { padding-top: 0.7125rem !important; padding-bottom: 0.7125rem !important; }
-.py-4 { padding-top: 0.95rem !important; padding-bottom: 0.95rem !important; }
+.mt-1 { margin-top: 0.2rem !important; }
+.mt-2 { margin-top: 0.4rem !important; }
+.mt-3 { margin-top: 0.6rem !important; }
+.mt-4 { margin-top: 0.8rem !important; }
 
-.m-1 { margin: 0.2375rem !important; }
-.m-2 { margin: 0.475rem !important; }
-.m-3 { margin: 0.7125rem !important; }
-.m-4 { margin: 0.95rem !important; }
+.gap-1 { gap: 0.2rem !important; }
+.gap-2 { gap: 0.4rem !important; }
+.gap-3 { gap: 0.6rem !important; }
+.gap-4 { gap: 0.8rem !important; }
 
-.mb-1 { margin-bottom: 0.2375rem !important; }
-.mb-2 { margin-bottom: 0.475rem !important; }
-.mb-3 { margin-bottom: 0.7125rem !important; }
-.mb-4 { margin-bottom: 0.95rem !important; }
-.mb-6 { margin-bottom: 1.425rem !important; }
+.space-x-1 > * + * { margin-left: 0.2rem !important; }
+.space-x-2 > * + * { margin-left: 0.4rem !important; }
+.space-x-3 > * + * { margin-left: 0.6rem !important; }
+.space-x-4 > * + * { margin-left: 0.8rem !important; }
 
-.mt-1 { margin-top: 0.2375rem !important; }
-.mt-2 { margin-top: 0.475rem !important; }
-.mt-3 { margin-top: 0.7125rem !important; }
-.mt-4 { margin-top: 0.95rem !important; }
-
-.gap-1 { gap: 0.2375rem !important; }
-.gap-2 { gap: 0.475rem !important; }
-.gap-3 { gap: 0.7125rem !important; }
-.gap-4 { gap: 0.95rem !important; }
-
-.space-x-1 > * + * { margin-left: 0.2375rem !important; }
-.space-x-2 > * + * { margin-left: 0.475rem !important; }
-.space-x-3 > * + * { margin-left: 0.7125rem !important; }
-.space-x-4 > * + * { margin-left: 0.95rem !important; }
-
-.w-80 { width: 19rem !important; }
+.w-80 { width: 16rem !important; }
 .w-full { width: 100% !important; }
+
+/* Tailwind text sizes remain at default (base is 16px) */
+/* .text-xs = 12px, .text-sm = 14px, .text-base = 16px, etc. */
 
 /* Hide scrollbar but keep scrollable in left sidebar */
 .overflow-y-auto::-webkit-scrollbar {
