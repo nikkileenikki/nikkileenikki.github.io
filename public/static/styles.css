@@ -42,6 +42,7 @@
     position: absolute;
     cursor: move;
     border: none;
+    z-index: 10; /* Ensure elements appear above the canvas overlay */
 }
 
 .canvas-element.selected {
@@ -99,6 +100,31 @@
     box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
 }
 
+/* Canvas container with overflow visible to show elements outside */
+#canvasContainer {
+    position: relative;
+}
+
+/* Add padding to canvasContainer to provide space for elements outside canvas */
+#canvasContainer {
+    padding: 200px !important; /* Generous padding for overflow area */
+}
+
+/* Overlay mask to make area outside canvas semi-transparent */
+#canvasWrapper::before {
+    content: '';
+    position: absolute;
+    top: -200px;
+    left: -200px;
+    right: -200px;
+    bottom: -200px;
+    pointer-events: none;
+    z-index: 1000;
+    box-shadow: 
+        0 0 0 200px rgba(30, 41, 59, 0.6); /* Dark semi-transparent overlay outside canvas */
+}
+
+/* Canvas with visible overflow */
 #canvas {
     background: 
         linear-gradient(45deg, #f0f0f0 25%, transparent 25%),
@@ -108,6 +134,9 @@
     background-size: 20px 20px;
     background-position: 0 0, 0 10px, 10px -10px, -10px 0px;
     background-color: white;
+    position: relative;
+    z-index: 1;
+    overflow: visible !important; /* Allow elements to overflow */
 }
 
 .anim-item {
