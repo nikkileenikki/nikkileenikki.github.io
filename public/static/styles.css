@@ -28,27 +28,32 @@
     flex-direction: column !important;
 }
 
-/* Canvas area - scrollable and centered, takes remaining space */
+/* Canvas area - takes remaining space, constrains canvas container */
 .flex-1.flex.items-center.justify-center {
-    overflow: auto !important;
+    overflow: hidden !important; /* Hide overflow, let canvasContainer handle scrolling */
     min-width: 0 !important;
     max-width: 100% !important;
     flex: 1 1 0 !important;
     display: flex !important;
-    align-items: center !important;
-    justify-content: center !important;
+    align-items: stretch !important; /* Stretch to fill */
+    justify-content: stretch !important; /* Stretch to fill */
 }
 
-/* Canvas container with overflow visible to show elements outside */
+/* Canvas container - scrollable with constrained size */
 #canvasContainer {
     position: relative;
     padding: 100px !important; /* Padding for overflow area */
     background: rgba(30, 41, 59, 0.7); /* Dark background for overflow area */
-    overflow: visible !important; /* Allow overflow elements to show beyond container */
-    flex-shrink: 0 !important; /* Don't shrink, let parent scroll instead */
+    overflow: auto !important; /* Scrollable when content exceeds container */
+    flex-shrink: 0 !important; /* Don't shrink */
     display: flex !important;
     align-items: center !important;
     justify-content: center !important;
+    /* Constrain size so it doesn't push timeline down */
+    max-width: 100% !important;
+    max-height: 100% !important;
+    width: 100% !important;
+    height: 100% !important;
 }
 .text-xs { font-size: 10px !important; }  /* Was 12px */
 .text-sm { font-size: 12px !important; }  /* Was 14px */
@@ -214,6 +219,7 @@ input, select, button, textarea, label {
 #canvasWrapper {
     box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
     position: relative;
+    flex-shrink: 0 !important; /* Maintain banner size, don't shrink */
 }
 
 /* Canvas container with overflow visible to show elements outside */
