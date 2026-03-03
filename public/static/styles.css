@@ -21,11 +21,13 @@
     max-height: 100vh !important;
 }
 
-/* Middle section containing canvas and timeline - constrain to screen height */
+/* Middle section containing canvas and timeline - constrain to screen height and calculate width */
 .flex-1.flex.flex-col.overflow-hidden.bg-gray-900 {
     max-height: 100vh !important;
     display: flex !important;
     flex-direction: column !important;
+    width: calc(100vw - 16rem) !important; /* Full width minus left panel (w-80 = 16rem) */
+    max-width: calc(100vw - 16rem) !important;
 }
 
 /* Canvas area - takes remaining space, constrains canvas container */
