@@ -39,7 +39,7 @@
     justify-content: stretch !important; /* Stretch to fill */
 }
 
-/* Canvas container - scrollable with constrained size */
+/* Canvas container - scrollable with constrained size, always center content */
 #canvasContainer {
     position: relative;
     padding: 100px !important; /* Padding for overflow area */

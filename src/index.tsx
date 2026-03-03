@@ -570,9 +570,11 @@ app.get('/', (c) => {
                 <!-- Canvas -->
                 <div class="flex-1 flex flex-col overflow-hidden bg-gray-900">
                     <div id="canvasContainer" class="flex-1 flex items-center justify-center p-8 overflow-auto">
-                        <div id="canvasWrapper" class="relative shadow-2xl" style="width: 300px; height: 250px;">
-                            <div id="canvas" class="w-full h-full relative overflow-hidden">
-                                <!-- Elements will be added here -->
+                        <div class="inline-flex items-center justify-center">
+                            <div id="canvasWrapper" class="relative shadow-2xl" style="width: 300px; height: 250px;">
+                                <div id="canvas" class="w-full h-full relative overflow-hidden">
+                                    <!-- Elements will be added here -->
+                                </div>
                             </div>
                         </div>
                     </div>
