@@ -1407,12 +1407,23 @@
     function handleElementMouseDown(e) {
         if ($(e.target).hasClass('resize-handle')) return;
         
-        e.preventDefault();
+        // Don't prevent default if clicking on video controls
+        const $target = $(e.target);
+        const isVideoControl = $target.is('video') || $target.closest('video').length > 0;
+        
+        if (!isVideoControl) {
+            e.preventDefault();
+        }
         e.stopPropagation();
         
         const $element = $(e.currentTarget);
         const id = $element.attr('id');
         selectElement(id);
+        
+        // Don't start dragging if clicking on video controls
+        if (isVideoControl) {
+            return;
+        }
         
         isDragging = true;
         const element = elements.find(el => el.id === id);
