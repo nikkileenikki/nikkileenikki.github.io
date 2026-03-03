@@ -1004,7 +1004,7 @@
             width: canvasWidth,
             height: canvasHeight,
             rotation: 0,
-            opacity: 0.3,
+            opacity: 1.0,
             zIndex: elements.length, // Follow normal z-index sorting
             animations: [],
             interactions: initInteractionProperties()
@@ -1021,11 +1021,19 @@
                 opacity: ${element.opacity};
                 transform: rotate(${element.rotation}deg);
                 z-index: ${element.zIndex};
+                background: repeating-linear-gradient(
+                    45deg,
+                    rgba(168, 85, 247, 0.1),
+                    rgba(168, 85, 247, 0.1) 10px,
+                    rgba(168, 85, 247, 0.2) 10px,
+                    rgba(168, 85, 247, 0.2) 20px
+                );
+                border: 2px dashed rgba(168, 85, 247, 0.5);
             ">
                 <div style="text-align: center; color: rgba(168, 85, 247, 0.8); pointer-events: none;">
                     <i class="fas fa-mouse-pointer text-2xl mb-2"></i>
                     <div class="text-xs">Clickthrough</div>
-                    <div class="text-xs font-bold">${url || '(No URL)'}</div>
+                    ${url ? `<div class="text-xs font-bold">${url}</div>` : ''}
                 </div>
                 <div class="resize-handle nw"></div>
                 <div class="resize-handle ne"></div>
@@ -3188,11 +3196,19 @@
                     opacity: ${element.opacity};
                     transform: rotate(${element.rotation}deg);
                     z-index: ${element.zIndex};
+                    background: repeating-linear-gradient(
+                        45deg,
+                        rgba(168, 85, 247, 0.1),
+                        rgba(168, 85, 247, 0.1) 10px,
+                        rgba(168, 85, 247, 0.2) 10px,
+                        rgba(168, 85, 247, 0.2) 20px
+                    );
+                    border: 2px dashed rgba(168, 85, 247, 0.5);
                 ">
                     <div style="text-align: center; color: rgba(168, 85, 247, 0.8); pointer-events: none;">
                         <i class="fas fa-mouse-pointer text-2xl mb-2"></i>
                         <div class="text-xs">Clickthrough</div>
-                        <div class="text-xs font-bold">${element.url || '(No URL)'}</div>
+                        ${element.url ? `<div class="text-xs font-bold">${element.url}</div>` : ''}
                     </div>
                     <div class="resize-handle nw"></div>
                     <div class="resize-handle ne"></div>
