@@ -773,7 +773,7 @@
     // CLICKTHROUGH MANAGEMENT
     // ============================================
     function openClickthroughModal() {
-        $('#clickthroughUrl').val('https://kult.my');
+        $('#clickthroughUrl').val(''); // Empty by default - no default URL
         $('#clickthroughTarget').val('_blank');
         $clickthroughModal.removeClass('hidden');
         setTimeout(() => $('#clickthroughUrl').focus(), 100);
@@ -784,7 +784,7 @@
     }
     
     function saveClickthrough() {
-        const url = $('#clickthroughUrl').val() || 'https://kult.my';
+        const url = $('#clickthroughUrl').val() || ''; // Allow empty URL
         const target = $('#clickthroughTarget').val() || '_blank';
         addClickthroughToCanvas(url, target);
         closeClickthroughModal();
@@ -1005,7 +1005,7 @@
             height: canvasHeight,
             rotation: 0,
             opacity: 0.3,
-            zIndex: 9999,
+            zIndex: elements.length, // Follow normal z-index sorting
             animations: [],
             interactions: initInteractionProperties()
         };
@@ -1025,7 +1025,7 @@
                 <div style="text-align: center; color: rgba(168, 85, 247, 0.8); pointer-events: none;">
                     <i class="fas fa-mouse-pointer text-2xl mb-2"></i>
                     <div class="text-xs">Clickthrough</div>
-                    <div class="text-xs font-bold">${url}</div>
+                    <div class="text-xs font-bold">${url || '(No URL)'}</div>
                 </div>
                 <div class="resize-handle nw"></div>
                 <div class="resize-handle ne"></div>
@@ -1839,8 +1839,8 @@
         const $clickthroughProps = $('#clickthroughProps');
         if (element.type === 'clickthrough') {
             $clickthroughProps.removeClass('hidden');
-            $('#propClickUrl').val(element.url);
-            $('#propClickTarget').val(element.target);
+            $('#propClickUrl').val(element.url || ''); // Show empty if no URL
+            $('#propClickTarget').val(element.target || '_blank');
         } else {
             $clickthroughProps.addClass('hidden');
         }
@@ -3181,7 +3181,7 @@
                     <div style="text-align: center; color: rgba(168, 85, 247, 0.8); pointer-events: none;">
                         <i class="fas fa-mouse-pointer text-2xl mb-2"></i>
                         <div class="text-xs">Clickthrough</div>
-                        <div class="text-xs font-bold">${element.url}</div>
+                        <div class="text-xs font-bold">${element.url || '(No URL)'}</div>
                     </div>
                     <div class="resize-handle nw"></div>
                     <div class="resize-handle ne"></div>
@@ -3809,9 +3809,11 @@
                 }
             } else if (element.type === 'clickthrough') {
                 // Use div with JavaScript click handler instead of <a> tag
+                // Only include data-url and data-target if URL exists
                 const clickIndex = elements.filter(el => el.type === 'clickthrough').findIndex(el => el.id === element.id) + 1;
+                const dataAttrs = element.url ? `data-url="${element.url}" data-target="${element.target}" data-click-index="${clickIndex}"` : '';
                 elementsHtml += `
-        <div id="${element.id}" class="clickthrough-zone" data-url="${element.url}" data-target="${element.target}" data-click-index="${clickIndex}" style="
+        <div id="${element.id}" class="clickthrough-zone" ${dataAttrs} style="
             position: absolute;
             left: ${element.x}px;
             top: ${element.y}px;
@@ -3819,7 +3821,7 @@
             height: ${element.height}px;
             opacity: 0;
             z-index: ${element.zIndex};
-            cursor: pointer;
+            cursor: ${element.url ? 'pointer' : 'default'};
         "></div>`;
             } else if (element.type === 'invisible') {
                 // Invisible layer - render as an empty div with opacity 0
@@ -4400,10 +4402,19 @@
     // ZOOM CONTROLS
     // ============================================
     function updateStageZoom() {
-        // Update the wrapper's transform scale
+        // Get current canvas dimensions
+        const currentWidth = canvasWidth;
+        const currentHeight = canvasHeight;
+        
+        // Update the wrapper's transform scale and dimensions
+        // Set wrapper size to scaled dimensions so it doesn't take up full space in layout
         $canvasWrapper.css({
             'transform': `scale(${stageZoom})`,
-            'transform-origin': 'center center'
+            'transform-origin': 'center center',
+            'width': `${currentWidth}px`,
+            'height': `${currentHeight}px`,
+            // Use margin to compensate for transform scale space
+            'margin': `${currentHeight * (1 - stageZoom) / 2}px ${currentWidth * (1 - stageZoom) / 2}px`
         });
         
         // Update zoom level display
