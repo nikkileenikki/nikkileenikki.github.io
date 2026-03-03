@@ -4207,11 +4207,22 @@
                         this.play();
                     });
                 } else if (playTrigger === 'click') {
-                    video.addEventListener('click', function() {
-                        if (this.paused) {
-                            this.play();
-                        } else {
-                            this.pause();
+                    video.addEventListener('click', function(e) {
+                        // Don't toggle play/pause if clicking on video controls
+                        // Check if click is on the video controls area (bottom ~40px)
+                        const videoRect = this.getBoundingClientRect();
+                        const clickY = e.clientY - videoRect.top;
+                        const hasControls = this.hasAttribute('controls');
+                        const controlsHeight = 40; // Approximate height of controls bar
+                        const clickedOnControls = hasControls && clickY > (videoRect.height - controlsHeight);
+                        
+                        if (!clickedOnControls) {
+                            // Only toggle play/pause if not clicking on controls
+                            if (this.paused) {
+                                this.play();
+                            } else {
+                                this.pause();
+                            }
                         }
                     });
                 }
