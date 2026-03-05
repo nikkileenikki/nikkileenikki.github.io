@@ -3846,7 +3846,11 @@
     }
     
     function playTimeline() {
-        if (elements.length === 0 || !elements.some(el => el.animations.length > 0)) {
+        // Check if there are any animations on elements or folders
+        const hasElementAnimations = elements.some(el => el.animations && el.animations.length > 0);
+        const hasFolderAnimations = groups.some(g => g.animations && g.animations.length > 0);
+        
+        if (elements.length === 0 || (!hasElementAnimations && !hasFolderAnimations)) {
             alert('Please add some animations first');
             return;
         }
