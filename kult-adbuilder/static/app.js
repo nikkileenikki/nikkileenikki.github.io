@@ -2753,13 +2753,30 @@
     }
     
     function saveAnimation() {
+        console.log('saveAnimation called');
+        console.log('selectedElement:', selectedElement);
+        console.log('selectedFolder:', selectedFolder);
+        
         // Check if we're editing a folder or element
         const isFolder = selectedFolder !== null;
         const target = isFolder ? 
             groups.find(g => g.id === selectedFolder) : 
             elements.find(el => el.id === selectedElement);
         
-        if (!target) return;
+        console.log('isFolder:', isFolder);
+        console.log('target:', target);
+        
+        if (!target) {
+            console.error('No target found!');
+            alert('Error: No element or folder selected. Please try again.');
+            return;
+        }
+        
+        // Ensure animations array exists
+        if (!target.animations) {
+            console.warn('Target has no animations array, initializing...');
+            target.animations = [];
+        }
         
         // Get all selected animation types from dropdowns
         const selectedTypes = [];
@@ -2768,10 +2785,14 @@
         const zoom = $('#animZoom').val();
         const rotate = $('#animRotate').val();
         
+        console.log('Animation values - fade:', fade, 'slide:', slide, 'zoom:', zoom, 'rotate:', rotate);
+        
         if (fade) selectedTypes.push(fade);
         if (slide) selectedTypes.push(slide);
         if (zoom) selectedTypes.push(zoom);
         if (rotate) selectedTypes.push(rotate);
+        
+        console.log('selectedTypes:', selectedTypes);
         
         if (selectedTypes.length === 0) {
             alert('Please select at least one animation effect');
@@ -2782,8 +2803,11 @@
         const duration = Math.round(parseFloat($('#animDuration').val()) * 10) / 10;
         const ease = $('#animEase').val();
         
+        console.log('Animation params - start:', start, 'duration:', duration, 'ease:', ease);
+        
         if (editingAnimation) {
             // Update existing animation
+            console.log('Updating existing animation:', editingAnimation);
             const anim = target.animations.find(a => a.id === editingAnimation.animId);
             if (anim && selectedTypes.length > 0) {
                 anim.type = selectedTypes[0];
@@ -2794,6 +2818,7 @@
             }
         } else {
             // Add new animations - create one timeline item with multiple types
+            console.log('Creating new animation');
             const animationId = `anim_${Date.now()}`;
             const animation = {
                 id: animationId,
@@ -2805,13 +2830,17 @@
                 customProps: {}
             };
             
+            console.log('New animation object:', animation);
             target.animations.push(animation);
+            console.log('Target animations after push:', target.animations);
         }
         
+        console.log('Saving state and updating timeline...');
         saveState(); // Save state for undo
         rebuildTimeline();
         updateTimelineTracks();
         closeAnimationModal();
+        console.log('Animation saved successfully');
     }
     
     function deleteEditingAnimation() {
