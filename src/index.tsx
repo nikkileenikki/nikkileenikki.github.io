@@ -142,6 +142,37 @@ app.get('/', (c) => {
                     <div id="propertiesPanel" class="mb-2 hidden">
                         <h2 class="text-lg font-semibold mb-3">Properties</h2>
                         <div class="space-y-2 bg-gray-900 rounded-lg p-3">
+                            <!-- Common Properties - Always visible -->
+                            <div class="grid grid-cols-2 gap-2 pb-3 border-b border-gray-700">
+                                <div>
+                                    <label class="text-sm text-gray-400">Width</label>
+                                    <input type="number" id="propWidth" class="w-full bg-gray-800 rounded px-3 py-2 text-sm">
+                                </div>
+                                <div>
+                                    <label class="text-sm text-gray-400">Height</label>
+                                    <input type="number" id="propHeight" class="w-full bg-gray-800 rounded px-3 py-2 text-sm">
+                                </div>
+                                <div>
+                                    <label class="text-sm text-gray-400">X Position</label>
+                                    <input type="number" id="propX" class="w-full bg-gray-800 rounded px-3 py-2 text-sm">
+                                </div>
+                                <div>
+                                    <label class="text-sm text-gray-400">Y Position</label>
+                                    <input type="number" id="propY" class="w-full bg-gray-800 rounded px-3 py-2 text-sm">
+                                </div>
+                                <div>
+                                    <label class="text-sm text-gray-400">Rotation</label>
+                                    <input type="number" id="propRotation" class="w-full bg-gray-800 rounded px-3 py-2 text-sm" placeholder="degrees">
+                                </div>
+                                <div>
+                                    <label class="text-sm text-gray-400">Opacity</label>
+                                    <div>
+                                        <input type="range" id="propOpacity" class="w-full" min="0" max="1" step="0.1" value="1">
+                                        <span id="opacityValue" class="text-xs text-gray-500">100%</span>
+                                    </div>
+                                </div>
+                            </div>
+                            
                             <!-- Text Properties -->
                             <div id="textProps" class="hidden space-y-2 pb-3 border-b border-gray-700">
                                 <div>
@@ -367,37 +398,6 @@ app.get('/', (c) => {
                                         <input type="checkbox" id="propVideoControls" class="w-4 h-4 mr-2">
                                         <span class="text-sm text-gray-300">Controls</span>
                                     </label>
-                                </div>
-                            </div>
-                            
-                            <!-- Common Properties -->
-                            <div class="grid grid-cols-2 gap-2">
-                                <div>
-                                    <label class="text-sm text-gray-400">Width</label>
-                                    <input type="number" id="propWidth" class="w-full bg-gray-800 rounded px-3 py-2 text-sm">
-                                </div>
-                                <div>
-                                    <label class="text-sm text-gray-400">Height</label>
-                                    <input type="number" id="propHeight" class="w-full bg-gray-800 rounded px-3 py-2 text-sm">
-                                </div>
-                                <div>
-                                    <label class="text-sm text-gray-400">X Position</label>
-                                    <input type="number" id="propX" class="w-full bg-gray-800 rounded px-3 py-2 text-sm">
-                                </div>
-                                <div>
-                                    <label class="text-sm text-gray-400">Y Position</label>
-                                    <input type="number" id="propY" class="w-full bg-gray-800 rounded px-3 py-2 text-sm">
-                                </div>
-                                <div>
-                                    <label class="text-sm text-gray-400">Rotation</label>
-                                    <input type="number" id="propRotation" class="w-full bg-gray-800 rounded px-3 py-2 text-sm" placeholder="degrees">
-                                </div>
-                                <div>
-                                    <label class="text-sm text-gray-400">Opacity</label>
-                                    <div>
-                                        <input type="range" id="propOpacity" class="w-full" min="0" max="1" step="0.1" value="1">
-                                        <span id="opacityValue" class="text-xs text-gray-500">100%</span>
-                                    </div>
                                 </div>
                             </div>
                             
