@@ -2015,12 +2015,24 @@
         e.stopPropagation();
         const id = $(e.currentTarget).data('id');
         
+        console.log('handleAddLayerAnimation clicked, id:', id);
+        
+        if (!id) {
+            console.error('No element ID found');
+            alert('No element ID found. Please try again.');
+            return;
+        }
+        
         // Check if it's a folder or element
-        if (id && id.startsWith('folder_')) {
+        if (id.startsWith('folder_')) {
+            console.log('Selecting folder:', id);
             selectFolder(id);
         } else {
+            console.log('Selecting element:', id);
             selectElement(id);
         }
+        
+        console.log('selectedElement after selection:', selectedElement);
         
         openAnimationModal();
     }
@@ -2658,8 +2670,11 @@
     // ANIMATION & TIMELINE
     // ============================================
     function openAnimationModal() {
+        console.log('openAnimationModal called, selectedElement:', selectedElement);
+        
         if (!selectedElement) {
-            alert('Please select an element first');
+            console.error('No element selected');
+            alert('Please select an element first by clicking on it in the canvas or layers panel');
             return;
         }
         
@@ -2676,6 +2691,7 @@
         $('#animZoom').val('');
         $('#animRotate').val('');
         
+        console.log('Opening animation modal');
         $animModal.removeClass('hidden');
         setTimeout(() => $('#animStart').focus(), 100);
     }
