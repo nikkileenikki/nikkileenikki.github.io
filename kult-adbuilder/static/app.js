@@ -197,6 +197,11 @@
                 !$target.closest('.properties-panel').length &&
                 !$target.closest('#propertiesPanel').length &&
                 !$target.closest('.modal').length &&
+                !$target.closest('#animModal').length && // Animation modal
+                !$target.closest('#textModal').length && // Text modal
+                !$target.closest('#shapeModal').length && // Shape modal
+                !$target.closest('#videoModal').length && // Video modal
+                !$target.closest('#clickthroughModal').length && // Clickthrough modal
                 !$target.closest('.layers-panel').length &&
                 !$target.closest('.timeline').length &&
                 !$target.closest('.w-80').length) { // Left sidebar
