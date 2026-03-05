@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8" />
+<title>Timeline Folder Integration Test</title>
+<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+<script src="https://code.jquery.com/ui/1.13.3/jquery-ui.min.js"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<style>
+  body { background: #1e1e22; font-family: sans-serif; padding: 20px; color: #fff; }
+  .timeline-container { width: 600px; background: #2a2a30; padding: 10px; border-radius: 10px; }
+  
+  #timelineTracks {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    min-height: 200px;
+  }
+
+  .timeline-track {
+    background: #3a3a42;
+    color: #fff;
+    padding: 8px;
+    margin: 6px 0;
+    border-radius: 8px;
+    font-size: 13px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  
+  .timeline-track-label {
+    display: flex;
+    align-items: center;
+    flex: 1;
+    gap: 8px;
+  }
+  
+  .timeline-folder {
+    margin: 6px 0;
+  }
+
+  .timeline-folder-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: #4a4a52;
+    color: #fff;
+    padding: 8px;
+    border-radius: 8px;
+    font-size: 13px;
+  }
+
+  .timeline-folder-header:hover {
+    background: #5a5a62;
+  }
+
+  .timeline-folder-toggle {
+    width: 18px;
+    text-align: center;
+    cursor: pointer;
+    user-select: none;
+    opacity: 0.9;
+  }
+
+  .timeline-folder-children {
+    margin-left: 18px;
+    min-height: 40px;
+    padding: 4px 0;
+    border-radius: 8px;
+    list-style: none;
+  }
+
+  .timeline-folder-children:empty {
+    border: 1px dashed rgba(255, 255, 255, 0.18);
+  }
+
+  .timeline-folder.collapsed .timeline-folder-children {
+    display: none;
+  }
+
+  .timeline-handle {
+    width: 18px;
+    text-align: center;
+    opacity: 0.85;
+    cursor: grab;
+    user-select: none;
+  }
+
+  .ui-sortable-placeholder {
+    height: 36px;
+    background: #555;
+    border-radius: 8px;
+    margin: 6px 0;
+    visibility: visible !important;
+  }
+  
+  .btn { background: #4a5568; border: none; color: white; padding: 8px 16px; border-radius: 4px; cursor: pointer; margin-right: 8px; }
+  .btn:hover { background: #5a6578; }
+</style>
+</head>
+<body>
+
+<div style="margin-bottom: 20px;">
+  <button class="btn" onclick="addElement()">Add Layer</button>
+  <button class="btn" onclick="createFolder()">Create Folder</button>
+  <button class="btn" onclick="logStructure()">Log Structure</button>
+</div>
+
+<div class="timeline-container">
+  <ul id="timelineTracks">
+    <li class="timeline-track layer" data-element-id="elem1">
+      <div class="timeline-track-label">
+        <span class="timeline-handle">⋮⋮</span>
+        <i class="fas fa-image text-blue-400"></i>
+        <span>Background</span>
+      </div>
+    </li>
+
+    <li class="timeline-track layer" data-element-id="elem2">
+      <div class="timeline-track-label">
+        <span class="timeline-handle">⋮⋮</span>
+        <i class="fas fa-font text-blue-400"></i>
+        <span>Title</span>
+      </div>
+    </li>
+  </ul>
+</div>
+
+<script>
+  let elemCount = 3;
+  let folderCount = 1;
+
+  function initTimelineSortable() {
+    // Destroy existing sortables
+    if ($("#timelineTracks").hasClass("ui-sortable")) {
+      $("#timelineTracks").sortable("destroy");
+    }
+    $(".timeline-folder-children").each(function() {
+      if ($(this).hasClass("ui-sortable")) {
+        $(this).sortable("destroy");
+      }
+    });
+
+    // Root sortable: accepts both layers and folders
+    $("#timelineTracks").sortable({
+      items: "> .layer, > .timeline-folder",
+      connectWith: ".timeline-folder-children",
+      handle: ".timeline-handle",
+      placeholder: "ui-sortable-placeholder",
+      tolerance: "pointer",
+      forcePlaceholderSize: true,
+      update: function(e, ui) {
+        console.log("Timeline updated");
+        logStructure();
+      }
+    });
+
+    // Folder children: only layers
+    $(".timeline-folder-children").sortable({
+      items: "> .layer",
+      connectWith: "#timelineTracks, .timeline-folder-children",
+      handle: ".timeline-handle",
+      placeholder: "ui-sortable-placeholder",
+      tolerance: "pointer",
+      forcePlaceholderSize: true,
+      receive: function(e, ui) {
+        // Block folders from being moved into folders
+        if (ui.item.hasClass("timeline-folder")) {
+          $(this).sortable("cancel");
+        }
+      },
+      update: function(e, ui) {
+        console.log("Folder children updated");
+        logStructure();
+      }
+    });
+  }
+
+  // Initialize
+  initTimelineSortable();
+
+  // Toggle folder
+  $(document).on("click", ".timeline-folder-toggle", function(e) {
+    e.stopPropagation();
+    const $folder = $(this).closest(".timeline-folder").toggleClass("collapsed");
+    $(this).text($folder.hasClass("collapsed") ? "▸" : "▾");
+  });
+
+  // Add element
+  function addElement() {
+    const $elem = $(`
+      <li class="timeline-track layer" data-element-id="elem${elemCount}">
+        <div class="timeline-track-label">
+          <span class="timeline-handle">⋮⋮</span>
+          <i class="fas fa-image text-blue-400"></i>
+          <span>Layer ${elemCount}</span>
+        </div>
+      </li>
+    `);
+    $("#timelineTracks").prepend($elem);
+    elemCount++;
+  }
+
+  // Create folder
+  function createFolder() {
+    const $folder = $(`
+      <li class="timeline-folder" data-folder-id="folder${folderCount}">
+        <div class="timeline-folder-header">
+          <span class="timeline-handle">⋮⋮</span>
+          <span class="timeline-folder-toggle">▾</span>
+          <i class="fas fa-folder text-yellow-400"></i>
+          <span>Folder ${folderCount}</span>
+        </div>
+        <ul class="timeline-folder-children"></ul>
+      </li>
+    `);
+    $("#timelineTracks").prepend($folder);
+    folderCount++;
+    
+    // Re-init sortable to include new folder children
+    initTimelineSortable();
+  }
+
+  // Log current structure
+  function logStructure() {
+    const structure = [];
+    
+    $("#timelineTracks > li").each(function() {
+      if ($(this).hasClass("timeline-folder")) {
+        const folderId = $(this).data("folder-id");
+        const children = [];
+        $(this).find(".timeline-folder-children > li").each(function() {
+          children.push($(this).data("element-id"));
+        });
+        structure.push({ type: "folder", id: folderId, children });
+      } else {
+        structure.push({ type: "layer", id: $(this).data("element-id") });
+      }
+    });
+    
+    console.log("Current structure:", JSON.stringify(structure, null, 2));
+  }
+</script>
+</body>
+</html>
