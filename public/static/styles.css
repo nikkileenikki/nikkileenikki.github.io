@@ -601,9 +601,16 @@ input, select, button, textarea, label {
 /* Canvas folder wrapper */
 .canvas-folder {
     position: absolute !important;
-    pointer-events: none;
+    pointer-events: none !important; /* Let clicks pass through to elements */
+}
+
+/* When selected, show visual feedback but still let clicks pass through */
+.canvas-folder.selected {
+    outline: 2px dashed rgba(251, 191, 36, 0.5);
+    background: rgba(251, 191, 36, 0.05);
+    pointer-events: none !important; /* Let clicks pass through */
 }
 
 .canvas-folder > .canvas-element {
-    pointer-events: auto;
+    pointer-events: auto; /* Child elements always clickable and take priority */
 }

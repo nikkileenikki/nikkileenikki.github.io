@@ -12,6 +12,9 @@
     const MAX_UNDO_STACK = 50;
     let selectedElement = null;
     let selectedFolder = null; // NEW: Track selected folder
+    let lastClickTime = 0; // Track last click time for multi-click detection
+    let lastClickedElement = null; // Track last clicked element
+    let clickCount = 0; // Track number of clicks for triple-click detection
     let dragOffset = { x: 0, y: 0 };
     let isDragging = false;
     let isResizing = false;
@@ -147,6 +150,7 @@
         $('#createGroupBtn').on('click', createFolder);
         $(document).on('click', '.timeline-folder-toggle', toggleFolder);
         $(document).on('click', '.delete-folder', deleteFolder);
+        $(document).on('click', '.toggle-folder-visibility', toggleFolderVisibility);
         
         // Enter key support for video
         $('#videoUrl, #videoName').on('keypress', function(e) {
@@ -179,9 +183,38 @@
         
         // Canvas interactions
         $canvas.on('mousedown', '.canvas-element', handleElementMouseDown);
+        $canvas.on('mousedown', '.canvas-folder', handleFolderMouseDown);
         $canvas.on('mousedown', '.resize-handle', handleResizeStart);
+        $canvas.on('mousedown', handleCanvasMouseDown); // Click on blank canvas
         $(document).on('mousemove', handleMouseMove);
         $(document).on('mouseup', handleMouseUp);
+        
+        // Click outside canvas to unfocus
+        $(document).on('mousedown', function(e) {
+            const $target = $(e.target);
+            // Check if click is outside canvas container and not on UI elements (panels, modals, etc.)
+            if (!$target.closest('#canvasContainer').length && 
+                !$target.closest('.properties-panel').length &&
+                !$target.closest('#propertiesPanel').length &&
+                !$target.closest('.modal').length &&
+                !$target.closest('.layers-panel').length &&
+                !$target.closest('.timeline').length &&
+                !$target.closest('.w-80').length) { // Left sidebar
+                // Clicking outside canvas area - deselect everything
+                selectedElement = null;
+                selectedFolder = null;
+                clickCount = 0;
+                lastClickedElement = null;
+                
+                $('.canvas-element').removeClass('selected');
+                $('.canvas-folder').removeClass('selected');
+                $('.layer-item').removeClass('selected');
+                $('.timeline-track').removeClass('selected');
+                $('.timeline-folder').removeClass('selected');
+                
+                updatePropertiesPanel();
+            }
+        });
         
         // Deselect element when clicking on canvas container background only
         $(document).on('mousedown', '#canvasContainer', function(e) {
@@ -202,6 +235,7 @@
         $layersList.on('click', '.delete-layer', handleDeleteLayer);
         $layersList.on('click', '.add-layer-anim', handleAddLayerAnimation);
         $layersList.on('click', '.toggle-layer-visibility', toggleLayerVisibility);
+        $layersList.on('click', '.toggle-folder-visibility', toggleFolderVisibility);
         
         // Common properties
         $('#propWidth').on('change', updateElementWidth);
@@ -1426,27 +1460,138 @@
         
         const $element = $(e.currentTarget);
         const id = $element.attr('id');
-        selectElement(id);
+        const element = elements.find(el => el.id === id);
+        if (!element) return;
+        
+        // Check if element is in a folder
+        const inFolder = element.folderId !== undefined && element.folderId !== null;
+        
+        // Multi-click detection (within 300ms)
+        const currentTime = Date.now();
+        const isSameElement = lastClickedElement === id;
+        const isWithinTimeWindow = (currentTime - lastClickTime < 300);
+        
+        if (isSameElement && isWithinTimeWindow) {
+            clickCount++;
+        } else {
+            clickCount = 1;
+        }
+        
+        lastClickTime = currentTime;
+        lastClickedElement = id;
+        
+        const isDoubleClick = clickCount === 2;
         
         // Don't start dragging if clicking on video controls
         if (isVideoControl) {
             return;
         }
         
-        isDragging = true;
-        const element = elements.find(el => el.id === id);
-        if (!element) return;
+        // Check if we have an element selected from a folder
+        const currentSelectedElement = selectedElement ? elements.find(el => el.id === selectedElement) : null;
+        const selectedElementInFolder = currentSelectedElement && currentSelectedElement.folderId;
+        
+        if (inFolder) {
+            // Check if this element is already individually selected
+            if (selectedElement === id) {
+                // Element is already selected → enable dragging
+                isDragging = true;
+            } else if (clickCount === 1) {
+                // First click on element in folder → select folder and enable folder dragging
+                if (selectedElementInFolder && selectedElement !== id) {
+                    // Element from folder is selected, clicking different element → deselect and select folder
+                    selectFolder(element.folderId);
+                } else {
+                    // Normal single click → select folder
+                    selectFolder(element.folderId);
+                }
+                // Enable dragging folder via child element on first click
+                isDragging = true;
+            } else if (isDoubleClick) {
+                // Second click (double-click) → select individual element
+                selectElement(id);
+                return; // Don't start dragging on second click
+            }
+        } else {
+            // Element not in folder → always select element and allow dragging
+            selectElement(id);
+            isDragging = true;
+        }
+        
+        // Only set up drag offset if dragging is enabled
+        if (!isDragging) return;
         
         const canvasOffset = $canvas.offset();
         const $canvasContainer = $('#canvasContainer').parent();
         const scrollLeft = $canvasContainer.scrollLeft() || 0;
         const scrollTop = $canvasContainer.scrollTop() || 0;
         
-        // Store the offset between mouse position and element position (accounting for zoom)
+        if (selectedFolder) {
+            // Dragging folder via child element
+            const folder = groups.find(g => g.id === element.folderId);
+            if (folder) {
+                // Initialize folder position if not set
+                if (folder.x === undefined) folder.x = 0;
+                if (folder.y === undefined) folder.y = 0;
+                
+                dragOffset = {
+                    x: (e.pageX + scrollLeft - canvasOffset.left) / stageZoom - folder.x,
+                    y: (e.pageY + scrollTop - canvasOffset.top) / stageZoom - folder.y
+                };
+            }
+        } else {
+            // Dragging individual element
+            dragOffset = {
+                x: (e.pageX + scrollLeft - canvasOffset.left) / stageZoom - element.x,
+                y: (e.pageY + scrollTop - canvasOffset.top) / stageZoom - element.y
+            };
+        }
+    }
+    
+    function handleFolderMouseDown(e) {
+        const folderId = $(e.currentTarget).attr('id');
+        
+        // Allow selecting folder by clicking on it (even if not already selected)
+        e.preventDefault();
+        e.stopPropagation();
+        
+        // Select folder on click
+        selectFolder(folderId);
+        
+        isDragging = true;
+        
+        const folder = groups.find(g => g.id === folderId);
+        if (!folder) return;
+        
+        const canvasOffset = $canvas.offset();
+        const $canvasContainer = $('#canvasContainer').parent();
+        const scrollLeft = $canvasContainer.scrollLeft() || 0;
+        const scrollTop = $canvasContainer.scrollTop() || 0;
+        
+        // Store initial mouse position and folder offset
         dragOffset = {
-            x: (e.pageX + scrollLeft - canvasOffset.left) / stageZoom - element.x,
-            y: (e.pageY + scrollTop - canvasOffset.top) / stageZoom - element.y
+            x: (e.pageX + scrollLeft - canvasOffset.left) / stageZoom - (folder.x || 0),
+            y: (e.pageY + scrollTop - canvasOffset.top) / stageZoom - (folder.y || 0)
         };
+    }
+    
+    function handleCanvasMouseDown(e) {
+        // Only deselect if clicking directly on canvas (not on elements or folders)
+        if ($(e.target).is('#canvas')) {
+            // Clicking on blank canvas - deselect everything
+            selectedElement = null;
+            selectedFolder = null;
+            clickCount = 0; // Reset click count
+            lastClickedElement = null;
+            
+            $('.canvas-element').removeClass('selected');
+            $('.canvas-folder').removeClass('selected');
+            $('.layer-item').removeClass('selected');
+            $('.timeline-track').removeClass('selected');
+            $('.timeline-folder').removeClass('selected');
+            
+            updatePropertiesPanel();
+        }
     }
     
     function handleResizeStart(e) {
@@ -1461,31 +1606,96 @@
     }
     
     function handleMouseMove(e) {
+        if (!selectedElement && !selectedFolder) return;
+        
+        const canvasOffset = $canvas.offset();
+        const $canvasContainer = $('#canvasContainer').parent();
+        const scrollLeft = $canvasContainer.scrollLeft() || 0;
+        const scrollTop = $canvasContainer.scrollTop() || 0;
+        
+        if (isDragging && selectedFolder) {
+            // Dragging a folder - move all child elements by delta
+            const folder = groups.find(g => g.id === selectedFolder);
+            if (!folder) return;
+            
+            // Initialize folder position if not set
+            if (folder.x === undefined) folder.x = 0;
+            if (folder.y === undefined) folder.y = 0;
+            
+            // Calculate new folder position based on mouse and drag offset
+            let newFolderX = (e.pageX + scrollLeft - canvasOffset.left) / stageZoom - dragOffset.x;
+            let newFolderY = (e.pageY + scrollTop - canvasOffset.top) / stageZoom - dragOffset.y;
+            
+            // Calculate delta from previous folder position
+            const deltaX = newFolderX - folder.x;
+            const deltaY = newFolderY - folder.y;
+            
+            // Update folder position
+            folder.x = newFolderX;
+            folder.y = newFolderY;
+            
+            // Move all child elements by the delta
+            const folderElements = elements.filter(el => el.folderId === folder.id);
+            folderElements.forEach(element => {
+                element.x += deltaX;
+                element.y += deltaY;
+                
+                const $element = $(`#${element.id}`);
+                $element.css({
+                    left: element.x + 'px',
+                    top: element.y + 'px'
+                });
+            });
+            
+            // Update folder wrapper bounds
+            updateFolderBounds(folder.id);
+            
+            updatePropertiesPanel();
+            return;
+        }
+        
         if (!selectedElement) return;
         
         const element = elements.find(el => el.id === selectedElement);
         if (!element) return;
         
         const $element = $(`#${selectedElement}`);
-        const canvasOffset = $canvas.offset();
-        const $canvasContainer = $('#canvasContainer').parent();
-        const scrollLeft = $canvasContainer.scrollLeft() || 0;
-        const scrollTop = $canvasContainer.scrollTop() || 0;
         
         if (isDragging) {
             // Account for zoom, scroll, and canvas offset
             let newX = (e.pageX + scrollLeft - canvasOffset.left) / stageZoom - dragOffset.x;
             let newY = (e.pageY + scrollTop - canvasOffset.top) / stageZoom - dragOffset.y;
             
-            // No clamping - allow elements to move freely anywhere
-            // Elements can go outside canvas boundaries
-            element.x = newX;
-            element.y = newY;
+            // Calculate delta from current position
+            const deltaX = newX - element.x;
+            const deltaY = newY - element.y;
             
-            $element.css({
-                left: newX + 'px',
-                top: newY + 'px'
-            });
+            // Check if this is an individually selected element in a folder
+            const isIndividuallySelected = selectedElement && element.folderId && !selectedFolder;
+            
+            if (element.folderId && !isIndividuallySelected) {
+                // Element in folder but folder is selected - move all elements
+                const folderElements = elements.filter(el => el.folderId === element.folderId);
+                folderElements.forEach(el => {
+                    el.x += deltaX;
+                    el.y += deltaY;
+                    
+                    const $el = $(`#${el.id}`);
+                    $el.css({
+                        left: el.x + 'px',
+                        top: el.y + 'px'
+                    });
+                });
+            } else {
+                // Element not in folder OR individually selected - move only this element
+                element.x = newX;
+                element.y = newY;
+                
+                $element.css({
+                    left: newX + 'px',
+                    top: newY + 'px'
+                });
+            }
             
             updatePropertiesPanel();
         } else if (isResizing) {
@@ -1537,9 +1747,31 @@
         }
     }
     
+    // Update folder visual bounds to wrap child elements
+    function updateFolderBounds(folderId) {
+        const $folder = $(`#${folderId}`);
+        if ($folder.length === 0) return;
+        
+        const bounds = calculateFolderBounds(folderId);
+        $folder.css({
+            left: bounds.left + 'px',
+            top: bounds.top + 'px',
+            width: bounds.width + 'px',
+            height: bounds.height + 'px'
+        });
+    }
+    
+    // Update all folder bounds
+    function updateAllFolderBounds() {
+        groups.forEach(folder => {
+            updateFolderBounds(folder.id);
+        });
+    }
+    
     function handleMouseUp() {
         if (isDragging || isResizing) {
             saveState(); // Save state after drag/resize
+            updateAllFolderBounds(); // Update folder bounds after moving elements
         }
         isDragging = false;
         isResizing = false;
@@ -1646,6 +1878,7 @@
         selectedFolder = null; // Clear folder selection
         
         $('.canvas-element').removeClass('selected');
+        $('.canvas-folder').removeClass('selected'); // Remove from folders
         $(`#${id}`).addClass('selected');
         
         $('.layer-item').removeClass('selected');
@@ -1665,11 +1898,15 @@
         selectedElement = null; // Clear element selection
         
         $('.canvas-element').removeClass('selected');
+        $('.canvas-folder').removeClass('selected'); // Remove from all folders
         $('.layer-item').removeClass('selected');
         $('.timeline-track').removeClass('selected');
         
         $('.timeline-folder').removeClass('selected');
         $(`.timeline-folder[data-folder-id="${folderId}"]`).addClass('selected');
+        
+        // Add selected class to canvas folder for dragging
+        $(`#${folderId}.canvas-folder`).addClass('selected');
         
         updateFolderPropertiesPanel();
     }
@@ -1806,6 +2043,38 @@
         }
         
         updateLayersList();
+    }
+    
+    function toggleFolderVisibility(e) {
+        e.stopPropagation();
+        const id = $(e.currentTarget).data('id') || $(e.currentTarget).data('folder-id');
+        const folder = groups.find(g => g.id === id);
+        if (!folder) return;
+        
+        // Toggle folder visibility
+        folder.visible = folder.visible === false ? true : false;
+        
+        // Update all elements in folder
+        const folderElements = elements.filter(el => el.folderId === folder.id);
+        folderElements.forEach(element => {
+            const $el = $(`#${element.id}`);
+            if (folder.visible === false) {
+                $el.css('visibility', 'hidden');
+            } else {
+                $el.css('visibility', 'visible');
+            }
+        });
+        
+        // Update folder wrapper visibility
+        const $folderWrapper = $(`#${folder.id}`);
+        if (folder.visible === false) {
+            $folderWrapper.css('visibility', 'hidden');
+        } else {
+            $folderWrapper.css('visibility', 'visible');
+        }
+        
+        updateTimelineTracks();
+        saveState();
     }
     
     // ============================================
@@ -2771,6 +3040,9 @@
                                 <i class="fas fa-folder text-yellow-400 mr-2"></i>
                                 <span class="flex-1">${group.name}</span>
                                 <div class="flex items-center gap-1 ml-2">
+                                    <button class="timeline-layer-btn toggle-folder-visibility" data-id="${group.id}" title="Toggle folder visibility">
+                                        <i class="fas ${group.visible === false ? 'fa-eye-slash' : 'fa-eye'} text-xs"></i>
+                                    </button>
                                     <button class="timeline-layer-btn add-layer-anim" data-id="${group.id}" title="Add animation to folder">
                                         <i class="fas fa-plus text-xs"></i>
                                     </button>
@@ -2964,6 +3236,7 @@
             name: `Folder ${folderCounter}`,
             zIndex: elements.length + groups.length,
             collapsed: false,
+            visible: true, // Folder visibility
             x: 0, // Folder position offset
             y: 0,
             animations: [] // Folder can have animations
@@ -3094,20 +3367,34 @@
         console.log('Redo performed. Undo stack:', undoStack.length, 'Redo stack:', redoStack.length);
     }
     
+    // Calculate bounding box for folder based on child elements
+    function calculateFolderBounds(folderId) {
+        const folder = groups.find(g => g.id === folderId);
+        const folderElements = elements.filter(el => el.folderId === folderId);
+        
+        // Folder always fills the entire canvas
+        return {
+            left: 0,
+            top: 0,
+            width: canvasWidth,
+            height: canvasHeight
+        };
+    }
+    
     // Update canvas elements from state
     function updateCanvas() {
         $canvas.find('.canvas-element, .canvas-folder').remove();
         
         // Create folder wrappers first
         groups.forEach(folder => {
+            const bounds = calculateFolderBounds(folder.id);
             const $folderWrapper = $(`
                 <div class="canvas-folder" id="${folder.id}" style="
                     position: absolute;
-                    left: 0;
-                    top: 0;
-                    width: 100%;
-                    height: 100%;
-                    pointer-events: none;
+                    left: ${bounds.left}px;
+                    top: ${bounds.top}px;
+                    width: ${bounds.width}px;
+                    height: ${bounds.height}px;
                     z-index: ${folder.zIndex};
                 "></div>
             `);
@@ -3129,14 +3416,24 @@
     }
     
     // Create DOM element from element data
+    // Get absolute position for element (always use element.x, element.y as absolute positions)
+    function getAbsolutePosition(element) {
+        // Elements always store absolute positions, even when in folders
+        return {
+            x: element.x,
+            y: element.y
+        };
+    }
+    
     function createElementDOM(element) {
+        const pos = getAbsolutePosition(element);
         let $element;
         
         if (element.type === 'text') {
             $element = $(`
                 <div class="canvas-element text-element" id="${element.id}" style="
-                    left: ${element.x}px;
-                    top: ${element.y}px;
+                    left: ${pos.x}px;
+                    top: ${pos.y}px;
                     width: ${element.width}px;
                     height: ${element.height}px;
                     opacity: ${element.opacity};
@@ -3171,8 +3468,8 @@
             
             $element = $(`
                 <div class="canvas-element" id="${element.id}" style="
-                    left: ${element.x}px;
-                    top: ${element.y}px;
+                    left: ${pos.x}px;
+                    top: ${pos.y}px;
                     width: ${element.width}px;
                     height: ${element.height}px;
                     opacity: ${element.opacity};
@@ -3189,8 +3486,8 @@
         } else if (element.type === 'clickthrough') {
             $element = $(`
                 <div class="canvas-element clickthrough-element" id="${element.id}" style="
-                    left: ${element.x}px;
-                    top: ${element.y}px;
+                    left: ${pos.x}px;
+                    top: ${pos.y}px;
                     width: ${element.width}px;
                     height: ${element.height}px;
                     opacity: ${element.opacity};
@@ -3219,8 +3516,8 @@
         } else if (element.type === 'invisible') {
             $element = $(`
                 <div class="canvas-element invisible-element" id="${element.id}" style="
-                    left: ${element.x}px;
-                    top: ${element.y}px;
+                    left: ${pos.x}px;
+                    top: ${pos.y}px;
                     width: ${element.width}px;
                     height: ${element.height}px;
                     opacity: 0.3;
@@ -3248,8 +3545,8 @@
         } else if (element.type === 'image') {
             $element = $(`
                 <div class="canvas-element" id="${element.id}" style="
-                    left: ${element.x}px;
-                    top: ${element.y}px;
+                    left: ${pos.x}px;
+                    top: ${pos.y}px;
                     width: ${element.width}px;
                     height: ${element.height}px;
                     opacity: ${element.opacity};
@@ -3270,8 +3567,8 @@
             
             $element = $(`
                 <div class="canvas-element" id="${element.id}" style="
-                    left: ${element.x}px;
-                    top: ${element.y}px;
+                    left: ${pos.x}px;
+                    top: ${pos.y}px;
                     width: ${element.width}px;
                     height: ${element.height}px;
                     opacity: ${element.opacity};
