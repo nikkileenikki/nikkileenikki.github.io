@@ -2675,11 +2675,11 @@
     // ANIMATION & TIMELINE
     // ============================================
     function openAnimationModal() {
-        console.log('openAnimationModal called, selectedElement:', selectedElement);
+        console.log('openAnimationModal called, selectedElement:', selectedElement, 'selectedFolder:', selectedFolder);
         
-        if (!selectedElement) {
-            console.error('No element selected');
-            alert('Please select an element first by clicking on it in the canvas or layers panel');
+        if (!selectedElement && !selectedFolder) {
+            console.error('No element or folder selected');
+            alert('Please select an element or folder first by clicking on it in the canvas or layers panel');
             return;
         }
         
