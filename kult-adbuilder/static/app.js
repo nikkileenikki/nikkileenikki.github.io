@@ -2114,13 +2114,8 @@
         
         $propertiesPanel.removeClass('hidden');
         
-        // IMPORTANT: Always show all common property fields for elements
-        $('#propWidth').closest('div').removeClass('hidden');
-        $('#propHeight').closest('div').removeClass('hidden');
-        $('#propX').closest('div').removeClass('hidden');
-        $('#propY').closest('div').removeClass('hidden');
-        $('#propRotation').closest('div').removeClass('hidden');
-        $('#propOpacity').closest('div').removeClass('hidden');
+        // IMPORTANT: Always show all common properties grid for elements
+        $('#commonPropertiesGrid').removeClass('hidden');
         
         // Reset panel heading to "Properties"
         $('#propertiesPanel h2').text('Properties');
@@ -2254,15 +2249,8 @@
         $('#shapeProps').addClass('hidden');
         $('#videoProps').addClass('hidden');
         
-        // Hide position/size/rotation properties (folders are full canvas)
-        $('#propWidth').closest('div').addClass('hidden');
-        $('#propHeight').closest('div').addClass('hidden');
-        $('#propX').closest('div').addClass('hidden');
-        $('#propY').closest('div').addClass('hidden');
-        $('#propRotation').closest('div').addClass('hidden');
-        
-        // Show ONLY opacity property for folders
-        $('#propOpacity').closest('div').removeClass('hidden');
+        // Hide common properties grid for folders (folders don't have position/size)
+        $('#commonPropertiesGrid').addClass('hidden');
         
         // Set folder opacity
         const folderOpacity = folder.opacity !== undefined ? folder.opacity : 1;
