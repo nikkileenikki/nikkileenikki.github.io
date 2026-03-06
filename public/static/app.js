@@ -197,6 +197,11 @@
                 !$target.closest('.properties-panel').length &&
                 !$target.closest('#propertiesPanel').length &&
                 !$target.closest('.modal').length &&
+                !$target.closest('#animModal').length && // Animation modal
+                !$target.closest('#textModal').length && // Text modal
+                !$target.closest('#shapeModal').length && // Shape modal
+                !$target.closest('#videoModal').length && // Video modal
+                !$target.closest('#clickthroughModal').length && // Clickthrough modal
                 !$target.closest('.layers-panel').length &&
                 !$target.closest('.timeline').length &&
                 !$target.closest('.w-80').length) { // Left sidebar
@@ -1301,46 +1306,52 @@
         }
     }
     
-    // Save interaction settings to selected element
+    // Save interaction settings to selected element or folder
     function saveInteractionSettings() {
-        if (!selectedElement) return;
+        let target = null;
         
-        const element = elements.find(el => el.id === selectedElement);
-        if (!element) return;
+        if (selectedFolder) {
+            target = groups.find(g => g.id === selectedFolder);
+        } else if (selectedElement) {
+            target = elements.find(el => el.id === selectedElement);
+        }
         
-        if (!element.interactions) {
-            element.interactions = initInteractionProperties();
+        if (!target) return;
+        
+        if (!target.interactions) {
+            target.interactions = initInteractionProperties();
         }
         
         // Save click settings
-        element.interactions.click.enabled = $('#enableClickInteraction').is(':checked');
-        element.interactions.click.targetElement = $('#clickTargetElement').val();
-        element.interactions.click.action = $('#clickAction').val();
-        element.interactions.click.shadowX = parseFloat($('#clickShadowX').val()) || 0;
-        element.interactions.click.shadowY = parseFloat($('#clickShadowY').val()) || 0;
-        element.interactions.click.shadowBlur = parseFloat($('#clickShadowBlur').val()) || 0;
-        element.interactions.click.shadowColor = $('#clickShadowColor').val();
-        element.interactions.click.glowX = parseFloat($('#clickGlowX').val()) || 0;
-        element.interactions.click.glowY = parseFloat($('#clickGlowY').val()) || 0;
-        element.interactions.click.glowBlur = parseFloat($('#clickGlowBlur').val()) || 0;
-        element.interactions.click.glowColor = $('#clickGlowColor').val();
-        element.interactions.click.scaleAmount = parseFloat($('#clickScaleAmount').val()) || 1.1;
+        target.interactions.click.enabled = $('#enableClickInteraction').is(':checked');
+        target.interactions.click.targetElement = $('#clickTargetElement').val();
+        target.interactions.click.action = $('#clickAction').val();
+        target.interactions.click.shadowX = parseFloat($('#clickShadowX').val()) || 0;
+        target.interactions.click.shadowY = parseFloat($('#clickShadowY').val()) || 0;
+        target.interactions.click.shadowBlur = parseFloat($('#clickShadowBlur').val()) || 0;
+        target.interactions.click.shadowColor = $('#clickShadowColor').val();
+        target.interactions.click.glowX = parseFloat($('#clickGlowX').val()) || 0;
+        target.interactions.click.glowY = parseFloat($('#clickGlowY').val()) || 0;
+        target.interactions.click.glowBlur = parseFloat($('#clickGlowBlur').val()) || 0;
+        target.interactions.click.glowColor = $('#clickGlowColor').val();
+        target.interactions.click.scaleAmount = parseFloat($('#clickScaleAmount').val()) || 1.1;
         
         // Save hover settings
-        element.interactions.hover.enabled = $('#enableHoverInteraction').is(':checked');
-        element.interactions.hover.targetElement = $('#hoverTargetElement').val();
-        element.interactions.hover.action = $('#hoverAction').val();
-        element.interactions.hover.shadowX = parseFloat($('#hoverShadowX').val()) || 0;
-        element.interactions.hover.shadowY = parseFloat($('#hoverShadowY').val()) || 0;
-        element.interactions.hover.shadowBlur = parseFloat($('#hoverShadowBlur').val()) || 0;
-        element.interactions.hover.shadowColor = $('#hoverShadowColor').val();
-        element.interactions.hover.glowX = parseFloat($('#hoverGlowX').val()) || 0;
-        element.interactions.hover.glowY = parseFloat($('#hoverGlowY').val()) || 0;
-        element.interactions.hover.glowBlur = parseFloat($('#hoverGlowBlur').val()) || 0;
-        element.interactions.hover.glowColor = $('#hoverGlowColor').val();
-        element.interactions.hover.scaleAmount = parseFloat($('#hoverScaleAmount').val()) || 1.1;
+        target.interactions.hover.enabled = $('#enableHoverInteraction').is(':checked');
+        target.interactions.hover.targetElement = $('#hoverTargetElement').val();
+        target.interactions.hover.action = $('#hoverAction').val();
+        target.interactions.hover.shadowX = parseFloat($('#hoverShadowX').val()) || 0;
+        target.interactions.hover.shadowY = parseFloat($('#hoverShadowY').val()) || 0;
+        target.interactions.hover.shadowBlur = parseFloat($('#hoverShadowBlur').val()) || 0;
+        target.interactions.hover.shadowColor = $('#hoverShadowColor').val();
+        target.interactions.hover.glowX = parseFloat($('#hoverGlowX').val()) || 0;
+        target.interactions.hover.glowY = parseFloat($('#hoverGlowY').val()) || 0;
+        target.interactions.hover.glowBlur = parseFloat($('#hoverGlowBlur').val()) || 0;
+        target.interactions.hover.glowColor = $('#hoverGlowColor').val();
+        target.interactions.hover.scaleAmount = parseFloat($('#hoverScaleAmount').val()) || 1.1;
         
-        console.log('Interaction settings saved:', element.interactions);
+        console.log('Interaction settings saved:', target.interactions);
+        saveState();
     }
     
     // ============================================
@@ -2015,12 +2026,24 @@
         e.stopPropagation();
         const id = $(e.currentTarget).data('id');
         
+        console.log('handleAddLayerAnimation clicked, id:', id);
+        
+        if (!id) {
+            console.error('No element ID found');
+            alert('No element ID found. Please try again.');
+            return;
+        }
+        
         // Check if it's a folder or element
-        if (id && id.startsWith('folder_')) {
+        if (id.startsWith('folder_')) {
+            console.log('Selecting folder:', id);
             selectFolder(id);
         } else {
+            console.log('Selecting element:', id);
             selectElement(id);
         }
+        
+        console.log('selectedElement after selection:', selectedElement);
         
         openAnimationModal();
     }
@@ -2090,6 +2113,17 @@
         if (!element) return;
         
         $propertiesPanel.removeClass('hidden');
+        
+        // IMPORTANT: Always show all common property fields for elements
+        $('#propWidth').closest('div').removeClass('hidden');
+        $('#propHeight').closest('div').removeClass('hidden');
+        $('#propX').closest('div').removeClass('hidden');
+        $('#propY').closest('div').removeClass('hidden');
+        $('#propRotation').closest('div').removeClass('hidden');
+        $('#propOpacity').closest('div').removeClass('hidden');
+        
+        // Reset panel heading to "Properties"
+        $('#propertiesPanel h2').text('Properties');
         
         // Show/hide text properties
         if (element.type === 'text') {
@@ -2178,7 +2212,14 @@
             $videoProps.addClass('hidden');
         }
         
-        // Common properties
+        // Common properties - Always ensure they are visible for elements
+        $('#propWidth').closest('div').removeClass('hidden');
+        $('#propHeight').closest('div').removeClass('hidden');
+        $('#propX').closest('div').removeClass('hidden');
+        $('#propY').closest('div').removeClass('hidden');
+        $('#propRotation').closest('div').removeClass('hidden');
+        $('#propOpacity').closest('div').removeClass('hidden');
+        
         $('#propWidth').val(Math.round(element.width));
         $('#propHeight').val(Math.round(element.height));
         $('#propX').val(Math.round(element.x));
@@ -2207,20 +2248,45 @@
         // Show properties panel with folder info
         $propertiesPanel.removeClass('hidden');
         
-        // Hide all type-specific properties
+        // Hide ALL type-specific properties for folders
         $textProps.addClass('hidden');
         $('#clickthroughProps').addClass('hidden');
         $('#shapeProps').addClass('hidden');
         $('#videoProps').addClass('hidden');
-        $('#interactionProps').addClass('hidden');
         
-        // Hide size/position properties (folders don't have canvas presence yet)
-        $('#propWidth, #propHeight, #propX, #propY, #propRotation, #propOpacity').closest('div').addClass('hidden');
+        // Hide position/size/rotation properties (folders are full canvas)
+        $('#propWidth').closest('div').addClass('hidden');
+        $('#propHeight').closest('div').addClass('hidden');
+        $('#propX').closest('div').addClass('hidden');
+        $('#propY').closest('div').addClass('hidden');
+        $('#propRotation').closest('div').addClass('hidden');
         
-        // Show folder name in a label or heading
-        $('#propertiesPanel h3').text(`Folder: ${folder.name}`);
+        // Show ONLY opacity property for folders
+        $('#propOpacity').closest('div').removeClass('hidden');
         
-        console.log('Folder selected:', folder);
+        // Set folder opacity
+        const folderOpacity = folder.opacity !== undefined ? folder.opacity : 1;
+        $('#propOpacity').val(folderOpacity);
+        $('#opacityValue').text(Math.round(folderOpacity * 100) + '%');
+        
+        // Show interactions section for folders
+        $('#interactionsSection').removeClass('hidden');
+        
+        // Initialize folder interactions if not exists
+        if (!folder.interactions) {
+            folder.interactions = {
+                click: { enabled: false, targetElement: 'self', action: 'pauseAnimation' },
+                hover: { enabled: false, targetElement: 'self', action: 'addShadow' }
+            };
+        }
+        
+        // Update interaction UI for folder
+        updateInteractionUI(folder);
+        
+        // Update panel heading to show folder name
+        $('#propertiesPanel h2').text(`Folder: ${folder.name}`);
+        
+        console.log('Folder properties panel updated:', folder);
     }
     
     // Common property updates
@@ -2265,11 +2331,31 @@
     }
     
     function updateElementOpacity() {
-        if (!selectedElement) return;
-        const element = elements.find(el => el.id === selectedElement);
-        element.opacity = parseFloat($(this).val());
-        $(`#${selectedElement}`).css('opacity', element.opacity);
-        $('#opacityValue').text(Math.round(element.opacity * 100) + '%');
+        const opacityValue = parseFloat($(this).val());
+        $('#opacityValue').text(Math.round(opacityValue * 100) + '%');
+        
+        if (selectedFolder) {
+            // Update folder opacity
+            const folder = groups.find(g => g.id === selectedFolder);
+            if (folder) {
+                folder.opacity = opacityValue;
+                // Apply opacity to folder wrapper and all child elements
+                $(`#${selectedFolder}`).css('opacity', opacityValue);
+                const folderElements = elements.filter(el => el.folderId === selectedFolder);
+                folderElements.forEach(el => {
+                    $(`#${el.id}`).css('opacity', opacityValue);
+                });
+                saveState();
+            }
+        } else if (selectedElement) {
+            // Update element opacity
+            const element = elements.find(el => el.id === selectedElement);
+            if (element) {
+                element.opacity = opacityValue;
+                $(`#${selectedElement}`).css('opacity', opacityValue);
+                saveState();
+            }
+        }
     }
     
     // Text property updates
@@ -2658,8 +2744,11 @@
     // ANIMATION & TIMELINE
     // ============================================
     function openAnimationModal() {
-        if (!selectedElement) {
-            alert('Please select an element first');
+        console.log('openAnimationModal called, selectedElement:', selectedElement, 'selectedFolder:', selectedFolder);
+        
+        if (!selectedElement && !selectedFolder) {
+            console.error('No element or folder selected');
+            alert('Please select an element or folder first by clicking on it in the canvas or layers panel');
             return;
         }
         
@@ -2676,6 +2765,7 @@
         $('#animZoom').val('');
         $('#animRotate').val('');
         
+        console.log('Opening animation modal');
         $animModal.removeClass('hidden');
         setTimeout(() => $('#animStart').focus(), 100);
     }
@@ -2737,13 +2827,30 @@
     }
     
     function saveAnimation() {
+        console.log('saveAnimation called');
+        console.log('selectedElement:', selectedElement);
+        console.log('selectedFolder:', selectedFolder);
+        
         // Check if we're editing a folder or element
         const isFolder = selectedFolder !== null;
         const target = isFolder ? 
             groups.find(g => g.id === selectedFolder) : 
             elements.find(el => el.id === selectedElement);
         
-        if (!target) return;
+        console.log('isFolder:', isFolder);
+        console.log('target:', target);
+        
+        if (!target) {
+            console.error('No target found!');
+            alert('Error: No element or folder selected. Please try again.');
+            return;
+        }
+        
+        // Ensure animations array exists
+        if (!target.animations) {
+            console.warn('Target has no animations array, initializing...');
+            target.animations = [];
+        }
         
         // Get all selected animation types from dropdowns
         const selectedTypes = [];
@@ -2752,10 +2859,14 @@
         const zoom = $('#animZoom').val();
         const rotate = $('#animRotate').val();
         
+        console.log('Animation values - fade:', fade, 'slide:', slide, 'zoom:', zoom, 'rotate:', rotate);
+        
         if (fade) selectedTypes.push(fade);
         if (slide) selectedTypes.push(slide);
         if (zoom) selectedTypes.push(zoom);
         if (rotate) selectedTypes.push(rotate);
+        
+        console.log('selectedTypes:', selectedTypes);
         
         if (selectedTypes.length === 0) {
             alert('Please select at least one animation effect');
@@ -2766,8 +2877,11 @@
         const duration = Math.round(parseFloat($('#animDuration').val()) * 10) / 10;
         const ease = $('#animEase').val();
         
+        console.log('Animation params - start:', start, 'duration:', duration, 'ease:', ease);
+        
         if (editingAnimation) {
             // Update existing animation
+            console.log('Updating existing animation:', editingAnimation);
             const anim = target.animations.find(a => a.id === editingAnimation.animId);
             if (anim && selectedTypes.length > 0) {
                 anim.type = selectedTypes[0];
@@ -2778,6 +2892,7 @@
             }
         } else {
             // Add new animations - create one timeline item with multiple types
+            console.log('Creating new animation');
             const animationId = `anim_${Date.now()}`;
             const animation = {
                 id: animationId,
@@ -2789,13 +2904,17 @@
                 customProps: {}
             };
             
+            console.log('New animation object:', animation);
             target.animations.push(animation);
+            console.log('Target animations after push:', target.animations);
         }
         
+        console.log('Saving state and updating timeline...');
         saveState(); // Save state for undo
         rebuildTimeline();
         updateTimelineTracks();
         closeAnimationModal();
+        console.log('Animation saved successfully');
     }
     
     function deleteEditingAnimation() {
@@ -3796,7 +3915,11 @@
     }
     
     function playTimeline() {
-        if (elements.length === 0 || !elements.some(el => el.animations.length > 0)) {
+        // Check if there are any animations on elements or folders
+        const hasElementAnimations = elements.some(el => el.animations && el.animations.length > 0);
+        const hasFolderAnimations = groups.some(g => g.animations && g.animations.length > 0);
+        
+        if (elements.length === 0 || (!hasElementAnimations && !hasFolderAnimations)) {
             alert('Please add some animations first');
             return;
         }
