@@ -292,7 +292,7 @@ input, select, button, textarea, label {
 
 .timeline-track-label {
     width: 200px;
-    padding: 6px 8px;
+    padding: 5px 8px;
     background: rgb(31, 41, 55);
     border-right: 1px solid rgb(55, 65, 81);
     display: flex;
@@ -495,7 +495,7 @@ input, select, button, textarea, label {
 
 /* Folder Timeline Styles */
 .timeline-folder {
-    margin: 6px 0;
+    margin: 0;
 }
 
 .timeline-folder-header {
@@ -504,7 +504,7 @@ input, select, button, textarea, label {
     gap: 8px;
     background: #4a4a52;
     color: #fff;
-    padding: 8px;
+    padding: 7px 8px;
     border-radius: 8px;
     font-size: 13px;
     cursor: pointer;
