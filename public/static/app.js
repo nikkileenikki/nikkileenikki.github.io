@@ -4428,6 +4428,48 @@
             });
         });
         
+        // Generate folder animations
+        groups.forEach(folder => {
+            if (!folder.animations || folder.animations.length === 0) return;
+            
+            folder.animations.forEach(anim => {
+                const types = anim.types || [anim.type];
+                
+                // Get all elements in this folder
+                const folderElements = elements.filter(el => el.folderId === folder.id);
+                
+                // Apply animation to each element in the folder
+                folderElements.forEach(element => {
+                    let mergedProps = {};
+                    let startAt = null;
+                    
+                    types.forEach(type => {
+                        const props = getAnimationPropsForExport(type, element, anim.customProps);
+                        
+                        if (props.startAt) {
+                            startAt = startAt || {};
+                            Object.assign(startAt, props.startAt);
+                            delete props.startAt;
+                        }
+                        
+                        Object.assign(mergedProps, props);
+                    });
+                    
+                    if (startAt) {
+                        animationsJs += `
+        gsap.set('#${element.id}', ${JSON.stringify(startAt)});`;
+                    }
+                    
+                    animationsJs += `
+        tl.to('#${element.id}', {
+            ${Object.entries(mergedProps).map(([key, value]) => `${key}: ${JSON.stringify(value)}`).join(',\n            ')},
+            duration: ${anim.duration},
+            ease: '${anim.ease}'
+        }, ${anim.start});`;
+                });
+            });
+        });
+        
         // Generate interaction JavaScript
         let interactionsJs = '';
         sortedElements.forEach((element) => {
