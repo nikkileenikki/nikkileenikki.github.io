@@ -1413,7 +1413,8 @@
                     $folderElement.css('box-shadow', glow);
                 } else if (action === 'scale') {
                     const scale = folder.interactions.click.scaleAmount || 1.1;
-                    $folderElement.css('transform', `scale(${scale})`);\n                    $folderElement.css('transition', 'transform 0.3s ease');
+                    $folderElement.css('transform', `scale(${scale})`);
+                    $folderElement.css('transition', 'transform 0.3s ease');
                 } else if (action === 'hide') {
                     $folderElement.css('visibility', 'hidden');
                 } else if (action === 'show') {
