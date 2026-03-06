@@ -526,10 +526,11 @@
         const $block = $(e.currentTarget);
         const animId = $block.data('anim-id');
         const elementId = $block.data('element-id');
+        const folderId = $block.data('folder-id');
         
         // Don't set dragging flag yet - wait for actual movement
         let hasMoved = false;
-        draggedBlock = { animId, elementId, $block };
+        draggedBlock = { animId, elementId, folderId, $block };
         
         const $track = $block.parent();
         const trackOffset = $track.offset().left;
@@ -555,10 +556,16 @@
             const newLeftPercent = (newLeft / trackWidth) * 100;
             $block.css('left', newLeftPercent + '%');
             
-            // Update animation start time
-            const element = elements.find(el => el.id === elementId);
-            if (element) {
-                const anim = element.animations.find(a => a.id === animId);
+            // Update animation start time (element or folder)
+            let target, anim;
+            if (folderId) {
+                target = groups.find(g => g.id === folderId);
+            } else {
+                target = elements.find(el => el.id === elementId);
+            }
+            
+            if (target) {
+                anim = target.animations.find(a => a.id === animId);
                 if (anim) {
                     anim.start = Math.round(((newLeftPercent / 100) * totalDuration) * 10) / 10;
                 }
@@ -592,10 +599,11 @@
         const $block = $handle.parent();
         const animId = $block.data('anim-id');
         const elementId = $block.data('element-id');
+        const folderId = $block.data('folder-id');
         
         isTimelineBlockResizing = true;
         resizeDirection = $handle.hasClass('left') ? 'left' : 'right';
-        draggedBlock = { animId, elementId, $block };
+        draggedBlock = { animId, elementId, folderId, $block };
         
         const $track = $block.parent();
         const trackOffset = $track.offset().left;
@@ -610,10 +618,16 @@
             const deltaX = moveEvent.pageX - startX;
             const deltaPercent = (deltaX / trackWidth) * 100;
             
-            const element = elements.find(el => el.id === elementId);
-            if (!element) return;
+            // Find target (element or folder)
+            let target;
+            if (folderId) {
+                target = groups.find(g => g.id === folderId);
+            } else {
+                target = elements.find(el => el.id === elementId);
+            }
+            if (!target) return;
             
-            const anim = element.animations.find(a => a.id === animId);
+            const anim = target.animations.find(a => a.id === animId);
             if (!anim) return;
             
             if (resizeDirection === 'left') {
@@ -3883,6 +3897,18 @@
                 props.startAt = { y: canvasHeight };
                 props.y = 0;
                 break;
+            case 'slideToLeft':
+                props.x = -canvasWidth;
+                break;
+            case 'slideToRight':
+                props.x = canvasWidth;
+                break;
+            case 'slideToUp':
+                props.y = -canvasHeight;
+                break;
+            case 'slideToDown':
+                props.y = canvasHeight;
+                break;
             case 'scale':
             case 'scaleIn':
                 props.startAt = { scale: 0 };
@@ -4718,6 +4744,18 @@
             case 'slideDown':
                 props.startAt = { y: canvasHeight };
                 props.y = 0;
+                break;
+            case 'slideToLeft':
+                props.x = -canvasWidth;
+                break;
+            case 'slideToRight':
+                props.x = canvasWidth;
+                break;
+            case 'slideToUp':
+                props.y = -canvasHeight;
+                break;
+            case 'slideToDown':
+                props.y = canvasHeight;
                 break;
             case 'scale':
             case 'scaleIn':
