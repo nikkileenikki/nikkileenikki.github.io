@@ -167,7 +167,7 @@ app.get('/', (c) => {
                             </div>
                             
                             <!-- Opacity - Always visible for both elements and folders -->
-                            <div id="opacitySection" class="pb-3 border-b border-gray-700">
+                            <div id="opacitySection" class="pb-3">
                                 <label class="text-sm text-gray-400">Opacity</label>
                                 <div>
                                     <input type="range" id="propOpacity" class="w-full" min="0" max="1" step="0.1" value="1">

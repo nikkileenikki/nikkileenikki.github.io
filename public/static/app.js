@@ -1365,7 +1365,89 @@
         target.interactions.hover.scaleAmount = parseFloat($('#hoverScaleAmount').val()) || 1.1;
         
         console.log('Interaction settings saved:', target.interactions);
+        
+        // If it's a folder, reapply interactions to the canvas folder element
+        if (selectedFolder) {
+            const $folderElement = $(`#${selectedFolder}.canvas-folder`);
+            if ($folderElement.length) {
+                applyFolderInteractions(target, $folderElement);
+            }
+        }
+        
         saveState();
+    }
+    
+    // Apply folder interactions to canvas folder wrapper
+    function applyFolderInteractions(folder, $folderElement) {
+        if (!folder.interactions) return;
+        
+        const folderId = folder.id;
+        
+        // Remove existing event handlers
+        $folderElement.off('click mouseenter mouseleave');
+        
+        // Click interaction
+        if (folder.interactions.click.enabled) {
+            $folderElement.on('click', function(e) {
+                // Prevent event from bubbling to canvas
+                e.stopPropagation();
+                
+                const action = folder.interactions.click.action;
+                const targetElement = folder.interactions.click.targetElement;
+                
+                if (action === 'pauseAnimation') {
+                    stopTimeline();
+                } else if (action === 'playAnimation') {
+                    playTimeline();
+                } else if (action === 'toggleAnimation') {
+                    if (isPlaying) {
+                        stopTimeline();
+                    } else {
+                        playTimeline();
+                    }
+                } else if (action === 'addShadow') {
+                    const shadow = `${folder.interactions.click.shadowX}px ${folder.interactions.click.shadowY}px ${folder.interactions.click.shadowBlur}px ${folder.interactions.click.shadowColor}`;
+                    $folderElement.css('box-shadow', shadow);
+                } else if (action === 'addGlow') {
+                    const glow = `${folder.interactions.click.glowX}px ${folder.interactions.click.glowY}px ${folder.interactions.click.glowBlur}px ${folder.interactions.click.glowColor}`;
+                    $folderElement.css('box-shadow', glow);
+                } else if (action === 'scale') {
+                    const scale = folder.interactions.click.scaleAmount || 1.1;
+                    $folderElement.css('transform', `scale(${scale})`);\n                    $folderElement.css('transition', 'transform 0.3s ease');
+                } else if (action === 'hide') {
+                    $folderElement.css('visibility', 'hidden');
+                } else if (action === 'show') {
+                    $folderElement.css('visibility', 'visible');
+                }
+            });
+        }
+        
+        // Hover interaction
+        if (folder.interactions.hover.enabled) {
+            $folderElement.on('mouseenter', function(e) {
+                const action = folder.interactions.hover.action;
+                
+                if (action === 'addShadow') {
+                    const shadow = `${folder.interactions.hover.shadowX}px ${folder.interactions.hover.shadowY}px ${folder.interactions.hover.shadowBlur}px ${folder.interactions.hover.shadowColor}`;
+                    $folderElement.css('box-shadow', shadow);
+                    $folderElement.css('transition', 'box-shadow 0.3s ease');
+                } else if (action === 'addGlow') {
+                    const glow = `${folder.interactions.hover.glowX}px ${folder.interactions.hover.glowY}px ${folder.interactions.hover.glowBlur}px ${folder.interactions.hover.glowColor}`;
+                    $folderElement.css('box-shadow', glow);
+                    $folderElement.css('transition', 'box-shadow 0.3s ease');
+                } else if (action === 'scale') {
+                    const scale = folder.interactions.hover.scaleAmount || 1.1;
+                    $folderElement.css('transform', `scale(${scale})`);
+                    $folderElement.css('transition', 'transform 0.3s ease');
+                }
+            });
+            
+            $folderElement.on('mouseleave', function(e) {
+                // Reset on mouse leave
+                $folderElement.css('box-shadow', '');
+                $folderElement.css('transform', '');
+            });
+        }
     }
     
     // ============================================
@@ -3322,11 +3404,14 @@
                                         top: 0;
                                         width: 100%;
                                         height: 100%;
-                                        pointer-events: none;
+                                        pointer-events: auto;
                                         z-index: ${group.zIndex};
                                     "></div>
                                 `);
                                 $canvas.append($folderWrapper);
+                                
+                                // Apply folder interactions
+                                applyFolderInteractions(group, $folderWrapper);
                             }
                             
                             // Move element into folder wrapper
@@ -3535,9 +3620,13 @@
                     width: ${bounds.width}px;
                     height: ${bounds.height}px;
                     z-index: ${folder.zIndex};
+                    pointer-events: auto;
                 "></div>
             `);
             $canvas.append($folderWrapper);
+            
+            // Apply folder interactions
+            applyFolderInteractions(folder, $folderWrapper);
         });
         
         // Restore elements and place them in folders or root
