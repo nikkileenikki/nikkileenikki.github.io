@@ -2114,6 +2114,17 @@
         
         $propertiesPanel.removeClass('hidden');
         
+        // IMPORTANT: Always show all common property fields for elements
+        $('#propWidth').closest('div').removeClass('hidden');
+        $('#propHeight').closest('div').removeClass('hidden');
+        $('#propX').closest('div').removeClass('hidden');
+        $('#propY').closest('div').removeClass('hidden');
+        $('#propRotation').closest('div').removeClass('hidden');
+        $('#propOpacity').closest('div').removeClass('hidden');
+        
+        // Reset panel heading to "Properties"
+        $('#propertiesPanel h2').text('Properties');
+        
         // Show/hide text properties
         if (element.type === 'text') {
             $textProps.removeClass('hidden');
@@ -2201,7 +2212,14 @@
             $videoProps.addClass('hidden');
         }
         
-        // Common properties
+        // Common properties - Always ensure they are visible for elements
+        $('#propWidth').closest('div').removeClass('hidden');
+        $('#propHeight').closest('div').removeClass('hidden');
+        $('#propX').closest('div').removeClass('hidden');
+        $('#propY').closest('div').removeClass('hidden');
+        $('#propRotation').closest('div').removeClass('hidden');
+        $('#propOpacity').closest('div').removeClass('hidden');
+        
         $('#propWidth').val(Math.round(element.width));
         $('#propHeight').val(Math.round(element.height));
         $('#propX').val(Math.round(element.x));
@@ -2230,16 +2248,20 @@
         // Show properties panel with folder info
         $propertiesPanel.removeClass('hidden');
         
-        // Hide all type-specific properties
+        // Hide ALL type-specific properties for folders
         $textProps.addClass('hidden');
         $('#clickthroughProps').addClass('hidden');
         $('#shapeProps').addClass('hidden');
         $('#videoProps').addClass('hidden');
         
-        // Hide position/size properties (folders are full canvas)
-        $('#propWidth, #propHeight, #propX, #propY, #propRotation').closest('div').addClass('hidden');
+        // Hide position/size/rotation properties (folders are full canvas)
+        $('#propWidth').closest('div').addClass('hidden');
+        $('#propHeight').closest('div').addClass('hidden');
+        $('#propX').closest('div').addClass('hidden');
+        $('#propY').closest('div').addClass('hidden');
+        $('#propRotation').closest('div').addClass('hidden');
         
-        // Show opacity property for folders
+        // Show ONLY opacity property for folders
         $('#propOpacity').closest('div').removeClass('hidden');
         
         // Set folder opacity
@@ -2261,10 +2283,10 @@
         // Update interaction UI for folder
         updateInteractionUI(folder);
         
-        // Show folder name in a label or heading
+        // Update panel heading to show folder name
         $('#propertiesPanel h2').text(`Folder: ${folder.name}`);
         
-        console.log('Folder selected:', folder);
+        console.log('Folder properties panel updated:', folder);
     }
     
     // Common property updates
