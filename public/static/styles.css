@@ -571,8 +571,9 @@ input, select, button, textarea, label {
     box-shadow: 0 0 0 2px #3b82f6;
 }
 
+/* Folder animations should always be visible, even when folder is collapsed */
 .timeline-folder.collapsed .folder-track-content {
-    display: none;
+    display: block; /* Changed from 'none' to 'block' to keep folder animations visible */
 }
 
 .timeline-folder {

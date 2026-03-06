@@ -2773,16 +2773,34 @@
         
         const animId = $(e.currentTarget).data('anim-id');
         const elementId = $(e.currentTarget).data('element-id');
+        const folderId = $(e.currentTarget).data('folder-id');
         
-        const element = elements.find(el => el.id === elementId);
-        if (!element) return;
+        // Check if this is a folder animation or element animation
+        let target, anim;
         
-        const anim = element.animations.find(a => a.id === animId);
-        if (!anim) return;
-        
-        // Populate modal with animation data
-        editingAnimation = { elementId, animId };
-        selectElement(elementId);
+        if (folderId) {
+            // Folder animation
+            target = groups.find(g => g.id === folderId);
+            if (!target) return;
+            
+            anim = target.animations.find(a => a.id === animId);
+            if (!anim) return;
+            
+            // Populate modal with animation data
+            editingAnimation = { folderId, animId };
+            selectFolder(folderId);
+        } else {
+            // Element animation
+            target = elements.find(el => el.id === elementId);
+            if (!target) return;
+            
+            anim = target.animations.find(a => a.id === animId);
+            if (!anim) return;
+            
+            // Populate modal with animation data
+            editingAnimation = { elementId, animId };
+            selectElement(elementId);
+        }
         
         // Reset all dropdowns first
         $('#animFade').val('');
