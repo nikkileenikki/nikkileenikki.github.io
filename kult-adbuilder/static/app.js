@@ -1306,46 +1306,52 @@
         }
     }
     
-    // Save interaction settings to selected element
+    // Save interaction settings to selected element or folder
     function saveInteractionSettings() {
-        if (!selectedElement) return;
+        let target = null;
         
-        const element = elements.find(el => el.id === selectedElement);
-        if (!element) return;
+        if (selectedFolder) {
+            target = groups.find(g => g.id === selectedFolder);
+        } else if (selectedElement) {
+            target = elements.find(el => el.id === selectedElement);
+        }
         
-        if (!element.interactions) {
-            element.interactions = initInteractionProperties();
+        if (!target) return;
+        
+        if (!target.interactions) {
+            target.interactions = initInteractionProperties();
         }
         
         // Save click settings
-        element.interactions.click.enabled = $('#enableClickInteraction').is(':checked');
-        element.interactions.click.targetElement = $('#clickTargetElement').val();
-        element.interactions.click.action = $('#clickAction').val();
-        element.interactions.click.shadowX = parseFloat($('#clickShadowX').val()) || 0;
-        element.interactions.click.shadowY = parseFloat($('#clickShadowY').val()) || 0;
-        element.interactions.click.shadowBlur = parseFloat($('#clickShadowBlur').val()) || 0;
-        element.interactions.click.shadowColor = $('#clickShadowColor').val();
-        element.interactions.click.glowX = parseFloat($('#clickGlowX').val()) || 0;
-        element.interactions.click.glowY = parseFloat($('#clickGlowY').val()) || 0;
-        element.interactions.click.glowBlur = parseFloat($('#clickGlowBlur').val()) || 0;
-        element.interactions.click.glowColor = $('#clickGlowColor').val();
-        element.interactions.click.scaleAmount = parseFloat($('#clickScaleAmount').val()) || 1.1;
+        target.interactions.click.enabled = $('#enableClickInteraction').is(':checked');
+        target.interactions.click.targetElement = $('#clickTargetElement').val();
+        target.interactions.click.action = $('#clickAction').val();
+        target.interactions.click.shadowX = parseFloat($('#clickShadowX').val()) || 0;
+        target.interactions.click.shadowY = parseFloat($('#clickShadowY').val()) || 0;
+        target.interactions.click.shadowBlur = parseFloat($('#clickShadowBlur').val()) || 0;
+        target.interactions.click.shadowColor = $('#clickShadowColor').val();
+        target.interactions.click.glowX = parseFloat($('#clickGlowX').val()) || 0;
+        target.interactions.click.glowY = parseFloat($('#clickGlowY').val()) || 0;
+        target.interactions.click.glowBlur = parseFloat($('#clickGlowBlur').val()) || 0;
+        target.interactions.click.glowColor = $('#clickGlowColor').val();
+        target.interactions.click.scaleAmount = parseFloat($('#clickScaleAmount').val()) || 1.1;
         
         // Save hover settings
-        element.interactions.hover.enabled = $('#enableHoverInteraction').is(':checked');
-        element.interactions.hover.targetElement = $('#hoverTargetElement').val();
-        element.interactions.hover.action = $('#hoverAction').val();
-        element.interactions.hover.shadowX = parseFloat($('#hoverShadowX').val()) || 0;
-        element.interactions.hover.shadowY = parseFloat($('#hoverShadowY').val()) || 0;
-        element.interactions.hover.shadowBlur = parseFloat($('#hoverShadowBlur').val()) || 0;
-        element.interactions.hover.shadowColor = $('#hoverShadowColor').val();
-        element.interactions.hover.glowX = parseFloat($('#hoverGlowX').val()) || 0;
-        element.interactions.hover.glowY = parseFloat($('#hoverGlowY').val()) || 0;
-        element.interactions.hover.glowBlur = parseFloat($('#hoverGlowBlur').val()) || 0;
-        element.interactions.hover.glowColor = $('#hoverGlowColor').val();
-        element.interactions.hover.scaleAmount = parseFloat($('#hoverScaleAmount').val()) || 1.1;
+        target.interactions.hover.enabled = $('#enableHoverInteraction').is(':checked');
+        target.interactions.hover.targetElement = $('#hoverTargetElement').val();
+        target.interactions.hover.action = $('#hoverAction').val();
+        target.interactions.hover.shadowX = parseFloat($('#hoverShadowX').val()) || 0;
+        target.interactions.hover.shadowY = parseFloat($('#hoverShadowY').val()) || 0;
+        target.interactions.hover.shadowBlur = parseFloat($('#hoverShadowBlur').val()) || 0;
+        target.interactions.hover.shadowColor = $('#hoverShadowColor').val();
+        target.interactions.hover.glowX = parseFloat($('#hoverGlowX').val()) || 0;
+        target.interactions.hover.glowY = parseFloat($('#hoverGlowY').val()) || 0;
+        target.interactions.hover.glowBlur = parseFloat($('#hoverGlowBlur').val()) || 0;
+        target.interactions.hover.glowColor = $('#hoverGlowColor').val();
+        target.interactions.hover.scaleAmount = parseFloat($('#hoverScaleAmount').val()) || 1.1;
         
-        console.log('Interaction settings saved:', element.interactions);
+        console.log('Interaction settings saved:', target.interactions);
+        saveState();
     }
     
     // ============================================
@@ -2229,13 +2235,34 @@
         $('#clickthroughProps').addClass('hidden');
         $('#shapeProps').addClass('hidden');
         $('#videoProps').addClass('hidden');
-        $('#interactionProps').addClass('hidden');
         
-        // Hide size/position properties (folders don't have canvas presence yet)
-        $('#propWidth, #propHeight, #propX, #propY, #propRotation, #propOpacity').closest('div').addClass('hidden');
+        // Hide position/size properties (folders are full canvas)
+        $('#propWidth, #propHeight, #propX, #propY, #propRotation').closest('div').addClass('hidden');
+        
+        // Show opacity property for folders
+        $('#propOpacity').closest('div').removeClass('hidden');
+        
+        // Set folder opacity
+        const folderOpacity = folder.opacity !== undefined ? folder.opacity : 1;
+        $('#propOpacity').val(folderOpacity);
+        $('#opacityValue').text(Math.round(folderOpacity * 100) + '%');
+        
+        // Show interactions section for folders
+        $('#interactionsSection').removeClass('hidden');
+        
+        // Initialize folder interactions if not exists
+        if (!folder.interactions) {
+            folder.interactions = {
+                click: { enabled: false, targetElement: 'self', action: 'pauseAnimation' },
+                hover: { enabled: false, targetElement: 'self', action: 'addShadow' }
+            };
+        }
+        
+        // Update interaction UI for folder
+        updateInteractionUI(folder);
         
         // Show folder name in a label or heading
-        $('#propertiesPanel h3').text(`Folder: ${folder.name}`);
+        $('#propertiesPanel h2').text(`Folder: ${folder.name}`);
         
         console.log('Folder selected:', folder);
     }
@@ -2282,11 +2309,31 @@
     }
     
     function updateElementOpacity() {
-        if (!selectedElement) return;
-        const element = elements.find(el => el.id === selectedElement);
-        element.opacity = parseFloat($(this).val());
-        $(`#${selectedElement}`).css('opacity', element.opacity);
-        $('#opacityValue').text(Math.round(element.opacity * 100) + '%');
+        const opacityValue = parseFloat($(this).val());
+        $('#opacityValue').text(Math.round(opacityValue * 100) + '%');
+        
+        if (selectedFolder) {
+            // Update folder opacity
+            const folder = groups.find(g => g.id === selectedFolder);
+            if (folder) {
+                folder.opacity = opacityValue;
+                // Apply opacity to folder wrapper and all child elements
+                $(`#${selectedFolder}`).css('opacity', opacityValue);
+                const folderElements = elements.filter(el => el.folderId === selectedFolder);
+                folderElements.forEach(el => {
+                    $(`#${el.id}`).css('opacity', opacityValue);
+                });
+                saveState();
+            }
+        } else if (selectedElement) {
+            // Update element opacity
+            const element = elements.find(el => el.id === selectedElement);
+            if (element) {
+                element.opacity = opacityValue;
+                $(`#${selectedElement}`).css('opacity', opacityValue);
+                saveState();
+            }
+        }
     }
     
     // Text property updates
