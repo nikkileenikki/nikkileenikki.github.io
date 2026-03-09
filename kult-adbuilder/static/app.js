@@ -5204,6 +5204,22 @@
     
     async function saveProject() {
         try {
+            // Build image mapping first
+            const imageMapping = {};
+            let imageIndex = 0;
+            
+            elements.forEach(el => {
+                if (el.type === 'image') {
+                    imageIndex++;
+                    const ext = getExtensionFromDataUrl(el.src);
+                    const filename = `image_${imageIndex}.${ext}`;
+                    imageMapping[el.id] = {
+                        filename: filename,
+                        dataUrl: el.src
+                    };
+                }
+            });
+            
             // Create project data
             const projectData = {
                 version: '1.0',
@@ -5213,11 +5229,11 @@
                 totalDuration: totalDuration,
                 animLoop: animLoop,  // GSAP repeat count (0 = once, 1 = twice, etc.)
                 elements: elements.map(el => {
-                    // For images, store filename instead of full data URL
+                    // For images, store reference to filename in ZIP
                     if (el.type === 'image') {
                         return {
                             ...el,
-                            src: el.filename || el.src // Use filename as reference
+                            imageFile: imageMapping[el.id].filename  // Reference to file in ZIP
                         };
                     }
                     return el;
@@ -5232,16 +5248,10 @@
             zip.file('project.json', JSON.stringify(projectData, null, 2));
             
             // Add all images to ZIP
-            let imageIndex = 0;
-            for (const element of elements) {
-                if (element.type === 'image') {
-                    imageIndex++;
-                    const filename = `image_${imageIndex}.${getExtensionFromDataUrl(element.src)}`;
-                    // Convert data URL to blob
-                    const base64Data = element.src.split(',')[1];
-                    const mimeType = element.src.split(',')[0].split(':')[1].split(';')[0];
-                    zip.file(filename, base64Data, { base64: true });
-                }
+            for (const [elementId, imageData] of Object.entries(imageMapping)) {
+                // Convert data URL to blob
+                const base64Data = imageData.dataUrl.split(',')[1];
+                zip.file(imageData.filename, base64Data, { base64: true });
             }
             
             // Generate ZIP
@@ -5282,6 +5292,19 @@
             const projectJson = await projectJsonFile.async('string');
             const projectData = JSON.parse(projectJson);
             
+            // Load all images from ZIP into a map
+            const imageDataUrls = {};
+            const imageFiles = Object.keys(zip.files).filter(f => f.startsWith('image_'));
+            
+            for (const filename of imageFiles) {
+                const imageFile = zip.file(filename);
+                if (imageFile) {
+                    const imageBlob = await imageFile.async('blob');
+                    const dataUrl = await blobToDataURL(imageBlob);
+                    imageDataUrls[filename] = dataUrl;
+                }
+            }
+            
             // Clear current project
             elements.length = 0;
             groups.length = 0;
@@ -5300,29 +5323,12 @@
             $('#animLoop').val(animLoop + 1);  // UI shows 1-based count
             updateCanvasSize();
             
-            // Load images from ZIP
-            const imageFiles = {};
-            let imageIndex = 0;
-            for (const element of projectData.elements) {
-                if (element.type === 'image') {
-                    imageIndex++;
-                    const filename = `image_${imageIndex}.${getExtensionFromDataUrl(element.src)}`;
-                    const imageFile = zip.file(filename);
-                    if (imageFile) {
-                        const imageBlob = await imageFile.async('blob');
-                        const dataUrl = await blobToDataURL(imageBlob);
-                        imageFiles[filename] = dataUrl;
-                    }
-                }
-            }
-            
             // Restore elements with loaded images
-            imageIndex = 0;
             for (const element of projectData.elements) {
-                if (element.type === 'image') {
-                    imageIndex++;
-                    const filename = `image_${imageIndex}.${getExtensionFromDataUrl(element.src)}`;
-                    element.src = imageFiles[filename] || element.src;
+                if (element.type === 'image' && element.imageFile) {
+                    // Replace imageFile reference with actual data URL
+                    element.src = imageDataUrls[element.imageFile] || element.src;
+                    delete element.imageFile;  // Clean up temporary field
                 }
                 elements.push(element);
             }
@@ -5331,6 +5337,20 @@
             if (projectData.groups) {
                 groups.push(...projectData.groups);
             }
+            
+            // Increment elementCounter to avoid ID conflicts
+            const maxId = Math.max(0, ...elements.map(el => {
+                const match = el.id.match(/element_(\d+)/);
+                return match ? parseInt(match[1]) : 0;
+            }));
+            elementCounter = maxId;
+            
+            // Increment folderCounter to avoid ID conflicts
+            const maxFolderId = Math.max(0, ...groups.map(g => {
+                const match = g.id.match(/folder_(\d+)/);
+                return match ? parseInt(match[1]) : 0;
+            }));
+            folderCounter = maxFolderId;
             
             // Update display
             updateCanvas();
