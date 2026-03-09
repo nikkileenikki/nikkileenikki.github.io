@@ -5204,6 +5204,22 @@
     
     async function saveProject() {
         try {
+            // Check if canvas is empty
+            if (elements.length === 0) {
+                alert('Nothing to save! Please add some elements to the canvas first.');
+                return;
+            }
+            
+            // Prompt for project name
+            const bannerName = prompt('Enter a name for your project:', `${canvasWidth}x${canvasHeight}-banner`);
+            if (!bannerName || bannerName.trim() === '') {
+                // User cancelled or entered empty name
+                return;
+            }
+            
+            // Sanitize filename (remove special characters)
+            const safeBannerName = bannerName.trim().replace(/[^a-z0-9_-]/gi, '_');
+            
             // Build image mapping first
             const imageMapping = {};
             let imageIndex = 0;
@@ -5224,6 +5240,7 @@
             const projectData = {
                 version: '1.0',
                 timestamp: new Date().toISOString(),
+                bannerName: bannerName,  // Store original banner name
                 canvasWidth: canvasWidth,
                 canvasHeight: canvasHeight,
                 totalDuration: totalDuration,
@@ -5257,11 +5274,22 @@
             // Generate ZIP
             const blob = await zip.generateAsync({ type: 'blob' });
             
-            // Download ZIP
+            // Download ZIP with banner name
             const timestamp = new Date().toISOString().slice(0, 10);
-            const filename = `adbuilder-project-${timestamp}.zip`;
+            const filename = `${safeBannerName}-${timestamp}.zip`;
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
+            a.href = url;
+            a.download = filename;
+            a.click();
+            URL.revokeObjectURL(url);
+            
+            console.log('Project saved successfully as:', filename);
+        } catch (error) {
+            console.error('Error saving project:', error);
+            alert('Error saving project. Please try again.');
+        }
+    }
             a.href = url;
             a.download = filename;
             a.click();
