@@ -5211,7 +5211,7 @@
                 canvasWidth: canvasWidth,
                 canvasHeight: canvasHeight,
                 totalDuration: totalDuration,
-                loopCount: loopCount,
+                animLoop: animLoop,  // GSAP repeat count (0 = once, 1 = twice, etc.)
                 elements: elements.map(el => {
                     // For images, store filename instead of full data URL
                     if (el.type === 'image') {
@@ -5292,12 +5292,12 @@
             canvasWidth = projectData.canvasWidth || 300;
             canvasHeight = projectData.canvasHeight || 250;
             totalDuration = projectData.totalDuration || 5;
-            loopCount = projectData.loopCount || 1;
+            animLoop = projectData.animLoop !== undefined ? projectData.animLoop : 0;
             
-            // Update UI
+            // Update UI (convert animLoop back to user-friendly loop count)
             $('#canvasSize').val(`${canvasWidth}x${canvasHeight}`);
             $('#totalDuration').val(totalDuration);
-            $('#loopCount').val(loopCount);
+            $('#animLoop').val(animLoop + 1);  // UI shows 1-based count
             updateCanvasSize();
             
             // Load images from ZIP
