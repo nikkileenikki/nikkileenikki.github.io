@@ -250,7 +250,26 @@
                                 </div>
                                 <div>
                                     <label class="text-sm text-gray-400">Fill Color</label>
-                                    <input type="color" id="propShapeColor" class="w-full h-10 bg-gray-800 rounded px-2 py-1">
+                                    <div class="flex items-center gap-2">
+                                        <input type="color" id="propShapeColor" class="flex-1 h-10 bg-gray-800 rounded px-2 py-1">
+                                        <label class="flex items-center gap-1 text-xs text-gray-400">
+                                            <input type="checkbox" id="propShapeTransparent" class="w-4 h-4">
+                                            <span>Transparent</span>
+                                        </label>
+                                    </div>
+                                </div>
+                                <div>
+                                    <label class="text-sm text-gray-400">Border</label>
+                                    <div class="flex gap-2">
+                                        <div class="flex-1">
+                                            <input type="number" id="propShapeBorderWidth" class="w-full bg-gray-800 rounded px-2 py-1 text-sm" placeholder="Width" min="0" max="50" value="0">
+                                            <label class="text-xs text-gray-500">Width (px)</label>
+                                        </div>
+                                        <div class="flex-1">
+                                            <input type="color" id="propShapeBorderColor" class="w-full h-10 bg-gray-800 rounded px-2 py-1" value="#000000">
+                                            <label class="text-xs text-gray-500">Color</label>
+                                        </div>
+                                    </div>
                                 </div>
                                 <div>
                                     <label class="text-sm text-gray-400">Shadow</label>
@@ -439,6 +458,20 @@
                                     </div>
                                 </div>
                             </div>
+                        </div>
+                    </div>
+
+                    <!-- Save/Load Section -->
+                    <div class="mb-2">
+                        <h2 class="text-lg font-semibold mb-3">Project</h2>
+                        <div class="space-y-2">
+                            <button id="saveProjectBtn" class="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 rounded transition-colors">
+                                <i class="fas fa-save mr-2"></i>Save Project
+                            </button>
+                            <button id="loadProjectBtn" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white py-2 rounded transition-colors">
+                                <i class="fas fa-folder-open mr-2"></i>Load Project
+                            </button>
+                            <input type="file" id="loadProjectInput" accept=".json" class="hidden">
                         </div>
                     </div>
 

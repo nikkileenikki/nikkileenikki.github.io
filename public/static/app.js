@@ -292,6 +292,9 @@
         // Shape properties
         $('#propShapeType').on('change', updateShapeType);
         $('#propShapeColor').on('change', updateShapeColor);
+        $('#propShapeTransparent').on('change', updateShapeTransparent);
+        $('#propShapeBorderWidth').on('change', updateShapeBorder);
+        $('#propShapeBorderColor').on('change', updateShapeBorder);
         
         // Video properties
         $('#propVideoUrl').on('change', updateVideoUrl);
@@ -877,6 +880,9 @@
             shapeType: shapeType,
             fillColor: fillColor,
             borderRadius: borderRadius,
+            borderWidth: 0,
+            borderColor: '#000000',
+            transparent: false,
             x: 50,
             y: 50,
             width: width,
@@ -1474,6 +1480,7 @@
                 type: 'image',
                 src: url,
                 filename: filename,
+                aspectRatio: aspectRatio,  // Store aspect ratio for export
                 x: 0,  // Start at X = 0
                 y: 0,  // Start at Y = 0
                 width: fitWidth,
@@ -2265,6 +2272,9 @@
             $shapeProps.removeClass('hidden');
             $('#propShapeType').val(element.shapeType);
             $('#propShapeColor').val(element.fillColor);
+            $('#propShapeTransparent').prop('checked', element.transparent || false);
+            $('#propShapeBorderWidth').val(element.borderWidth || 0);
+            $('#propShapeBorderColor').val(element.borderColor || '#000000');
             
             // Shape shadow and glow
             $('#propShapeShadowX').val(element.shadowX || 0);
@@ -2579,7 +2589,37 @@
         if (element.type !== 'shape') return;
         
         element.fillColor = $(this).val();
-        $(`#${selectedElement}`).css('background-color', element.fillColor);
+        const bgColor = element.transparent ? 'transparent' : element.fillColor;
+        $(`#${selectedElement}`).css('background-color', bgColor);
+    }
+    
+    function updateShapeTransparent() {
+        if (!selectedElement) return;
+        const element = elements.find(el => el.id === selectedElement);
+        if (element.type !== 'shape') return;
+        
+        element.transparent = $(this).is(':checked');
+        const bgColor = element.transparent ? 'transparent' : element.fillColor;
+        $(`#${selectedElement}`).css('background-color', bgColor);
+    }
+    
+    function updateShapeBorder() {
+        if (!selectedElement) return;
+        const element = elements.find(el => el.id === selectedElement);
+        if (element.type !== 'shape') return;
+        
+        element.borderWidth = parseInt($('#propShapeBorderWidth').val()) || 0;
+        element.borderColor = $('#propShapeBorderColor').val();
+        
+        const $elem = $(`#${selectedElement}`);
+        if (element.borderWidth > 0) {
+            $elem.css({
+                'border': `${element.borderWidth}px solid ${element.borderColor}`,
+                'box-sizing': 'border-box'
+            });
+        } else {
+            $elem.css('border', 'none');
+        }
     }
     
     // Video property updates
@@ -4297,6 +4337,7 @@
             top: ${element.y}px;
             width: ${element.width}px;
             height: ${element.height}px;
+            object-fit: contain;
             opacity: ${element.opacity};
             transform: rotate(${element.rotation}deg);
             z-index: ${element.zIndex};
@@ -4417,6 +4458,14 @@
                     borderRadius = element.borderRadius + 'px';
                 }
                 
+                // Background color (support transparent)
+                const bgColor = element.transparent ? 'transparent' : (element.fillColor || '#ffffff');
+                
+                // Border style
+                const borderStyle = (element.borderWidth && element.borderWidth > 0) 
+                    ? `border: ${element.borderWidth}px solid ${element.borderColor || '#000000'}; box-sizing: border-box;`
+                    : '';
+                
                 // Build box-shadow CSS (always-on effects)
                 let boxShadow = '';
                 if (!element.shadowHover && (element.shadowX || element.shadowY || element.shadowBlur || element.shadowSpread)) {
@@ -4447,8 +4496,9 @@
             height: ${element.height}px;
             opacity: ${element.opacity};
             transform: rotate(${element.rotation}deg);
-            background-color: ${element.fillColor};
+            background-color: ${bgColor};
             border-radius: ${borderRadius};
+            ${borderStyle}
             ${boxShadowStyle}
             z-index: ${element.zIndex};
             user-select: none;
