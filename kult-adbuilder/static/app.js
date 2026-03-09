@@ -5210,15 +5210,14 @@
                 return;
             }
             
-            // Prompt for project name
-            const bannerName = prompt('Enter a name for your project:', `${canvasWidth}x${canvasHeight}-banner`);
-            if (!bannerName || bannerName.trim() === '') {
-                // User cancelled or entered empty name
-                return;
+            // Use the banner name from the input field
+            let bannerName = ($('#bannerName').val() || '').trim();
+            if (!bannerName) {
+                bannerName = `${canvasWidth}x${canvasHeight}-banner`;
             }
             
             // Sanitize filename (remove special characters)
-            const safeBannerName = bannerName.trim().replace(/[^a-z0-9_-]/gi, '_');
+            const safeBannerName = bannerName.replace(/[^a-z0-9_-]/gi, '_') || 'banner';
             
             // Build image mapping first
             const imageMapping = {};
@@ -5285,17 +5284,6 @@
             URL.revokeObjectURL(url);
             
             console.log('Project saved successfully as:', filename);
-        } catch (error) {
-            console.error('Error saving project:', error);
-            alert('Error saving project. Please try again.');
-        }
-    }
-            a.href = url;
-            a.download = filename;
-            a.click();
-            URL.revokeObjectURL(url);
-            
-            console.log('Project saved successfully!');
         } catch (error) {
             console.error('Error saving project:', error);
             alert('Error saving project. Please try again.');
