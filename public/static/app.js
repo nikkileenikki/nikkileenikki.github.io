@@ -434,6 +434,11 @@
         // Actions
         $('#previewBtn').on('click', playTimeline);
         $('#exportBtn').on('click', exportToZip);
+        $('#saveProjectBtn').on('click', saveProject);
+        $('#loadProjectBtn').on('click', function() {
+            $('#loadProjectInput').click();
+        });
+        $('#loadProjectInput').on('change', loadProject);
         $('#clearBtn').on('click', clearAll);
         
         // Banner name input - sanitize in real-time
@@ -5191,6 +5196,167 @@
         }
         
         updateStageZoom();
+    }
+    
+    // ============================================
+    // SAVE/LOAD PROJECT FUNCTIONS
+    // ============================================
+    
+    async function saveProject() {
+        try {
+            // Create project data
+            const projectData = {
+                version: '1.0',
+                timestamp: new Date().toISOString(),
+                canvasWidth: canvasWidth,
+                canvasHeight: canvasHeight,
+                totalDuration: totalDuration,
+                loopCount: loopCount,
+                elements: elements.map(el => {
+                    // For images, store filename instead of full data URL
+                    if (el.type === 'image') {
+                        return {
+                            ...el,
+                            src: el.filename || el.src // Use filename as reference
+                        };
+                    }
+                    return el;
+                }),
+                groups: groups
+            };
+            
+            // Create ZIP file
+            const zip = new JSZip();
+            
+            // Add project.json
+            zip.file('project.json', JSON.stringify(projectData, null, 2));
+            
+            // Add all images to ZIP
+            let imageIndex = 0;
+            for (const element of elements) {
+                if (element.type === 'image') {
+                    imageIndex++;
+                    const filename = `image_${imageIndex}.${getExtensionFromDataUrl(element.src)}`;
+                    // Convert data URL to blob
+                    const base64Data = element.src.split(',')[1];
+                    const mimeType = element.src.split(',')[0].split(':')[1].split(';')[0];
+                    zip.file(filename, base64Data, { base64: true });
+                }
+            }
+            
+            // Generate ZIP
+            const blob = await zip.generateAsync({ type: 'blob' });
+            
+            // Download ZIP
+            const timestamp = new Date().toISOString().slice(0, 10);
+            const filename = `adbuilder-project-${timestamp}.zip`;
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = filename;
+            a.click();
+            URL.revokeObjectURL(url);
+            
+            console.log('Project saved successfully!');
+        } catch (error) {
+            console.error('Error saving project:', error);
+            alert('Error saving project. Please try again.');
+        }
+    }
+    
+    async function loadProject(event) {
+        const file = event.target.files[0];
+        if (!file) return;
+        
+        try {
+            // Read ZIP file
+            const zip = await JSZip.loadAsync(file);
+            
+            // Extract project.json
+            const projectJsonFile = zip.file('project.json');
+            if (!projectJsonFile) {
+                alert('Invalid project file: project.json not found');
+                return;
+            }
+            
+            const projectJson = await projectJsonFile.async('string');
+            const projectData = JSON.parse(projectJson);
+            
+            // Clear current project
+            elements.length = 0;
+            groups.length = 0;
+            selectedElement = null;
+            selectedFolder = null;
+            
+            // Restore canvas settings
+            canvasWidth = projectData.canvasWidth || 300;
+            canvasHeight = projectData.canvasHeight || 250;
+            totalDuration = projectData.totalDuration || 5;
+            loopCount = projectData.loopCount || 1;
+            
+            // Update UI
+            $('#canvasSize').val(`${canvasWidth}x${canvasHeight}`);
+            $('#totalDuration').val(totalDuration);
+            $('#loopCount').val(loopCount);
+            updateCanvasSize();
+            
+            // Load images from ZIP
+            const imageFiles = {};
+            let imageIndex = 0;
+            for (const element of projectData.elements) {
+                if (element.type === 'image') {
+                    imageIndex++;
+                    const filename = `image_${imageIndex}.${getExtensionFromDataUrl(element.src)}`;
+                    const imageFile = zip.file(filename);
+                    if (imageFile) {
+                        const imageBlob = await imageFile.async('blob');
+                        const dataUrl = await blobToDataURL(imageBlob);
+                        imageFiles[filename] = dataUrl;
+                    }
+                }
+            }
+            
+            // Restore elements with loaded images
+            imageIndex = 0;
+            for (const element of projectData.elements) {
+                if (element.type === 'image') {
+                    imageIndex++;
+                    const filename = `image_${imageIndex}.${getExtensionFromDataUrl(element.src)}`;
+                    element.src = imageFiles[filename] || element.src;
+                }
+                elements.push(element);
+            }
+            
+            // Restore groups
+            if (projectData.groups) {
+                groups.push(...projectData.groups);
+            }
+            
+            // Update display
+            updateCanvas();
+            updateLayersList();
+            rebuildTimeline();
+            updatePropertiesPanel();
+            
+            // Reset file input
+            $('#loadProjectInput').val('');
+            
+            console.log('Project loaded successfully!');
+            alert('Project loaded successfully!');
+        } catch (error) {
+            console.error('Error loading project:', error);
+            alert('Error loading project. Please make sure the file is a valid project ZIP.');
+        }
+    }
+    
+    // Helper function to convert Blob to Data URL
+    function blobToDataURL(blob) {
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload = () => resolve(reader.result);
+            reader.onerror = reject;
+            reader.readAsDataURL(blob);
+        });
     }
     
 })();
