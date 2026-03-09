@@ -236,6 +236,10 @@
                                         <option value="_top">Top Frame (_top)</option>
                                     </select>
                                 </div>
+                                <div id="imageBorderRadius" class="hidden">
+                                    <label class="text-sm text-gray-400">Border Radius</label>
+                                    <input type="number" id="propImageBorderRadius" class="w-full bg-gray-800 rounded px-3 py-2 text-sm" placeholder="0" min="0" max="200" value="0">
+                                </div>
                             </div>
                             
                             <!-- Shape Properties -->
@@ -260,14 +264,18 @@
                                 </div>
                                 <div>
                                     <label class="text-sm text-gray-400">Border</label>
-                                    <div class="flex gap-2">
-                                        <div class="flex-1">
+                                    <div class="grid grid-cols-3 gap-2">
+                                        <div>
                                             <input type="number" id="propShapeBorderWidth" class="w-full bg-gray-800 rounded px-2 py-1 text-sm" placeholder="Width" min="0" max="50" value="0">
                                             <label class="text-xs text-gray-500">Width (px)</label>
                                         </div>
-                                        <div class="flex-1">
+                                        <div>
                                             <input type="color" id="propShapeBorderColor" class="w-full h-10 bg-gray-800 rounded px-2 py-1" value="#000000">
                                             <label class="text-xs text-gray-500">Color</label>
+                                        </div>
+                                        <div>
+                                            <input type="number" id="propShapeBorderRadius" class="w-full bg-gray-800 rounded px-2 py-1 text-sm" placeholder="Radius" min="0" max="200" value="0">
+                                            <label class="text-xs text-gray-500">Radius (px)</label>
                                         </div>
                                     </div>
                                 </div>

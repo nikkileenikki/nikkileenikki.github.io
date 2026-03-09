@@ -295,6 +295,8 @@
         $('#propShapeTransparent').on('change', updateShapeTransparent);
         $('#propShapeBorderWidth').on('change', updateShapeBorder);
         $('#propShapeBorderColor').on('change', updateShapeBorder);
+        $('#propShapeBorderRadius').on('change', updateShapeBorderRadius);
+        $('#propImageBorderRadius').on('change', updateImageBorderRadius);
         
         // Video properties
         $('#propVideoUrl').on('change', updateVideoUrl);
@@ -1481,6 +1483,7 @@
                 src: url,
                 filename: filename,
                 aspectRatio: aspectRatio,  // Store aspect ratio for export
+                borderRadius: 0,  // Initialize border radius
                 x: 0,  // Start at X = 0
                 y: 0,  // Start at Y = 0
                 width: fitWidth,
@@ -2262,8 +2265,17 @@
             $clickthroughProps.removeClass('hidden');
             $('#propClickUrl').val(element.url || ''); // Show empty if no URL
             $('#propClickTarget').val(element.target || '_blank');
+            $('#imageBorderRadius').addClass('hidden');
         } else {
             $clickthroughProps.addClass('hidden');
+        }
+        
+        // Show border radius for images
+        if (element.type === 'image') {
+            $('#imageBorderRadius').removeClass('hidden');
+            $('#propImageBorderRadius').val(element.borderRadius || 0);
+        } else {
+            $('#imageBorderRadius').addClass('hidden');
         }
         
         // Show/hide shape properties
@@ -2275,6 +2287,7 @@
             $('#propShapeTransparent').prop('checked', element.transparent || false);
             $('#propShapeBorderWidth').val(element.borderWidth || 0);
             $('#propShapeBorderColor').val(element.borderColor || '#000000');
+            $('#propShapeBorderRadius').val(element.borderRadius || 0);
             
             // Shape shadow and glow
             $('#propShapeShadowX').val(element.shadowX || 0);
@@ -2620,6 +2633,37 @@
         } else {
             $elem.css('border', 'none');
         }
+    }
+    
+    function updateShapeBorderRadius() {
+        if (!selectedElement) return;
+        const element = elements.find(el => el.id === selectedElement);
+        if (element.type !== 'shape') return;
+        
+        element.borderRadius = parseInt($('#propShapeBorderRadius').val()) || 0;
+        
+        let borderRadius = '0';
+        if (element.shapeType === 'circle') {
+            borderRadius = '50%';
+        } else if (element.shapeType === 'rounded-rectangle') {
+            borderRadius = '12px';
+        } else if (element.borderRadius > 0) {
+            borderRadius = element.borderRadius + 'px';
+        }
+        
+        $(`#${selectedElement}`).css('border-radius', borderRadius);
+    }
+    
+    function updateImageBorderRadius() {
+        if (!selectedElement) return;
+        const element = elements.find(el => el.id === selectedElement);
+        if (element.type !== 'image') return;
+        
+        element.borderRadius = parseInt($('#propImageBorderRadius').val()) || 0;
+        
+        const borderRadius = element.borderRadius > 0 ? element.borderRadius + 'px' : '0';
+        $(`#${selectedElement}`).css('border-radius', borderRadius);
+        $(`#${selectedElement} img`).css('border-radius', borderRadius);
     }
     
     // Video property updates
@@ -4330,6 +4374,7 @@
             if (element.type === 'image') {
                 // Images in root folder (no subfolder)
                 const imgSrc = `image_${imageCounter}.${getExtensionFromDataUrl(element.src)}`;
+                const borderRadius = (element.borderRadius && element.borderRadius > 0) ? `border-radius: ${element.borderRadius}px;` : '';
                 elementsHtml += `
         <img id="${element.id}" src="${imgSrc}" style="
             position: absolute;
@@ -4340,6 +4385,7 @@
             object-fit: contain;
             opacity: ${element.opacity};
             transform: rotate(${element.rotation}deg);
+            ${borderRadius}
             z-index: ${element.zIndex};
             user-select: none;
             cursor: pointer;
