@@ -364,32 +364,41 @@
         });
         
         // Timeline layer controls
+        // Use a timer to distinguish single click (select) from double-click (rename)
+        let trackClickTimer = null;
+
         $timelineTracks.on('click', '.timeline-track-label', function(e) {
-            // Don't select if clicking on a button
+            // Don't select if clicking on a button or rename input
             if ($(e.target).closest('button').length > 0) return;
+            if ($(e.target).is('.track-rename-input')) return;
             
-            e.stopPropagation(); // Prevent folder from capturing the event
+            e.stopPropagation();
             
             const elementId = $(e.currentTarget).closest('.timeline-track').data('element-id');
-            if (elementId) {
-                console.log('Timeline track clicked, selecting element:', elementId);
+            if (!elementId) return;
+
+            clearTimeout(trackClickTimer);
+            trackClickTimer = setTimeout(function() {
                 selectElement(elementId);
-            }
+            }, 220);
         });
         
         // Also handle clicks on tracks inside folders explicitly
         $timelineTracks.on('click', '.timeline-folder-children .timeline-track-label', function(e) {
-            // Don't select if clicking on a button
+            // Don't select if clicking on a button or rename input
             if ($(e.target).closest('button').length > 0) return;
+            if ($(e.target).is('.track-rename-input')) return;
             
-            e.stopPropagation(); // Prevent folder from capturing the event
+            e.stopPropagation();
             e.preventDefault();
             
             const elementId = $(e.currentTarget).closest('.timeline-track').data('element-id');
-            if (elementId) {
-                console.log('Folder child track clicked, selecting element:', elementId);
+            if (!elementId) return;
+
+            clearTimeout(trackClickTimer);
+            trackClickTimer = setTimeout(function() {
                 selectElement(elementId);
-            }
+            }, 220);
         });
         
         // Folder header click to select folder
@@ -407,6 +416,9 @@
         $timelineTracks.on('dblclick', '.track-name-label', function(e) {
             e.stopPropagation();
             e.preventDefault();
+            
+            // Cancel the pending single-click select so properties panel doesn't flicker
+            clearTimeout(trackClickTimer);
             
             const $span = $(this);
             const currentName = $span.text();
@@ -430,6 +442,8 @@
                     const group = groups.find(g => g.id === folderId);
                     if (group) group.name = newName || group.name;
                 }
+                // Remove focus from active element before rebuilding
+                if (document.activeElement) document.activeElement.blur();
                 rebuildTimeline();
             }
             
