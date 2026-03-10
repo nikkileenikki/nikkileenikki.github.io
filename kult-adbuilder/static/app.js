@@ -418,7 +418,10 @@
             $span.replaceWith($input);
             $input.focus().select();
             
+            let committed = false;
             function commitRename() {
+                if (committed) return;
+                committed = true;
                 const newName = $input.val().trim();
                 if (elementId) {
                     const el = elements.find(e => e.id === elementId);
@@ -430,10 +433,24 @@
                 rebuildTimeline();
             }
             
-            $input.on('blur', commitRename);
+            // Prevent any mousedown inside timelineTracks from stealing focus away from input
+            function blockMousedown(e) {
+                if ($(e.target).is('.track-rename-input')) return;
+                e.preventDefault();
+            }
+            $timelineTracks[0].addEventListener('mousedown', blockMousedown, true);
+            
+            $input.on('blur', function() {
+                $timelineTracks[0].removeEventListener('mousedown', blockMousedown, true);
+                commitRename();
+            });
             $input.on('keydown', function(e) {
-                if (e.key === 'Enter') { e.preventDefault(); commitRename(); }
-                if (e.key === 'Escape') { e.preventDefault(); rebuildTimeline(); }
+                if (e.key === 'Enter') { e.preventDefault(); $input.blur(); }
+                if (e.key === 'Escape') {
+                    committed = true; // skip save
+                    $timelineTracks[0].removeEventListener('mousedown', blockMousedown, true);
+                    rebuildTimeline();
+                }
             });
         });
         
