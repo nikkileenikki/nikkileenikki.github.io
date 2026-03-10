@@ -5337,6 +5337,9 @@
             $('#canvasSize').val(`${canvasWidth}x${canvasHeight}`);
             $('#totalDuration').val(totalDuration);
             $('#animLoop').val(animLoop + 1);  // UI shows 1-based count
+            if (projectData.bannerName) {
+                $('#bannerName').val(projectData.bannerName);
+            }
             updateCanvasSize();
             
             // Restore elements with loaded images
