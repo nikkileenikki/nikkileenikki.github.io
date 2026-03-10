@@ -403,6 +403,40 @@
             }
         });
         
+        // Double-click on element/folder name label to rename inline
+        $timelineTracks.on('dblclick', '.track-name-label', function(e) {
+            e.stopPropagation();
+            e.preventDefault();
+            
+            const $span = $(this);
+            const currentName = $span.text();
+            const elementId = $span.data('element-id');
+            const folderId = $span.data('folder-id');
+            
+            // Replace span with input
+            const $input = $(`<input type="text" class="track-rename-input" value="${currentName.replace(/"/g, '&quot;')}" />`);
+            $span.replaceWith($input);
+            $input.focus().select();
+            
+            function commitRename() {
+                const newName = $input.val().trim();
+                if (elementId) {
+                    const el = elements.find(e => e.id === elementId);
+                    if (el) el.name = newName || undefined;
+                } else if (folderId) {
+                    const group = groups.find(g => g.id === folderId);
+                    if (group) group.name = newName || group.name;
+                }
+                rebuildTimeline();
+            }
+            
+            $input.on('blur', commitRename);
+            $input.on('keydown', function(e) {
+                if (e.key === 'Enter') { e.preventDefault(); commitRename(); }
+                if (e.key === 'Escape') { e.preventDefault(); rebuildTimeline(); }
+            });
+        });
+        
         $timelineTracks.on('click', '.toggle-visibility', function(e) {
             e.stopPropagation();
             toggleLayerVisibility(e);
@@ -3230,28 +3264,28 @@
             
             if (element.type === 'text') {
                 icon = 'fa-font';
-                label = element.text.substring(0, 15);
+                label = element.name || element.text.substring(0, 15);
             } else if (element.type === 'clickthrough') {
                 icon = 'fa-mouse-pointer';
                 const clickthroughElements = elements.filter(el => el.type === 'clickthrough');
                 const clickIndex = clickthroughElements.findIndex(el => el.id === element.id) + 1;
-                label = `Click${clickIndex}`;
+                label = element.name || `Click${clickIndex}`;
             } else if (element.type === 'invisible') {
                 icon = 'fa-eye-slash';
                 const invisibleElements = elements.filter(el => el.type === 'invisible');
                 const invisibleIndex = invisibleElements.findIndex(el => el.id === element.id) + 1;
-                label = `Invisible${invisibleIndex}`;
+                label = element.name || `Invisible${invisibleIndex}`;
             } else if (element.type === 'shape') {
                 icon = 'fa-shapes';
                 const shapeElements = elements.filter(el => el.type === 'shape');
                 const shapeIndex = shapeElements.findIndex(el => el.id === element.id) + 1;
-                label = `Shape${shapeIndex}`;
+                label = element.name || `Shape${shapeIndex}`;
             } else if (element.type === 'video') {
                 icon = 'fa-video';
-                label = element.videoName;
+                label = element.name || element.videoName;
             } else {
                 icon = 'fa-image';
-                label = (element.filename || 'Image').substring(0, 15);
+                label = element.name || (element.filename || 'Image').substring(0, 15);
             }
             
             return { icon, label };
@@ -3266,7 +3300,7 @@
                     <div class="timeline-track-label">
                         <span class="timeline-handle">⋮⋮</span>
                         <i class="fas ${icon} text-blue-400 mr-2"></i>
-                        <span class="truncate flex-1">${label}</span>
+                        <span class="truncate flex-1 track-name-label" data-element-id="${element.id}">${label}</span>
                         <div class="flex items-center gap-1 ml-2">
                             <button class="timeline-layer-btn toggle-visibility" data-id="${element.id}" title="Toggle visibility">
                                 <i class="fas ${element.hidden ? 'fa-eye-slash' : 'fa-eye'} text-xs"></i>
@@ -3349,7 +3383,7 @@
                                 <span class="timeline-handle">⋮⋮</span>
                                 <span class="timeline-folder-toggle">${group.collapsed ? '▸' : '▾'}</span>
                                 <i class="fas fa-folder text-yellow-400 mr-2"></i>
-                                <span class="flex-1">${group.name}</span>
+                                <span class="flex-1 track-name-label" data-folder-id="${group.id}">${group.name}</span>
                                 <div class="flex items-center gap-1 ml-2">
                                     <button class="timeline-layer-btn toggle-folder-visibility" data-id="${group.id}" title="Toggle folder visibility">
                                         <i class="fas ${group.visible === false ? 'fa-eye-slash' : 'fa-eye'} text-xs"></i>
