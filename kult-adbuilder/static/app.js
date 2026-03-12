@@ -779,9 +779,9 @@
     }
     
     async function uploadFile(file) {
-        const validTypes = ['image/jpeg', 'image/png', 'image/gif'];
+        const validTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/svg+xml', 'image/webp'];
         if (!validTypes.includes(file.type)) {
-            alert('Please upload a JPG, PNG, or GIF file.');
+            alert('Please upload a JPG, PNG, GIF, SVG, or WEBP file.');
             return;
         }
         
@@ -1536,14 +1536,35 @@
         elementCounter++;
         const id = `element_${elementCounter}`;
         
-        // Load image to get natural dimensions
-        const img = new Image();
-        img.onload = function() {
-            const naturalWidth = img.width;
-            const naturalHeight = img.height;
-            const aspectRatio = naturalHeight / naturalWidth;
-            
-            // Fit to canvas width, maintain aspect ratio
+        // For SVGs, extract dimensions from the SVG markup directly
+        function getSvgDimensions(dataUrl) {
+            try {
+                const svgText = decodeURIComponent(
+                    dataUrl.startsWith('data:image/svg+xml,')
+                        ? dataUrl.slice('data:image/svg+xml,'.length)
+                        : atob(dataUrl.split(',')[1])
+                );
+                const parser = new DOMParser();
+                const doc = parser.parseFromString(svgText, 'image/svg+xml');
+                const svgEl = doc.querySelector('svg');
+                if (!svgEl) return null;
+                // Try width/height attributes first
+                const w = parseFloat(svgEl.getAttribute('width'));
+                const h = parseFloat(svgEl.getAttribute('height'));
+                if (w > 0 && h > 0) return { width: w, height: h };
+                // Fall back to viewBox
+                const vb = svgEl.getAttribute('viewBox');
+                if (vb) {
+                    const parts = vb.trim().split(/[\s,]+/);
+                    if (parts.length === 4) return { width: parseFloat(parts[2]), height: parseFloat(parts[3]) };
+                }
+            } catch(e) {}
+            return null;
+        }
+
+        function placeOnCanvas(natW, natH) {
+            if (!natW || !natH) { natW = canvasWidth; natH = canvasWidth; }
+            const aspectRatio = natH / natW;
             const fitWidth = canvasWidth;
             const fitHeight = Math.round(fitWidth * aspectRatio);
             
@@ -1562,7 +1583,6 @@
                 opacity: 1,
                 zIndex: elements.length,
                 animations: [],
-            interactions: initInteractionProperties(),
                 interactions: initInteractionProperties()
             };
             
@@ -1590,14 +1610,22 @@
             saveState(); // Save state for undo
             updateLayersList();
             selectElement(id);
-        };
-        
+        }
+
+        // SVG: extract dimensions from markup, no need for Image()
+        if (url.includes('image/svg')) {
+            const dims = getSvgDimensions(url);
+            placeOnCanvas(dims ? dims.width : 0, dims ? dims.height : 0);
+            return;
+        }
+
+        // Raster images: use Image() to get natural dimensions
+        const img = new Image();
+        img.onload = function() { placeOnCanvas(img.width, img.height); };
         img.onerror = function() {
-            // Fallback if image fails to load
             console.error('Failed to load image:', filename);
             alert('Failed to load image. Please try again.');
         };
-        
         img.src = url;
     }
     
@@ -4410,6 +4438,8 @@
     function getExtensionFromDataUrl(dataUrl) {
         if (dataUrl.includes('image/png')) return 'png';
         if (dataUrl.includes('image/gif')) return 'gif';
+        if (dataUrl.includes('image/svg')) return 'svg';
+        if (dataUrl.includes('image/webp')) return 'webp';
         return 'jpg';
     }
     
