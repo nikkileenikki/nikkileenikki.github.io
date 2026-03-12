@@ -133,6 +133,28 @@ input, select, button, textarea, label {
     -ms-overflow-style: none; /* IE and Edge */
 }
 
+/* Timeline tracks - Y scroll only, no scrollbar chrome */
+.timeline-tracks-scroll {
+    overflow-y: auto;
+    overflow-x: hidden;
+    scrollbar-width: none;       /* Firefox */
+    -ms-overflow-style: none;    /* IE/Edge */
+}
+.timeline-tracks-scroll::-webkit-scrollbar {
+    display: none;               /* Chrome/Safari/Opera */
+}
+
+/* Hide all scrollbars inside the timeline container */
+#timelineContainer,
+#timelineContainer * {
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+}
+#timelineContainer::-webkit-scrollbar,
+#timelineContainer *::-webkit-scrollbar {
+    display: none;
+}
+
 .layer-item {
     cursor: pointer;
     transition: all 0.2s;
