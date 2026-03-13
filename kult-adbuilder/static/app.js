@@ -497,14 +497,36 @@
         $('#timelinePlayhead').on('mousedown', handlePlayheadDragStart);
         
         // Actions
-        $('#previewBtn').on('click', playTimeline);
-        $('#exportBtn').on('click', exportToZip);
-        $('#saveProjectBtn').on('click', saveProject);
+        $('#previewBtn').on('click', function() {
+            $('#importExportMenu').addClass('hidden');
+            playTimeline();
+        });
+        $('#exportBtn').on('click', function() {
+            $('#importExportMenu').addClass('hidden');
+            exportToZip();
+        });
+        $('#saveProjectBtn').on('click', function() {
+            $('#importExportMenu').addClass('hidden');
+            saveProject();
+        });
         $('#loadProjectBtn').on('click', function() {
+            $('#importExportMenu').addClass('hidden');
             $('#loadProjectInput').click();
         });
         $('#loadProjectInput').on('change', loadProject);
         $('#clearBtn').on('click', clearAll);
+
+        // Import/Export dropdown toggle
+        $('#importExportBtn').on('click', function(e) {
+            e.stopPropagation();
+            $('#importExportMenu').toggleClass('hidden');
+        });
+        // Close dropdown when clicking outside
+        $(document).on('click.importExport', function(e) {
+            if (!$(e.target).closest('#importExportDropdownWrapper').length) {
+                $('#importExportMenu').addClass('hidden');
+            }
+        });
         
         // Banner name input - sanitize in real-time
         $('#bannerName').on('input', function() {
