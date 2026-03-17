@@ -41,6 +41,17 @@
 			<div id="aspectRatio"><div id="aspectResult">16 : 9</div></div>
 		</div>
 	</div>
+	<br>
+	<br>
+	<br>
+	<div id="ft-video-calc">
+		<h3><b>Video Clickthrough Overlay</b></h3>
+		<div id="ft-leftBox">
+			<span>Y position of video: </span><input type="number" id="y-height" class="overlayCalc" value="30"/><br>
+			<span>Video height: </span><input type="number" id="v-height" class="overlayCalc" value="169"/><br>
+			<span>Clickthrough height: </span><input type="number" id="c-height" class="overlayCalc" value="159"/><br>
+		</div>
+	</div>
 <br>
 <br>
 <br>
@@ -55,7 +66,7 @@
 			<!--input type="button" onclick="encodeAddJS()" value="Encode & Add JS"-->
 		</div>
 
-		<div id="u-title"><b>Utility functions</b> <div id="u-plus">[+]</div></div>
+		<!--div id="u-title"><b>Utility functions</b> <div id="u-plus">[+]</div></div>
 		<div id="u-content" style="display:none;">
 			bannerdivparent : "div#ebDiv"+cRand;<br>
 			banneriframediv : "div#ebIframeDiv_"+cAdID+"_"+cRand;<br>
@@ -90,7 +101,7 @@
 			</td>
 			</tr>
 			</table>
-		</div>
+		</div-->
 	</div>
 <br>
 <br>
@@ -564,7 +575,25 @@ function calcRatio2(){
 	var r1 = r1r.toFixed(0);
 	$( "#p-width" ).val( r1 );
 }
+
+function ftCalc(){
+	var a = $( "#y-height" ).val();
+	var b = $( "#v-height" ).val();
+
+	var ftc1 = (parseInt(a)+parseInt(b))-40;
+	// var r1 = r1r.toFixed(0);
+	$( "#c-height" ).val( ftc1 );
+}
 	
+$( "#y-height" ).keyup(function() {
+	ftCalc();
+});
+
+$( "#v-height" ).keyup(function() {
+	ftCalc();
+});
+
+
 var gcd = function(a, b) {
 		if ( ! b) {
 			return a;
@@ -1086,6 +1115,16 @@ html,body{
 			width: 16px;
 			height: 16px;
 			vertical-align: text-top;
+			}
+			#ft-video-calc{
+
+			}
+			#ft-leftBox{
+				width: 500px;
+			}
+			#ft-leftBox span{
+				width: 150px;
+				display: inline-block;
 			}
 </style>
 </body>
