@@ -926,10 +926,7 @@
     function openClickthroughModal() {
         $('#clickthroughUrl').val(''); // Empty by default - no default URL
         // Auto-suggest next click index
-        const usedIndexes = elements.filter(el => el.type === 'clickthrough').map(el => el.clickIndex || 1);
-        let nextIndex = 1;
-        while (usedIndexes.includes(nextIndex)) nextIndex++;
-        $('#clickthroughIndex').val(nextIndex);
+        $('#clickthroughIndex').val(1);
         $('#clickthroughTarget').val('_blank');
         $clickthroughModal.removeClass('hidden');
         setTimeout(() => $('#clickthroughUrl').focus(), 100);
@@ -2694,7 +2691,7 @@
         if (!selectedElement) return;
         const element = elements.find(el => el.id === selectedElement);
         if (element.type !== 'clickthrough') return;
-        element.clickIndex = parseInt($(this).val()) || 1;
+        element.clickIndex = Math.min(10, Math.max(1, parseInt($(this).val()) || 1));
     }
     
     function updateClickTarget() {
@@ -5020,9 +5017,7 @@
                 zone.addEventListener('click', function() {
                     const url = this.getAttribute('data-url');
                     const clickIndex = parseInt(this.getAttribute('data-click-index')) || 1;
-                    if (url && typeof myFT !== 'undefined' && myFT.clickTag) {
-                        myFT.clickTag(clickIndex, url);
-                    }
+                    myFT.clickTag(clickIndex, url);
                 });
             });
             
