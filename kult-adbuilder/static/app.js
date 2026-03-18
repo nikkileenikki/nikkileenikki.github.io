@@ -4603,9 +4603,9 @@
                 }
             } else if (element.type === 'clickthrough') {
                 // Use div with JavaScript click handler instead of <a> tag
-                // Only include data-url and data-target if URL exists
+                // Always include data-url and data-click-index
                 const clickIndex = element.clickIndex || 1;
-                const dataAttrs = element.url ? `data-url="${element.url}" data-click-index="${clickIndex}"` : '';
+                const dataAttrs = `data-url="${element.url || ''}" data-click-index="${clickIndex}"`;
                 elementsHtml += `
         <div id="${element.id}" class="clickthrough-zone" ${dataAttrs} style="
             position: absolute;
@@ -4615,7 +4615,7 @@
             height: ${element.height}px;
             opacity: 0;
             z-index: ${element.zIndex};
-            cursor: ${element.url ? 'pointer' : 'default'};
+            cursor: pointer;
         "></div>`;
             } else if (element.type === 'invisible') {
                 // Invisible layer - render as an empty div with opacity 0
