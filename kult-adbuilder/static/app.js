@@ -287,6 +287,7 @@
         
         // Clickthrough properties
         $('#propClickUrl').on('change', updateClickUrl);
+        $('#propClickIndex').on('change', updateClickIndex);
         $('#propClickTarget').on('change', updateClickTarget);
         
         // Shape properties
@@ -924,6 +925,11 @@
     // ============================================
     function openClickthroughModal() {
         $('#clickthroughUrl').val(''); // Empty by default - no default URL
+        // Auto-suggest next click index
+        const usedIndexes = elements.filter(el => el.type === 'clickthrough').map(el => el.clickIndex || 1);
+        let nextIndex = 1;
+        while (usedIndexes.includes(nextIndex)) nextIndex++;
+        $('#clickthroughIndex').val(nextIndex);
         $('#clickthroughTarget').val('_blank');
         $clickthroughModal.removeClass('hidden');
         setTimeout(() => $('#clickthroughUrl').focus(), 100);
@@ -936,7 +942,8 @@
     function saveClickthrough() {
         const url = $('#clickthroughUrl').val() || ''; // Allow empty URL
         const target = $('#clickthroughTarget').val() || '_blank';
-        addClickthroughToCanvas(url, target);
+        const clickIndex = parseInt($('#clickthroughIndex').val()) || 1;
+        addClickthroughToCanvas(url, target, clickIndex);
         closeClickthroughModal();
     }
     
@@ -1143,7 +1150,7 @@
         updateTimelineTracks();
     }
     
-    function addClickthroughToCanvas(url, target) {
+    function addClickthroughToCanvas(url, target, clickIndex = 1) {
         elementCounter++;
         const id = `element_${elementCounter}`;
         
@@ -1152,6 +1159,7 @@
             type: 'clickthrough',
             url: url,
             target: target,
+            clickIndex: clickIndex,
             x: 0,
             y: 0,
             width: canvasWidth,
@@ -2384,6 +2392,7 @@
         if (element.type === 'clickthrough') {
             $clickthroughProps.removeClass('hidden');
             $('#propClickUrl').val(element.url || ''); // Show empty if no URL
+            $('#propClickIndex').val(element.clickIndex || 1);
             $('#propClickTarget').val(element.target || '_blank');
             $('#imageBorderRadius').addClass('hidden');
         } else {
@@ -2679,6 +2688,13 @@
         
         element.url = $(this).val() || 'https://kult.my';
         updateClickthroughDisplay(element);
+    }
+    
+    function updateClickIndex() {
+        if (!selectedElement) return;
+        const element = elements.find(el => el.id === selectedElement);
+        if (element.type !== 'clickthrough') return;
+        element.clickIndex = parseInt($(this).val()) || 1;
     }
     
     function updateClickTarget() {
@@ -4588,8 +4604,8 @@
             } else if (element.type === 'clickthrough') {
                 // Use div with JavaScript click handler instead of <a> tag
                 // Only include data-url and data-target if URL exists
-                const clickIndex = elements.filter(el => el.type === 'clickthrough').findIndex(el => el.id === element.id) + 1;
-                const dataAttrs = element.url ? `data-url="${element.url}" data-target="${element.target}" data-click-index="${clickIndex}"` : '';
+                const clickIndex = element.clickIndex || 1;
+                const dataAttrs = element.url ? `data-url="${element.url}" data-click-index="${clickIndex}"` : '';
                 elementsHtml += `
         <div id="${element.id}" class="clickthrough-zone" ${dataAttrs} style="
             position: absolute;
@@ -5003,14 +5019,9 @@
             clickthroughZones.forEach(function(zone) {
                 zone.addEventListener('click', function() {
                     const url = this.getAttribute('data-url');
-                    const target = this.getAttribute('data-target');
-                    const clickIndex = this.getAttribute('data-click-index');
-                    
-                    // Try Flashtalking API first, fallback to window.open
-                    if (typeof myFT !== 'undefined' && myFT.clickTag) {
+                    const clickIndex = parseInt(this.getAttribute('data-click-index')) || 1;
+                    if (url && typeof myFT !== 'undefined' && myFT.clickTag) {
                         myFT.clickTag(clickIndex, url);
-                    } else {
-                        window.open(url, target);
                     }
                 });
             });
