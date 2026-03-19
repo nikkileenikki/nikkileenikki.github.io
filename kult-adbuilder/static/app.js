@@ -1121,14 +1121,15 @@
                 display: flex;
                 align-items: center;
                 justify-content: center;
+                overflow: hidden;
                 color: #fff;
                 font-size: 14px;
                 border: 2px solid #e53e3e;
             ">
-                <div style="text-align: center;">
+                <div style="text-align: center; width: 100%; padding: 0 8px; box-sizing: border-box; overflow: hidden;">
                     <i class="fas fa-video" style="font-size: 32px; margin-bottom: 8px;"></i>
                     <div>${videoName}</div>
-                    <div style="font-size: 11px; opacity: 0.7;">${videoUrl}</div>
+                    <div style="font-size: 11px; opacity: 0.7; word-break: break-all; overflow: hidden;">${videoUrl}</div>
                     <div style="font-size: 11px; margin-top: 4px;">
                         ${playText} ${muted ? '🔇 Muted' : '🔊 Sound'} ${controls ? '⚙ Controls' : ''}
                     </div>
@@ -2851,15 +2852,17 @@
             element.playTrigger === 'mouseover' ? '🖱 On Hover' :
             '👆 On Click';
         
-        const mutedIcon = element.muted ? '🔇' : '🔊';
-        const controlsText = element.controls ? ' | 🎛 Controls' : '';
+        const mutedIcon = element.muted ? '🔇 Muted' : '🔊 Sound';
+        const controlsText = element.controls ? ' | ⚙ Controls' : '';
         
         const $element = $(`#${element.id}`);
-        $element.find('div').last().html(`
-            <i class="fas fa-video text-2xl mb-2"></i>
-            <div class="text-xs font-bold">${element.videoName}</div>
-            <div class="text-xs">${element.videoUrl}</div>
-            <div class="text-xs mt-1">${playTriggerText} ${mutedIcon}${controlsText}</div>
+        // Target the first child div (info display), not the resize handles
+        $element.css('overflow', 'hidden');
+        $element.children('div').first().css({'width': '100%', 'padding': '0 8px', 'boxSizing': 'border-box', 'overflow': 'hidden'}).html(`
+            <i class="fas fa-video" style="font-size: 32px; margin-bottom: 8px;"></i>
+            <div>${element.videoName}</div>
+            <div style="font-size: 11px; opacity: 0.7; word-break: break-all; overflow: hidden;">${element.videoUrl}</div>
+            <div style="font-size: 11px; margin-top: 4px;">${playTriggerText} ${mutedIcon}${controlsText}</div>
         `);
     }
     
@@ -4024,14 +4027,15 @@
                     display: flex;
                     align-items: center;
                     justify-content: center;
+                    overflow: hidden;
                     color: #fff;
                     font-size: 14px;
                     border: 2px solid #e53e3e;
                 ">
-                    <div style="text-align: center;">
+                    <div style="text-align: center; width: 100%; padding: 0 8px; box-sizing: border-box; overflow: hidden;">
                         <i class="fas fa-video" style="font-size: 32px; margin-bottom: 8px;"></i>
                         <div>${element.videoName}</div>
-                        <div style="font-size: 11px; opacity: 0.7;">${element.videoUrl}</div>
+                        <div style="font-size: 11px; opacity: 0.7; word-break: break-all; overflow: hidden;">${element.videoUrl}</div>
                         <div style="font-size: 11px; margin-top: 4px;">
                             ${playText} ${element.muted ? '🔇 Muted' : '🔊 Sound'} ${element.controls ? '⚙ Controls' : ''}
                         </div>
@@ -4432,8 +4436,10 @@
     }
     
     function generateManifest() {
-        // Count clickthrough elements
-        const clickthroughCount = elements.filter(el => el.type === 'clickthrough').length;
+        // clickTagCount = highest unique clickIndex used across all clickthrough elements
+        const clickthroughEls = elements.filter(el => el.type === 'clickthrough');
+        const clickTagCount = clickthroughEls.length === 0 ? 0 :
+            Math.max(...clickthroughEls.map(el => el.clickIndex || 1));
         
         // Get video elements
         const videoElements = elements.filter(el => el.type === 'video');
@@ -4446,7 +4452,7 @@
     "filename": "index.html",
     "width": ${width},
     "height": ${height},
-    "clickTagCount": ${clickthroughCount}`;
+    "clickTagCount": ${clickTagCount}`;
         
         // Add videos array if there are video elements
         if (videoElements.length > 0) {
@@ -4471,6 +4477,14 @@
     }
     
     function getExtensionFromDataUrl(dataUrl) {
+        if (dataUrl.includes('image/png')) return 'png';
+        if (dataUrl.includes('image/gif')) return 'gif';
+        if (dataUrl.includes('image/svg')) return 'svg';
+        if (dataUrl.includes('image/webp')) return 'webp';
+        return 'jpg';
+    }
+    
+        function getExtensionFromDataUrl(dataUrl) {
         if (dataUrl.includes('image/png')) return 'png';
         if (dataUrl.includes('image/gif')) return 'gif';
         if (dataUrl.includes('image/svg')) return 'svg';
@@ -4509,14 +4523,14 @@
             if (element.type === 'image') {
                 // Images in root folder (no subfolder)
                 const imgSrc = `image_${imageCounter}.${getExtensionFromDataUrl(element.src)}`;
-                const borderRadius = (element.borderRadius && element.borderRadius > 0) ? `border-radius: ${element.borderRadius}px;` : '';
+                const borderRadius = (element.borderRadius && element.borderRadius > 0) ? `border-radius: ${Math.round(element.borderRadius)}px;` : '';
                 elementsHtml += `
         <img id="${element.id}" src="${imgSrc}" style="
             position: absolute;
-            left: ${element.x}px;
-            top: ${element.y}px;
-            width: ${element.width}px;
-            height: ${element.height}px;
+            left: ${Math.round(element.x)}px;
+            top: ${Math.round(element.y)}px;
+            width: ${Math.round(element.width)}px;
+            height: ${Math.round(element.height)}px;
             object-fit: contain;
             opacity: ${element.opacity};
             transform: rotate(${element.rotation}deg);
@@ -4530,14 +4544,14 @@
                 // Build text-shadow CSS (always-on effects)
                 let textShadow = '';
                 if (!element.shadowHover && (element.shadowX || element.shadowY || element.shadowBlur)) {
-                    textShadow = `${element.shadowX}px ${element.shadowY}px ${element.shadowBlur}px ${element.shadowColor}`;
+                    textShadow = `${Math.round(element.shadowX)}px ${Math.round(element.shadowY)}px ${Math.round(element.shadowBlur)}px ${element.shadowColor}`;
                 }
                 if (!element.glowHover && (element.glowX || element.glowY || element.glowBlur || element.glowSpread)) {
-                    let glowShadow = `${element.glowX}px ${element.glowY}px ${element.glowBlur}px ${element.glowColor}`;
+                    let glowShadow = `${Math.round(element.glowX)}px ${Math.round(element.glowY)}px ${Math.round(element.glowBlur)}px ${element.glowColor}`;
                     if (element.glowSpread > 0) {
                         const spreadLayers = [];
                         for (let i = 1; i <= element.glowSpread; i += 2) {
-                            spreadLayers.push(`${element.glowX}px ${element.glowY}px ${element.glowBlur + i}px ${element.glowColor}`);
+                            spreadLayers.push(`${Math.round(element.glowX)}px ${Math.round(element.glowY)}px ${Math.round(element.glowBlur + i)}px ${element.glowColor}`);
                         }
                         glowShadow = [glowShadow, ...spreadLayers].join(', ');
                     }
@@ -4548,14 +4562,14 @@
                 // Build hover text-shadow (if hover effects exist)
                 let hoverShadow = '';
                 if (element.shadowHover && (element.shadowX || element.shadowY || element.shadowBlur)) {
-                    hoverShadow = `${element.shadowX}px ${element.shadowY}px ${element.shadowBlur}px ${element.shadowColor}`;
+                    hoverShadow = `${Math.round(element.shadowX)}px ${Math.round(element.shadowY)}px ${Math.round(element.shadowBlur)}px ${element.shadowColor}`;
                 }
                 if (element.glowHover && (element.glowX || element.glowY || element.glowBlur || element.glowSpread)) {
-                    let glowShadow = `${element.glowX}px ${element.glowY}px ${element.glowBlur}px ${element.glowColor}`;
+                    let glowShadow = `${Math.round(element.glowX)}px ${Math.round(element.glowY)}px ${Math.round(element.glowBlur)}px ${element.glowColor}`;
                     if (element.glowSpread > 0) {
                         const spreadLayers = [];
                         for (let i = 1; i <= element.glowSpread; i += 2) {
-                            spreadLayers.push(`${element.glowX}px ${element.glowY}px ${element.glowBlur + i}px ${element.glowColor}`);
+                            spreadLayers.push(`${Math.round(element.glowX)}px ${Math.round(element.glowY)}px ${Math.round(element.glowBlur + i)}px ${element.glowColor}`);
                         }
                         glowShadow = [glowShadow, ...spreadLayers].join(', ');
                     }
@@ -4566,13 +4580,13 @@
                 elementsHtml += `
         <div id="${element.id}"${hoverClass} style="
             position: absolute;
-            left: ${element.x}px;
-            top: ${element.y}px;
-            width: ${element.width}px;
-            height: ${element.height}px;
+            left: ${Math.round(element.x)}px;
+            top: ${Math.round(element.y)}px;
+            width: ${Math.round(element.width)}px;
+            height: ${Math.round(element.height)}px;
             opacity: ${element.opacity};
             transform: rotate(${element.rotation}deg);
-            font-size: ${element.fontSize}px;
+            font-size: ${Math.round(element.fontSize)}px;
             font-family: ${element.fontFamily};
             color: ${element.color};
             font-weight: ${element.bold ? 'bold' : 'normal'};
@@ -4606,10 +4620,10 @@
                 elementsHtml += `
         <div id="${element.id}" class="clickthrough-zone" ${dataAttrs} style="
             position: absolute;
-            left: ${element.x}px;
-            top: ${element.y}px;
-            width: ${element.width}px;
-            height: ${element.height}px;
+            left: ${Math.round(element.x)}px;
+            top: ${Math.round(element.y)}px;
+            width: ${Math.round(element.width)}px;
+            height: ${Math.round(element.height)}px;
             opacity: 0;
             z-index: ${element.zIndex};
             cursor: pointer;
@@ -4619,10 +4633,10 @@
                 elementsHtml += `
         <div id="${element.id}" style="
             position: absolute;
-            left: ${element.x}px;
-            top: ${element.y}px;
-            width: ${element.width}px;
-            height: ${element.height}px;
+            left: ${Math.round(element.x)}px;
+            top: ${Math.round(element.y)}px;
+            width: ${Math.round(element.width)}px;
+            height: ${Math.round(element.height)}px;
             opacity: 0;
             transform: rotate(${element.rotation}deg);
             z-index: ${element.zIndex};
@@ -4644,16 +4658,16 @@
                 
                 // Border style
                 const borderStyle = (element.borderWidth && element.borderWidth > 0) 
-                    ? `border: ${element.borderWidth}px solid ${element.borderColor || '#000000'}; box-sizing: border-box;`
+                    ? `border: ${Math.round(element.borderWidth)}px solid ${element.borderColor || '#000000'}; box-sizing: border-box;`
                     : '';
                 
                 // Build box-shadow CSS (always-on effects)
                 let boxShadow = '';
                 if (!element.shadowHover && (element.shadowX || element.shadowY || element.shadowBlur || element.shadowSpread)) {
-                    boxShadow = `${element.shadowX}px ${element.shadowY}px ${element.shadowBlur}px ${element.shadowSpread}px ${element.shadowColor}`;
+                    boxShadow = `${Math.round(element.shadowX)}px ${Math.round(element.shadowY)}px ${Math.round(element.shadowBlur)}px ${Math.round(element.shadowSpread)}px ${element.shadowColor}`;
                 }
                 if (!element.glowHover && (element.glowX || element.glowY || element.glowBlur || element.glowSpread)) {
-                    const glowShadow = `${element.glowX}px ${element.glowY}px ${element.glowBlur}px ${element.glowSpread}px ${element.glowColor}`;
+                    const glowShadow = `${Math.round(element.glowX)}px ${Math.round(element.glowY)}px ${Math.round(element.glowBlur)}px ${Math.round(element.glowSpread)}px ${element.glowColor}`;
                     boxShadow = boxShadow ? `${boxShadow}, ${glowShadow}` : glowShadow;
                 }
                 const boxShadowStyle = boxShadow ? `box-shadow: ${boxShadow};` : '';
@@ -4661,20 +4675,20 @@
                 // Build hover box-shadow
                 let hoverShadow = '';
                 if (element.shadowHover && (element.shadowX || element.shadowY || element.shadowBlur || element.shadowSpread)) {
-                    hoverShadow = `${element.shadowX}px ${element.shadowY}px ${element.shadowBlur}px ${element.shadowSpread}px ${element.shadowColor}`;
+                    hoverShadow = `${Math.round(element.shadowX)}px ${Math.round(element.shadowY)}px ${Math.round(element.shadowBlur)}px ${Math.round(element.shadowSpread)}px ${element.shadowColor}`;
                 }
                 if (element.glowHover && (element.glowX || element.glowY || element.glowBlur || element.glowSpread)) {
-                    const glowShadow = `${element.glowX}px ${element.glowY}px ${element.glowBlur}px ${element.glowSpread}px ${element.glowColor}`;
+                    const glowShadow = `${Math.round(element.glowX)}px ${Math.round(element.glowY)}px ${Math.round(element.glowBlur)}px ${Math.round(element.glowSpread)}px ${element.glowColor}`;
                     hoverShadow = hoverShadow ? `${hoverShadow}, ${glowShadow}` : glowShadow;
                 }
                 
                 elementsHtml += `
         <div id="${element.id}" style="
             position: absolute;
-            left: ${element.x}px;
-            top: ${element.y}px;
-            width: ${element.width}px;
-            height: ${element.height}px;
+            left: ${Math.round(element.x)}px;
+            top: ${Math.round(element.y)}px;
+            width: ${Math.round(element.width)}px;
+            height: ${Math.round(element.height)}px;
             opacity: ${element.opacity};
             transform: rotate(${element.rotation}deg);
             background-color: ${bgColor};
@@ -4705,10 +4719,10 @@
                 elementsHtml += `
         <ft-video id="${element.videoName}" name="${element.videoName}"${autoplayAttr}${mutedAttr}${controlsAttr} data-play-trigger="${playTrigger}" style="
             position: absolute;
-            left: ${element.x}px;
-            top: ${element.y}px;
-            width: ${element.width}px;
-            height: ${element.height}px;
+            left: ${Math.round(element.x)}px;
+            top: ${Math.round(element.y)}px;
+            width: ${Math.round(element.width)}px;
+            height: ${Math.round(element.height)}px;
             opacity: ${element.opacity};
             transform: rotate(${element.rotation}deg);
             z-index: ${element.zIndex};
