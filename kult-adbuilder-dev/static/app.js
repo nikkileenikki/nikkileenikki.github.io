@@ -44,6 +44,40 @@
     let $propertiesPanel, $textProps, $animModal, $textModal;
     let $clickthroughModal, $shapeModal, $videoModal, $timelineTracks, $timelineRuler;
     
+    function getStore() {
+        return window.adBuilderStore;
+    }
+
+    function syncSelectedElementToStore() {
+        const store = getStore();
+        if (!store) return;
+        store.update(state => {
+            state.selection.selectedElementId = selectedElement;
+        });
+    }
+
+    function syncCanvasSizeToStore() {
+        const store = getStore();
+        if (!store) return;
+        store.update(state => {
+            state.meta.width = canvasWidth;
+            state.meta.height = canvasHeight;
+        });
+    }
+
+    function syncTimelineDurationToStore() {
+        const store = getStore();
+        if (!store) return;
+        store.update(state => {
+            state.timeline.totalDuration = totalDuration;
+        });
+    }
+
+    function syncLegacyStateToStore() {
+        syncSelectedElementToStore();
+        syncCanvasSizeToStore();
+        syncTimelineDurationToStore();
+    }
     // ============================================
     // INITIALIZATION
     // ============================================
@@ -67,6 +101,7 @@
         initEventListeners();
         updateCanvasSize();
         updateTimelineRuler();
+        syncLegacyStateToStore();
     });
     
     // ============================================
@@ -1678,6 +1713,7 @@
             const [width, height] = value.split('x').map(Number);
             canvasWidth = width;
             canvasHeight = height;
+            syncCanvasSizeToStore();
             updateCanvasSize();
         }
     }
@@ -1687,6 +1723,7 @@
         const height = parseInt($('#customHeight').val()) || 250;
         canvasWidth = width;
         canvasHeight = height;
+        syncCanvasSizeToStore();
         updateCanvasSize();
     }
     
@@ -1827,6 +1864,7 @@
         if ($(e.target).is('#canvas')) {
             // Clicking on blank canvas - deselect everything
             selectedElement = null;
+            syncSelectedElementToStore();
             selectedFolder = null;
             clickCount = 0; // Reset click count
             lastClickedElement = null;
@@ -2069,6 +2107,7 @@
             $(`#${selectedElement}`).remove();
             
             selectedElement = null;
+            syncSelectedElementToStore();
             $propertiesPanel.addClass('hidden');
             
             updateLayersList();
@@ -2122,6 +2161,7 @@
     // ============================================
     function selectElement(id) {
         selectedElement = id;
+        syncSelectedElementToStore();
         selectedFolder = null; // Clear folder selection
         
         $('.canvas-element').removeClass('selected');
@@ -2143,6 +2183,7 @@
     function selectFolder(folderId) {
         selectedFolder = folderId;
         selectedElement = null; // Clear element selection
+        syncSelectedElementToStore();n
         
         $('.canvas-element').removeClass('selected');
         $('.canvas-folder').removeClass('selected'); // Remove from all folders
@@ -2251,6 +2292,7 @@
         
         if (selectedElement === id) {
             selectedElement = null;
+            syncSelectedElementToStore();
             $propertiesPanel.addClass('hidden');
         }
         
@@ -3292,6 +3334,7 @@
         const newDuration = parseFloat($('#timelineDuration').val());
         if (newDuration && newDuration >= 1 && newDuration <= 30) {
             totalDuration = newDuration;
+            syncTimelineDurationToStore();
             updateTimelineRuler();
             updateTimelineTracks();
         }
@@ -3308,6 +3351,7 @@
     function zoomIn() {
         // Zoom in = decrease duration to see more detail
         totalDuration = Math.max(totalDuration - 2, 2);
+        syncTimelineDurationToStore();
         $('#timelineDuration').val(totalDuration);
         updateTimelineRuler();
         updateTimelineTracks();
@@ -3316,6 +3360,7 @@
     function zoomOut() {
         // Zoom out = increase duration to see more time
         totalDuration = Math.min(totalDuration + 2, 30);
+        syncTimelineDurationToStore();
         $('#timelineDuration').val(totalDuration);
         updateTimelineRuler();
         updateTimelineTracks();
@@ -5465,12 +5510,15 @@
             elements.length = 0;
             groups.length = 0;
             selectedElement = null;
+            syncSelectedElementToStore();
             selectedFolder = null;
             
             // Restore canvas settings
             canvasWidth = projectData.canvasWidth || 300;
             canvasHeight = projectData.canvasHeight || 250;
+            syncCanvasSizeToStore();
             totalDuration = projectData.totalDuration || 5;
+            syncTimelineDurationToStore();
             animLoop = projectData.animLoop !== undefined ? projectData.animLoop : 0;
             
             // Update UI (convert animLoop back to user-friendly loop count)
