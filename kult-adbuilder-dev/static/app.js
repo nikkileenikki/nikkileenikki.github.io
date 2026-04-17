@@ -939,7 +939,7 @@
             animations: [],
             interactions: initInteractionProperties()
         };
-        
+        saveState();
         elements.push(element);
         
         const $element = $(`
@@ -1058,7 +1058,7 @@
             animations: [],
             interactions: initInteractionProperties()
         };
-        
+        saveState();
         elements.push(element);
         
         let shapeStyle = `background-color: ${fillColor};`;
@@ -1150,7 +1150,7 @@
             animations: [],
             interactions: initInteractionProperties()
         };
-        
+        saveState();
         elements.push(element);
         
         // Get play trigger display text
@@ -1283,7 +1283,7 @@
             animations: [],
             interactions: initInteractionProperties()
         };
-        
+        saveState();
         elements.push(element);
         
         const $element = $(`
@@ -1670,7 +1670,7 @@
                 animations: [],
                 interactions: initInteractionProperties()
             };
-            
+            saveState();
             elements.push(element);
             
             const $element = $(`
@@ -1994,6 +1994,7 @@
                 });
             } else {
                 // Element not in folder OR individually selected - move only this element
+                saveState();
                 element.x = newX;
                 element.y = newY;
                 
@@ -2036,7 +2037,7 @@
                     newY = mouseY;
                     break;
             }
-            
+            saveState();
             element.width = newWidth;
             element.height = newHeight;
             element.x = newX;
@@ -2124,6 +2125,7 @@
             e.preventDefault();
             
             // Delete the selected element
+            saveState();
             elements = elements.filter(el => el.id !== selectedElement);
             $(`#${selectedElement}`).remove();
             
@@ -2664,7 +2666,7 @@
         if (!selectedElement) return;
         const element = elements.find(el => el.id === selectedElement);
         if (element.type !== 'text') return;
-        
+        saveState();
         element.text = $(this).val();
         $(`#${selectedElement}`).text(element.text);
         updateLayersList();
@@ -3354,6 +3356,7 @@
     function updateTimelineDuration() {
         const newDuration = parseFloat($('#timelineDuration').val());
         if (newDuration && newDuration >= 1 && newDuration <= 30) {
+            saveState();
             totalDuration = newDuration;
             syncTimelineDurationToStore();
             updateTimelineRuler();
@@ -3371,6 +3374,7 @@
     
     function zoomIn() {
         // Zoom in = decrease duration to see more detail
+        saveState();
         totalDuration = Math.max(totalDuration - 2, 2);
         syncTimelineDurationToStore();
         $('#timelineDuration').val(totalDuration);
@@ -3380,6 +3384,7 @@
     
     function zoomOut() {
         // Zoom out = increase duration to see more time
+        saveState();
         totalDuration = Math.min(totalDuration + 2, 30);
         syncTimelineDurationToStore();
         $('#timelineDuration').val(totalDuration);
@@ -3672,6 +3677,7 @@
                 const folderId = $(this).data('folder-id');
                 const group = groups.find(g => g.id === folderId);
                 if (group) {
+                    saveState();
                     group.zIndex = currentZIndex--;
                     
                     // Update elements in this folder
@@ -3680,6 +3686,7 @@
                         const elementId = $(this).data('element-id');
                         const element = elements.find(el => el.id === elementId);
                         if (element) {
+                            saveState();
                             element.folderId = folderId;
                             element.zIndex = folderZIndex--;
                             
@@ -3720,6 +3727,7 @@
                 const elementId = $(this).data('element-id');
                 const element = elements.find(el => el.id === elementId);
                 if (element) {
+                    saveState();
                     element.folderId = null; // Remove from folder
                     element.zIndex = currentZIndex--;
                     
@@ -3797,6 +3805,7 @@
         });
         
         // Remove folder
+        saveState();
         groups = groups.filter(g => g.id !== folderId);
         
         updateTimelineTracks();
@@ -5259,6 +5268,7 @@
         if (elements.length === 0) return;
         
         if (confirm('Are you sure you want to clear all elements?')) {
+            saveState();
             elements = [];
             selectedElement = null;
             $canvas.empty();
