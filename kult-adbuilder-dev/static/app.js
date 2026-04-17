@@ -77,7 +77,6 @@
         syncSelectedElementToStore();
         syncCanvasSizeToStore();
         syncTimelineDurationToStore();
-        syncBannerNameToStore();
     }
 
     function getAppState() {
@@ -1731,6 +1730,7 @@
         } else {
             $('#customWidth, #customHeight').addClass('hidden');
             const [width, height] = value.split('x').map(Number);
+            window.adBuilderHistory.push(window.adBuilderStore.getState());
             canvasWidth = width;
             canvasHeight = height;
             syncCanvasSizeToStore();
@@ -1741,6 +1741,7 @@
     function updateCustomCanvasSize() {
         const width = parseInt($('#customWidth').val()) || 300;
         const height = parseInt($('#customHeight').val()) || 250;
+        window.adBuilderHistory.push(window.adBuilderStore.getState());
         canvasWidth = width;
         canvasHeight = height;
         syncCanvasSizeToStore();
