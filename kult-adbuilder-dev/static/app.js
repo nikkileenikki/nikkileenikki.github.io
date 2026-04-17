@@ -3660,6 +3660,8 @@
     
     // Update element and folder data from DOM structure
     function updateStructureFromDOM() {
+        saveState();
+        
         const maxZIndex = elements.length + groups.length;
         let currentZIndex = maxZIndex;
         
@@ -3811,19 +3813,19 @@
     function saveState() {
         const state = {
             elements: JSON.parse(JSON.stringify(elements)),
-            groups: JSON.parse(JSON.stringify(groups))
+            groups: JSON.parse(JSON.stringify(groups)),
+            canvasWidth: canvasWidth,
+            canvasHeight: canvasHeight,
+            totalDuration: totalDuration
         };
-        
+
         undoStack.push(state);
-        
-        // Limit stack size
+
         if (undoStack.length > MAX_UNDO_STACK) {
             undoStack.shift();
         }
-        
-        // Clear redo stack when new action is performed
+
         redoStack = [];
-        
         _log('State saved. Undo stack:', undoStack.length);
     }
     
@@ -3837,7 +3839,10 @@
         // Save current state to redo stack
         const currentState = {
             elements: JSON.parse(JSON.stringify(elements)),
-            groups: JSON.parse(JSON.stringify(groups))
+            groups: JSON.parse(JSON.stringify(groups)),
+            canvasWidth: canvasWidth,
+            canvasHeight: canvasHeight,
+            totalDuration: totalDuration
         };
         redoStack.push(currentState);
         
@@ -3845,7 +3850,14 @@
         const previousState = undoStack.pop();
         elements = previousState.elements;
         groups = previousState.groups;
-        
+        canvasWidth = previousState.canvasWidth ?? canvasWidth;
+        canvasHeight = previousState.canvasHeight ?? canvasHeight;
+        totalDuration = previousState.totalDuration ?? totalDuration;
+
+        updateCanvasSize();
+        $('#timelineDuration').val(totalDuration);
+        updateTimelineRuler();
+
         // Update UI
         updateCanvas();
         updateTimelineTracks();
@@ -3864,7 +3876,10 @@
         // Save current state to undo stack
         const currentState = {
             elements: JSON.parse(JSON.stringify(elements)),
-            groups: JSON.parse(JSON.stringify(groups))
+            groups: JSON.parse(JSON.stringify(groups)),
+            canvasWidth: canvasWidth,
+            canvasHeight: canvasHeight,
+            totalDuration: totalDuration
         };
         undoStack.push(currentState);
         
@@ -3872,7 +3887,14 @@
         const nextState = redoStack.pop();
         elements = nextState.elements;
         groups = nextState.groups;
-        
+        canvasWidth = nextState.canvasWidth ?? canvasWidth;
+        canvasHeight = nextState.canvasHeight ?? canvasHeight;
+        totalDuration = nextState.totalDuration ?? totalDuration;
+
+        updateCanvasSize();
+        $('#timelineDuration').val(totalDuration);
+        updateTimelineRuler();
+
         // Update UI
         updateCanvas();
         updateTimelineTracks();
