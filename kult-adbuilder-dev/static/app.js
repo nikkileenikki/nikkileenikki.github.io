@@ -94,7 +94,7 @@
         const store = getStore();
         if (!store) return;
         store.update(state => {
-            state.meta.name = currentBannerName || '';
+            // state.meta.name = currentBannerName || '';
         });
     }
     // ============================================
