@@ -697,6 +697,7 @@
             
             // Only start dragging if mouse moved more than 3px
             if (!hasMoved && Math.abs(deltaX) > 3) {
+                saveState();
                 hasMoved = true;
                 isTimelineBlockDragging = true;
             }
@@ -754,6 +755,7 @@
         const elementId = $block.data('element-id');
         const folderId = $block.data('folder-id');
         
+        saveState();
         isTimelineBlockResizing = true;
         resizeDirection = $handle.hasClass('left') ? 'left' : 'right';
         draggedBlock = { animId, elementId, folderId, $block };
@@ -868,6 +870,7 @@
         
         reader.onload = function(e) {
             const dataUrl = e.target.result;
+            saveState();
             addImageToCanvas(dataUrl, file.name);
         };
         
@@ -1112,7 +1115,7 @@
     }
     
     function saveVideo() {
-        saveState();
+        
         const videoUrl = $('#videoUrl').val().trim();
         const videoName = $('#videoName').val().trim() || 'video1';
         const playTrigger = $('#videoPlayTrigger').val();
@@ -1123,7 +1126,7 @@
             alert('Please enter video URL');
             return;
         }
-        
+        saveState();
         addVideoToCanvas(videoUrl, videoName, playTrigger, muted, controls);
         closeVideoModal();
     }
@@ -1263,6 +1266,7 @@
     // INVISIBLE LAYER
     // ============================================
     function addInvisibleLayer() {
+        saveState();
         elementCounter++;
         const id = `element_${elementCounter}`;
         
@@ -1479,7 +1483,6 @@
     
     // Save interaction settings to selected element or folder
     function saveInteractionSettings() {
-        saveState();
         let target = null;
         
         if (selectedFolder) {
@@ -1819,6 +1822,8 @@
         // Only set up drag offset if dragging is enabled
         if (!isDragging) return;
         
+        saveState();
+
         const canvasOffset = $canvas.offset();
         const $canvasContainer = $('#canvasContainer').parent();
         const scrollLeft = $canvasContainer.scrollLeft() || 0;
@@ -1855,7 +1860,7 @@
         
         // Select folder on click
         selectFolder(folderId);
-        
+        saveState();
         isDragging = true;
         
         const folder = groups.find(g => g.id === folderId);
@@ -1896,7 +1901,7 @@
     function handleResizeStart(e) {
         e.preventDefault();
         e.stopPropagation();
-        
+        saveState();
         isResizing = true;
         resizeHandle = $(e.target).attr('class').split(' ')[1];
         
@@ -2117,6 +2122,7 @@
             e.preventDefault();
             
             // Delete the selected element
+            saveState();
             elements = elements.filter(el => el.id !== selectedElement);
             $(`#${selectedElement}`).remove();
             
@@ -2140,6 +2146,7 @@
         if (!element) return;
         
         // Shift key: move 10px; default: move 1px
+        saveState();
         const step = e.shiftKey ? 10 : 1;
         
         switch(e.keyCode) {
@@ -2197,7 +2204,7 @@
     function selectFolder(folderId) {
         selectedFolder = folderId;
         selectedElement = null; // Clear element selection
-        syncSelectedElementToStore();n
+        syncSelectedElementToStore();
         
         $('.canvas-element').removeClass('selected');
         $('.canvas-folder').removeClass('selected'); // Remove from all folders
@@ -2299,7 +2306,7 @@
     function handleDeleteLayer(e) {
         e.stopPropagation();
         const id = $(e.currentTarget).data('id');
-        
+        saveState();
         elements = elements.filter(el => el.id !== id);
         $(`#${id}`).remove();
         
@@ -3645,7 +3652,8 @@
     
     // Update element and folder data from DOM structure
     function updateStructureFromDOM() {
-        
+        saveState();
+
         const maxZIndex = elements.length + groups.length;
         let currentZIndex = maxZIndex;
         
@@ -5242,7 +5250,6 @@
     }
     
     function clearAll() {
-        saveState();
         if (elements.length === 0) return;
         
         if (confirm('Are you sure you want to clear all elements?')) {
@@ -5298,7 +5305,7 @@
             handleDragEnd(e);
             return;
         }
-        
+        saveState();
         const draggedEl = elements.find(el => el.id === draggedLayerId);
         const targetEl = elements.find(el => el.id === targetId);
         
