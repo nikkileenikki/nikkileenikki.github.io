@@ -1,5 +1,10 @@
 export const CURRENT_BANNER_VERSION = 1;
 
+export const DEFAULT_BANNER_SIZE = {
+  width: 300,
+  height: 250
+};
+
 export const ELEMENT_TYPES = {
   TEXT: 'text',
   IMAGE: 'image',
@@ -9,7 +14,7 @@ export const ELEMENT_TYPES = {
   INVISIBLE: 'invisible'
 };
 
-export const DEFAULT_BANNER_SIZE = {
-  width: 300,
-  height: 250
+export const DEFAULT_TIMELINE = {
+  totalDuration: 5,
+  loop: true
 };
