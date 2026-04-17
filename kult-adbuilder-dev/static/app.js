@@ -899,6 +899,7 @@
             alert('Please enter some text');
             return;
         }
+        saveState();
         addTextToCanvas(text);
         closeTextModal();
     }
@@ -939,7 +940,6 @@
             animations: [],
             interactions: initInteractionProperties()
         };
-        saveState();
         elements.push(element);
         
         const $element = $(`
@@ -970,7 +970,6 @@
         `);
         
         appendElementToCanvas($element, element);
-        saveState(); // Save state for undo
         updateLayersList();
         selectElement(id);
     }
@@ -992,6 +991,7 @@
     }
     
     function saveClickthrough() {
+        saveState();
         const url = $('#clickthroughUrl').val() || ''; // Allow empty URL
         const target = $('#clickthroughTarget').val() || '_blank';
         const clickIndex = parseInt($('#clickthroughIndex').val()) || 1;
@@ -1012,6 +1012,7 @@
     }
     
     function saveShape() {
+        saveState();
         const shapeType = $('#shapeType').val();
         const width = parseInt($('#shapeWidth').val()) || 200;
         const height = parseInt($('#shapeHeight').val()) || 150;
@@ -1058,7 +1059,6 @@
             animations: [],
             interactions: initInteractionProperties()
         };
-        saveState();
         elements.push(element);
         
         let shapeStyle = `background-color: ${fillColor};`;
@@ -1089,7 +1089,6 @@
         `);
         
         appendElementToCanvas($element, element);
-        saveState(); // Save state for undo
         updateLayersList();
         selectElement(id);
         updateTimelineTracks();
@@ -1113,6 +1112,7 @@
     }
     
     function saveVideo() {
+        saveState();
         const videoUrl = $('#videoUrl').val().trim();
         const videoName = $('#videoName').val().trim() || 'video1';
         const playTrigger = $('#videoPlayTrigger').val();
@@ -1150,7 +1150,6 @@
             animations: [],
             interactions: initInteractionProperties()
         };
-        saveState();
         elements.push(element);
         
         // Get play trigger display text
@@ -1197,7 +1196,6 @@
         `);
         
         appendElementToCanvas($element, element);
-        saveState(); // Save state for undo
         updateLayersList();
         selectElement(id);
         updateTimelineTracks();
@@ -1257,8 +1255,6 @@
         `);
         
         appendElementToCanvas($element, element);
-        // FIX #7: Added missing saveState() — clickthrough additions were not captured in undo stack
-        saveState();
         updateLayersList();
         selectElement(id);
     }
@@ -1283,7 +1279,6 @@
             animations: [],
             interactions: initInteractionProperties()
         };
-        saveState();
         elements.push(element);
         
         const $element = $(`
@@ -1316,7 +1311,6 @@
         `);
         
         appendElementToCanvas($element, element);
-        saveState(); // Save state for undo
         updateLayersList();
         selectElement(id);
     }
@@ -1485,6 +1479,7 @@
     
     // Save interaction settings to selected element or folder
     function saveInteractionSettings() {
+        saveState();
         let target = null;
         
         if (selectedFolder) {
@@ -1494,7 +1489,7 @@
         }
         
         if (!target) return;
-        
+        saveState();
         if (!target.interactions) {
             target.interactions = initInteractionProperties();
         }
@@ -1537,7 +1532,7 @@
             }
         }
         
-        saveState();
+        
     }
     
     // Apply folder interactions to canvas folder wrapper
@@ -1670,7 +1665,6 @@
                 animations: [],
                 interactions: initInteractionProperties()
             };
-            saveState();
             elements.push(element);
             
             const $element = $(`
@@ -1692,7 +1686,6 @@
             `);
             
             appendElementToCanvas($element, element);
-            saveState(); // Save state for undo
             updateLayersList();
             selectElement(id);
         }
@@ -1994,7 +1987,6 @@
                 });
             } else {
                 // Element not in folder OR individually selected - move only this element
-                saveState();
                 element.x = newX;
                 element.y = newY;
                 
@@ -2037,7 +2029,7 @@
                     newY = mouseY;
                     break;
             }
-            saveState();
+
             element.width = newWidth;
             element.height = newHeight;
             element.x = newX;
@@ -2077,7 +2069,7 @@
     
     function handleMouseUp() {
         if (isDragging || isResizing) {
-            saveState(); // Save state after drag/resize
+
             updateAllFolderBounds(); // Update folder bounds after moving elements
         }
         isDragging = false;
@@ -2125,7 +2117,6 @@
             e.preventDefault();
             
             // Delete the selected element
-            saveState();
             elements = elements.filter(el => el.id !== selectedElement);
             $(`#${selectedElement}`).remove();
             
@@ -2309,7 +2300,6 @@
         e.stopPropagation();
         const id = $(e.currentTarget).data('id');
         
-        saveState(); // Save state before deletion
         elements = elements.filter(el => el.id !== id);
         $(`#${id}`).remove();
         
@@ -2398,7 +2388,6 @@
         }
         
         updateTimelineTracks();
-        saveState();
     }
     
     // ============================================
@@ -2598,7 +2587,6 @@
         const element = elements.find(el => el.id === selectedElement);
         element.width = parseInt($(this).val()) || 100;
         $(`#${selectedElement}`).css('width', element.width + 'px');
-        saveState();
     }
     
     function updateElementHeight() {
@@ -2606,7 +2594,6 @@
         const element = elements.find(el => el.id === selectedElement);
         element.height = parseInt($(this).val()) || 100;
         $(`#${selectedElement}`).css('height', element.height + 'px');
-        saveState();
     }
     
     function updateElementX() {
@@ -2614,7 +2601,6 @@
         const element = elements.find(el => el.id === selectedElement);
         element.x = parseInt($(this).val()) || 0;
         $(`#${selectedElement}`).css('left', element.x + 'px');
-        saveState();
     }
     
     function updateElementY() {
@@ -2622,7 +2608,6 @@
         const element = elements.find(el => el.id === selectedElement);
         element.y = parseInt($(this).val()) || 0;
         $(`#${selectedElement}`).css('top', element.y + 'px');
-        saveState();
     }
     
     function updateElementRotation() {
@@ -2630,7 +2615,6 @@
         const element = elements.find(el => el.id === selectedElement);
         element.rotation = parseInt($(this).val()) || 0;
         $(`#${selectedElement}`).css('transform', `rotate(${element.rotation}deg)`);
-        saveState();
     }
     
     function updateElementOpacity() {
@@ -2648,7 +2632,6 @@
                 folderElements.forEach(el => {
                     $(`#${el.id}`).css('opacity', opacityValue);
                 });
-                saveState();
             }
         } else if (selectedElement) {
             // Update element opacity
@@ -2656,17 +2639,16 @@
             if (element) {
                 element.opacity = opacityValue;
                 $(`#${selectedElement}`).css('opacity', opacityValue);
-                saveState();
             }
         }
     }
     
     // Text property updates
     function updateTextContent() {
+        saveState();
         if (!selectedElement) return;
         const element = elements.find(el => el.id === selectedElement);
         if (element.type !== 'text') return;
-        saveState();
         element.text = $(this).val();
         $(`#${selectedElement}`).text(element.text);
         updateLayersList();
@@ -3301,7 +3283,6 @@
         }
         
         _log('Saving state and updating timeline...');
-        saveState(); // Save state for undo
         rebuildTimeline();
         updateTimelineTracks();
         closeAnimationModal();
@@ -3309,6 +3290,7 @@
     }
     
     function deleteEditingAnimation() {
+        saveState();
         if (!editingAnimation) return;
         
         // Check if it's a folder or element animation
@@ -3318,7 +3300,6 @@
             elements.find(el => el.id === editingAnimation.elementId);
         
         if (target) {
-            saveState(); // Save state for undo
             target.animations = target.animations.filter(a => a.id !== editingAnimation.animId);
             rebuildTimeline();
             updateTimelineTracks();
@@ -3328,6 +3309,7 @@
     }
     
     function handleDeleteAnimation(e) {
+        saveState();
         const animId = $(e.currentTarget).data('anim-id');
         const elementId = $(e.currentTarget).data('element-id');
         const folderId = $(e.currentTarget).data('folder-id');
@@ -3336,7 +3318,6 @@
             // Delete folder animation
             const folder = groups.find(g => g.id === folderId);
             if (folder) {
-                saveState(); // Save state for undo
                 folder.animations = folder.animations.filter(a => a.id !== animId);
                 rebuildTimeline();
                 updateTimelineTracks();
@@ -3345,7 +3326,6 @@
             // Delete element animation
             const element = elements.find(el => el.id === elementId);
             if (element) {
-                saveState(); // Save state for undo
                 element.animations = element.animations.filter(a => a.id !== animId);
                 rebuildTimeline();
                 updateTimelineTracks();
@@ -3665,7 +3645,6 @@
     
     // Update element and folder data from DOM structure
     function updateStructureFromDOM() {
-        saveState();
         
         const maxZIndex = elements.length + groups.length;
         let currentZIndex = maxZIndex;
@@ -3677,7 +3656,6 @@
                 const folderId = $(this).data('folder-id');
                 const group = groups.find(g => g.id === folderId);
                 if (group) {
-                    saveState();
                     group.zIndex = currentZIndex--;
                     
                     // Update elements in this folder
@@ -3686,7 +3664,6 @@
                         const elementId = $(this).data('element-id');
                         const element = elements.find(el => el.id === elementId);
                         if (element) {
-                            saveState();
                             element.folderId = folderId;
                             element.zIndex = folderZIndex--;
                             
@@ -3727,7 +3704,6 @@
                 const elementId = $(this).data('element-id');
                 const element = elements.find(el => el.id === elementId);
                 if (element) {
-                    saveState();
                     element.folderId = null; // Remove from folder
                     element.zIndex = currentZIndex--;
                     
@@ -3752,6 +3728,7 @@
     
     // Create new folder
     function createFolder() {
+        saveState(); // Save state for undo
         folderCounter++;
         const folderId = `folder_${folderCounter}`;
         
@@ -3767,7 +3744,7 @@
         };
         
         groups.push(folder);
-        saveState(); // Save state for undo
+        
         updateTimelineTracks();
         
         _log('Folder created:', folder);
@@ -3789,13 +3766,14 @@
     
     // Delete folder
     function deleteFolder(e) {
+        saveState(); // Save state before deletion
         e.stopPropagation();
         const folderId = $(this).data('id');
         const group = groups.find(g => g.id === folderId);
         
         if (!group) return;
         
-        saveState(); // Save state before deletion
+        
         
         // Move elements out of folder back to root
         elements.forEach(element => {
@@ -3805,7 +3783,6 @@
         });
         
         // Remove folder
-        saveState();
         groups = groups.filter(g => g.id !== folderId);
         
         updateTimelineTracks();
@@ -5265,6 +5242,7 @@
     }
     
     function clearAll() {
+        saveState();
         if (elements.length === 0) return;
         
         if (confirm('Are you sure you want to clear all elements?')) {
