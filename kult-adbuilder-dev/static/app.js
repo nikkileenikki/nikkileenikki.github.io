@@ -77,6 +77,26 @@
         syncSelectedElementToStore();
         syncCanvasSizeToStore();
         syncTimelineDurationToStore();
+        syncBannerNameToStore();
+    }
+
+    function getAppState() {
+        const store = getStore();
+        return store ? store.getState() : null;
+    }
+
+    function updateAppState(updater) {
+        const store = getStore();
+        if (!store) return;
+        store.update(updater);
+    }
+
+    function syncBannerNameToStore() {
+        const store = getStore();
+        if (!store) return;
+        store.update(state => {
+            state.meta.name = currentBannerName || '';
+        });
     }
     // ============================================
     // INITIALIZATION
