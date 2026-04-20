@@ -258,3 +258,82 @@ export function buildFolderChildrenSortableConfig({
         }
     };
 }
+
+export function updateStructureFromDOM({
+    $timelineTracks,
+    elements,
+    groups,
+    $canvas,
+    applyFolderInteractions,
+    updateLayersList
+}) {
+    const maxZIndex = elements.length + groups.length;
+    let currentZIndex = maxZIndex;
+
+    $timelineTracks.children('li').each(function() {
+        if ($(this).hasClass('timeline-folder')) {
+            const folderId = $(this).data('folder-id');
+            const group = groups.find(g => g.id === folderId);
+
+            if (group) {
+                group.zIndex = currentZIndex--;
+
+                let folderZIndex = group.zIndex * 100;
+                $(this).find('.timeline-folder-children > li').each(function() {
+                    const elementId = $(this).data('element-id');
+                    const element = elements.find(el => el.id === elementId);
+
+                    if (element) {
+                        element.folderId = folderId;
+                        element.zIndex = folderZIndex--;
+
+                        const $element = $(`#${element.id}`);
+                        let $folderWrapper = $(`#${folderId}`);
+
+                        if ($folderWrapper.length === 0) {
+                            $folderWrapper = $(`
+                                <div class="canvas-folder" id="${folderId}" style="
+                                    position: absolute;
+                                    left: 0;
+                                    top: 0;
+                                    width: 100%;
+                                    height: 100%;
+                                    pointer-events: auto;
+                                    z-index: ${group.zIndex};
+                                "></div>
+                            `);
+                            $canvas.append($folderWrapper);
+                            applyFolderInteractions(group, $folderWrapper);
+                        }
+
+                        $folderWrapper.css('z-index', group.zIndex);
+
+                        if ($element.parent().attr('id') !== folderId) {
+                            $folderWrapper.append($element);
+                        }
+
+                        $element.css('z-index', element.zIndex);
+                    }
+                });
+            }
+        } else {
+            const elementId = $(this).data('element-id');
+            const element = elements.find(el => el.id === elementId);
+
+            if (element) {
+                element.folderId = null;
+                element.zIndex = currentZIndex--;
+
+                const $element = $(`#${element.id}`);
+                if ($element.parent().hasClass('canvas-folder')) {
+                    $canvas.append($element);
+                }
+
+                $element.css('z-index', element.zIndex);
+                $element.appendTo($canvas);
+            }
+        }
+    });
+
+    updateLayersList();
+}
