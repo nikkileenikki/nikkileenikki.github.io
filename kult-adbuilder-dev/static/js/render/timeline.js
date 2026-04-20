@@ -527,28 +527,37 @@ export function handlePlayheadDragStart({
     event,
     timeline,
     totalDuration,
-    isPlaying,
+    getIsPlaying,
     setIsPlayheadDragging
 }) {
     event.preventDefault();
     event.stopPropagation();
     setIsPlayheadDragging(true);
 
-    const moveHandler = function(moveEvent) {
+    function updateFromPointer(pageX) {
         const $ruler = $('#timelineRuler');
         const rulerOffset = $ruler.offset().left;
         const rulerWidth = $ruler.width();
-        const mouseX = moveEvent.pageX - rulerOffset;
+        if (!rulerWidth) return;
+
+        const mouseX = pageX - rulerOffset;
 
         let percent = (mouseX / rulerWidth) * 100;
         percent = Math.max(0, Math.min(100, percent));
 
         $('#timelinePlayhead').css('left', percent + '%');
 
-        if (!isPlaying && timeline) {
-            const time = (percent / 100) * totalDuration;
+        if (!getIsPlaying() && timeline) {
+            const time = Math.round(((percent / 100) * totalDuration) * 10) / 10;
             timeline.seek(time);
         }
+    }
+
+    // Update immediately on mousedown too
+    updateFromPointer(event.pageX);
+
+    const moveHandler = function(moveEvent) {
+        updateFromPointer(moveEvent.pageX);
     };
 
     const upHandler = function() {
