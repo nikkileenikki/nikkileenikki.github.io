@@ -337,3 +337,170 @@ export function updateStructureFromDOM({
 
     updateLayersList();
 }
+
+export function handleTimelineBlockDragStart({
+    event,
+    saveState,
+    elements,
+    groups,
+    totalDuration,
+    setIsTimelineBlockDragging,
+    setDraggedBlock,
+    rebuildTimeline
+}) {
+    if ($(event.target).hasClass('timeline-block-resize-handle') ||
+        $(event.target).closest('.delete-anim').length > 0) {
+        return;
+    }
+
+    event.preventDefault();
+    event.stopPropagation();
+
+    const $block = $(event.currentTarget);
+    const animId = $block.data('anim-id');
+    const elementId = $block.data('element-id');
+    const folderId = $block.data('folder-id');
+
+    let hasMoved = false;
+    setDraggedBlock({ animId, elementId, folderId, $block });
+
+    const $track = $block.parent();
+    const trackOffset = $track.offset().left;
+    const trackWidth = $track.width();
+    const blockOffset = $block.offset().left;
+    const startX = event.pageX;
+    const initialLeft = blockOffset - trackOffset;
+
+    const moveHandler = function(moveEvent) {
+        const deltaX = moveEvent.pageX - startX;
+
+        if (!hasMoved && Math.abs(deltaX) > 3) {
+            saveState();
+            hasMoved = true;
+            setIsTimelineBlockDragging(true);
+        }
+
+        if (!hasMoved) return;
+
+        let newLeft = initialLeft + deltaX;
+        newLeft = Math.max(0, Math.min(trackWidth - $block.width(), newLeft));
+
+        const newLeftPercent = (newLeft / trackWidth) * 100;
+        $block.css('left', newLeftPercent + '%');
+
+        let target, anim;
+        if (folderId) {
+            target = groups.find(g => g.id === folderId);
+        } else {
+            target = elements.find(el => el.id === elementId);
+        }
+
+        if (target) {
+            anim = target.animations.find(a => a.id === animId);
+            if (anim) {
+                anim.start = Math.round(((newLeftPercent / 100) * totalDuration) * 10) / 10;
+            }
+        }
+    };
+
+    const upHandler = function() {
+        $(document).off('mousemove', moveHandler);
+        $(document).off('mouseup', upHandler);
+
+        if (hasMoved) {
+            rebuildTimeline();
+        }
+
+        setTimeout(() => {
+            setIsTimelineBlockDragging(false);
+            setDraggedBlock(null);
+        }, 50);
+    };
+
+    $(document).on('mousemove', moveHandler);
+    $(document).on('mouseup', upHandler);
+}
+
+export function handleTimelineBlockResizeStart({
+    event,
+    saveState,
+    elements,
+    groups,
+    totalDuration,
+    setIsTimelineBlockResizing,
+    setResizeDirection,
+    setDraggedBlock,
+    rebuildTimeline
+}) {
+    event.preventDefault();
+    event.stopPropagation();
+
+    const $handle = $(event.currentTarget);
+    const $block = $handle.parent();
+    const animId = $block.data('anim-id');
+    const elementId = $block.data('element-id');
+    const folderId = $block.data('folder-id');
+
+    saveState();
+    setIsTimelineBlockResizing(true);
+    setResizeDirection($handle.hasClass('left') ? 'left' : 'right');
+    setDraggedBlock({ animId, elementId, folderId, $block });
+
+    const $track = $block.parent();
+    const trackWidth = $track.width();
+    const startX = event.pageX;
+    const initialLeft = parseFloat($block.css('left'));
+    const initialWidth = $block.width();
+
+    const moveHandler = function(moveEvent) {
+        const deltaX = moveEvent.pageX - startX;
+        const deltaPercent = (deltaX / trackWidth) * 100;
+
+        let target;
+        if (folderId) {
+            target = groups.find(g => g.id === folderId);
+        } else {
+            target = elements.find(el => el.id === elementId);
+        }
+        if (!target) return;
+
+        const anim = target.animations.find(a => a.id === animId);
+        if (!anim) return;
+
+        if ($handle.hasClass('left')) {
+            let newLeft = initialLeft + deltaPercent;
+            newLeft = Math.max(0, newLeft);
+
+            const widthPercent = parseFloat($block.css('width'));
+            const newWidthPercent = widthPercent - (newLeft - initialLeft);
+
+            if (newWidthPercent > 2) {
+                $block.css('left', newLeft + '%');
+                $block.css('width', newWidthPercent + '%');
+
+                anim.start = Math.round(((newLeft / 100) * totalDuration) * 10) / 10;
+                anim.duration = Math.round(((newWidthPercent / 100) * totalDuration) * 10) / 10;
+            }
+        } else {
+            const currentWidthPx = initialWidth + deltaX;
+            const maxWidth = trackWidth - parseFloat($block.position().left);
+            const newWidthPx = Math.max(20, Math.min(currentWidthPx, maxWidth));
+            const newWidthPercent = (newWidthPx / trackWidth) * 100;
+
+            $block.css('width', newWidthPercent + '%');
+            anim.duration = Math.round(((newWidthPercent / 100) * totalDuration) * 10) / 10;
+        }
+    };
+
+    const upHandler = function() {
+        setIsTimelineBlockResizing(false);
+        setResizeDirection(null);
+        setDraggedBlock(null);
+        $(document).off('mousemove', moveHandler);
+        $(document).off('mouseup', upHandler);
+        rebuildTimeline();
+    };
+
+    $(document).on('mousemove', moveHandler);
+    $(document).on('mouseup', upHandler);
+}
