@@ -3371,84 +3371,14 @@
     
     // Update element and folder data from DOM structure
     function updateStructureFromDOM() {
-        const maxZIndex = elements.length + groups.length;
-        let currentZIndex = maxZIndex;
-        
-        // Process folders and elements in DOM order (they can be mixed)
-        $('#timelineTracks > li').each(function(index) {
-            if ($(this).hasClass('timeline-folder')) {
-                // Update folder zIndex
-                const folderId = $(this).data('folder-id');
-                const group = groups.find(g => g.id === folderId);
-                if (group) {
-                    group.zIndex = currentZIndex--;
-                    
-                    // Update elements in this folder
-                    let folderZIndex = group.zIndex * 100; // Offset for folder children
-                    $(this).find('.timeline-folder-children > li').each(function() {
-                        const elementId = $(this).data('element-id');
-                        const element = elements.find(el => el.id === elementId);
-                        if (element) {
-                            element.folderId = folderId;
-                            element.zIndex = folderZIndex--;
-                            
-                            // Move DOM element into folder wrapper
-                            const $element = $(`#${element.id}`);
-                            let $folderWrapper = $(`#${folderId}`);
-
-                            // Create folder wrapper if it doesn't exist
-                            if ($folderWrapper.length === 0) {
-                                $folderWrapper = $(`
-                                    <div class="canvas-folder" id="${folderId}" style="
-                                        position: absolute;
-                                        left: 0;
-                                        top: 0;
-                                        width: 100%;
-                                        height: 100%;
-                                        pointer-events: auto;
-                                        z-index: ${group.zIndex};
-                                    "></div>
-                                `);
-                                $canvas.append($folderWrapper);
-
-                                // Apply folder interactions
-                                applyFolderInteractions(group, $folderWrapper);
-                            }
-
-                            // IMPORTANT: always sync wrapper z-index, even if it already existed
-                            $folderWrapper.css('z-index', group.zIndex);
-                            
-                            // Move element into folder wrapper
-                            if ($element.parent().attr('id') !== folderId) {
-                                $folderWrapper.append($element);
-                            }
-                            
-                            $element.css('z-index', element.zIndex);
-                        }
-                    });
-                }
-            } else {
-                // Update root element
-                const elementId = $(this).data('element-id');
-                const element = elements.find(el => el.id === elementId);
-                if (element) {
-                    element.folderId = null; // Remove from folder
-                    element.zIndex = currentZIndex--;
-                    
-                    // Move DOM element back to canvas root
-                    const $element = $(`#${element.id}`);
-                    if ($element.parent().hasClass('canvas-folder')) {
-                        $canvas.append($element);
-                    }
-                    
-                    $element.css('z-index', element.zIndex);
-                    $element.appendTo($canvas);
-                }
-            }
+        return window.adBuilderRender.timelineRender.updateStructureFromDOM({
+            $timelineTracks,
+            elements,
+            groups,
+            $canvas,
+            applyFolderInteractions,
+            updateLayersList
         });
-        
-        _log('Structure updated from DOM');
-        updateLayersList();
     }
     
     // ============================================
