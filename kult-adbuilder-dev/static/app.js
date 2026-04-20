@@ -2305,7 +2305,7 @@
         hideAllTypeSpecificProperties();
         
         // Show/hide text properties
-        if (element.type === 'text') {
+        if (isTextElement(element)) {
             fillTextProperties(element);
         } else {
             $textProps.addClass('hidden');
@@ -2313,14 +2313,14 @@
         
         // Show/hide clickthrough properties
         const $clickthroughProps = $('#clickthroughProps');
-        if (element.type === 'clickthrough') {
+        if (isClickthroughElement(element)) {
             fillClickthroughProperties(element);
         } else {
             $clickthroughProps.addClass('hidden');
         }
         
         // Show border radius for images
-        if (element.type === 'image') {
+        if (isImageElement(element)) {
             showImageBorderRadius(element);
         } else {
             hideImageBorderRadius();
@@ -2328,7 +2328,7 @@
         
         // Show/hide shape properties
         const $shapeProps = $('#shapeProps');
-        if (element.type === 'shape') {
+        if (isShapeElement(element)) {
             fillShapeProperties(element);
         } else {
             $shapeProps.addClass('hidden');
@@ -2336,7 +2336,7 @@
         
         // Show/hide video properties
         const $videoProps = $('#videoProps');
-        if (element.type === 'video') {
+        if (isVideoElement(element)) {
             fillVideoProperties(element);
         } else {
             $videoProps.addClass('hidden');
@@ -2371,7 +2371,7 @@
         hideInteractionsSection();
         hideImageBorderRadius();
         setPropertiesPanelTitle(`Folder: ${folder.name}`);
-        
+
         // Set folder opacity
         const folderOpacity = folder.opacity !== undefined ? folder.opacity : 1;
         $('#propOpacity').val(folderOpacity);
@@ -2446,6 +2446,35 @@
         });
     }
 
+    function isTextElement(element) {
+        return window.adBuilderRender.propertiesUI.isTextElement({
+            element
+        });
+    }
+
+    function isClickthroughElement(element) {
+        return window.adBuilderRender.propertiesUI.isClickthroughElement({
+            element
+        });
+    }
+
+    function isShapeElement(element) {
+        return window.adBuilderRender.propertiesUI.isShapeElement({
+            element
+        });
+    }
+
+    function isVideoElement(element) {
+        return window.adBuilderRender.propertiesUI.isVideoElement({
+            element
+        });
+    }
+
+    function isImageElement(element) {
+        return window.adBuilderRender.propertiesUI.isImageElement({
+            element
+        });
+    }
     // Common property updates
     function updateElementWidth() {
         if (!selectedElement) return;
