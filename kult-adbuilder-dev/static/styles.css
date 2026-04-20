@@ -176,6 +176,47 @@ input, select, button, textarea, label {
     cursor: grabbing;
     background: rgba(255, 255, 255, 0.14);
 }
+
+#timelinePlayhead {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    width: 14px;
+    margin-left: -7px;
+    cursor: grab;
+    z-index: 30;
+    touch-action: none;
+}
+
+#timelinePlayhead:active {
+    cursor: grabbing;
+}
+
+#timelinePlayhead::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 5px;
+    width: 4px;
+    background: #60a5fa;
+    border-radius: 9999px;
+    box-shadow: 0 0 0 1px rgba(255,255,255,0.25);
+}
+
+#timelinePlayhead::after {
+    content: '';
+    position: absolute;
+    top: -4px;
+    left: 50%;
+    width: 14px;
+    height: 14px;
+    transform: translateX(-50%);
+    border-radius: 9999px;
+    background: #60a5fa;
+    box-shadow: 0 0 0 2px rgba(17,24,39,0.9);
+}
+
 .layer-item {
     cursor: pointer;
     transition: all 0.2s;
