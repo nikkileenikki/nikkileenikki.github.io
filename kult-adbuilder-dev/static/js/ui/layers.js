@@ -61,3 +61,7 @@ export function renderLayerItem({ element, index, elements }) {
         </div>
     `);
 }
+
+export function buildSortedLayerElements({ elements }) {
+    return [...elements].sort((a, b) => b.zIndex - a.zIndex);
+}
