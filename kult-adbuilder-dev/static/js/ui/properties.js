@@ -208,3 +208,39 @@ export function fillVideoProperties({ element }) {
         $('#propVideoMuted').prop('disabled', false);
     }
 }
+
+export function hideAllTypeSpecificProperties() {
+    $('#textProps').addClass('hidden');
+    $('#clickthroughProps').addClass('hidden');
+    $('#shapeProps').addClass('hidden');
+    $('#videoProps').addClass('hidden');
+}
+
+export function showImageBorderRadius({ element }) {
+    $('#imageBorderRadius').removeClass('hidden');
+    $('#propImageBorderRadius').val(element.borderRadius || 0);
+}
+
+export function hideImageBorderRadius() {
+    $('#imageBorderRadius').addClass('hidden');
+}
+
+export function showInteractionsSection() {
+    $('#interactionsSection').removeClass('hidden');
+}
+
+export function hideInteractionsSection() {
+    $('#interactionsSection').addClass('hidden');
+}
+
+export function showCommonPropertiesGrid() {
+    $('#commonPropertiesGrid').removeClass('hidden');
+}
+
+export function hideCommonPropertiesGrid() {
+    $('#commonPropertiesGrid').addClass('hidden');
+}
+
+export function setPropertiesPanelTitle({ title }) {
+    $('#propertiesPanel h2').text(title);
+}
