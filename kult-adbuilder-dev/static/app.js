@@ -662,39 +662,15 @@
     let isPlayheadDragging = false;
     
     function handlePlayheadDragStart(e) {
-        e.preventDefault();
-        e.stopPropagation();
-        isPlayheadDragging = true;
-        
-        const moveHandler = function(moveEvent) {
-            if (!isPlayheadDragging) return;
-            
-            const $ruler = $('#timelineRuler');
-            const rulerOffset = $ruler.offset().left;
-            const rulerWidth = $ruler.width();
-            const mouseX = moveEvent.pageX - rulerOffset;
-            
-            let percent = (mouseX / rulerWidth) * 100;
-            percent = Math.max(0, Math.min(100, percent));
-            
-            $('#timelinePlayhead').css('left', percent + '%');
-            
-            // Update timeline position if not playing
-            if (!isPlaying && timeline) {
-                const time = (percent / 100) * totalDuration;
-                timeline.seek(time);
+        return window.adBuilderRender.timelineRender.handlePlayheadDragStart({
+            event: e,
+            timeline,
+            totalDuration,
+            isPlaying,
+            setIsPlayheadDragging: (value) => {
+                isPlayheadDragging = value;
             }
-        };
-        
-        const upHandler = function() {
-            isPlayheadDragging = false;
-            // FIX #6: Namespaced off() — only removes these handlers, prevents stacking
-            $(document).off('mousemove.playhead mouseup.playhead');
-        };
-        
-        // FIX #6: Namespaced to prevent listener stacking on repeated drags
-        $(document).on('mousemove.playhead', moveHandler);
-        $(document).on('mouseup.playhead', upHandler);
+        });
     }
     
     // Timeline track drag and drop
@@ -3470,13 +3446,13 @@
     }
 
     function appendElementToCanvas($element, element) {
-    return window.adBuilderRender.canvasRender.appendElementToCanvas({
-        $canvas,
-        $element,
-        element,
-        groups
-    });
-}
+        return window.adBuilderRender.canvasRender.appendElementToCanvas({
+            $canvas,
+            $element,
+            element,
+            groups
+        });
+    }
     // ============================================
     // REBUILD TIMELINE
     // ============================================
