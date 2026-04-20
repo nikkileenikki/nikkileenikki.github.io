@@ -706,7 +706,8 @@
     let isTimelineBlockResizing = false;
     let draggedBlock = null;
     let resizeDirection = null;
-    
+    let hasSavedSortableSnapshot = false;
+
     function handleTimelineBlockDragStart(e) {
         // Don't drag if clicking on resize handle or delete button
         if ($(e.target).hasClass('timeline-block-resize-handle') || 
@@ -2392,7 +2393,7 @@
         const id = $(e.currentTarget).data('id');
         const element = elements.find(el => el.id === id);
         if (!element) return;
-        
+        saveState();
         // Toggle visibility
         element.visible = element.visible === false ? true : false;
         
@@ -2412,7 +2413,7 @@
         const id = $(e.currentTarget).data('id') || $(e.currentTarget).data('folder-id');
         const folder = groups.find(g => g.id === id);
         if (!folder) return;
-        
+        saveState();
         // Toggle folder visibility
         folder.visible = folder.visible === false ? true : false;
         
@@ -3669,40 +3670,55 @@
         // Root sortable: accepts both layers and folders, they can be mixed
         $timelineTracks.sortable({
             items: '> .layer, > .timeline-folder',
-            connectWith: '.timeline-folder-children',  // Allow layers to move into folders
+            connectWith: '.timeline-folder-children',
             handle: '.timeline-handle',
             placeholder: 'ui-sortable-placeholder',
             tolerance: 'pointer',
             forcePlaceholderSize: true,
+            start: function() {
+                if (!hasSavedSortableSnapshot) {
+                    saveState();
+                    hasSavedSortableSnapshot = true;
+                }
+            },
             update: function(e, ui) {
                 updateStructureFromDOM();
+            },
+            stop: function() {
+                hasSavedSortableSnapshot = false;
             }
         });
         
         // Folder children sortable: only accepts layers
         $('.timeline-folder-children').sortable({
             items: '> .layer',
-            connectWith: '#timelineTracks, .timeline-folder-children',  // Can move back to root OR other folders
+            connectWith: '#timelineTracks, .timeline-folder-children',
             handle: '.timeline-handle',
             placeholder: 'ui-sortable-placeholder',
             tolerance: 'pointer',
             forcePlaceholderSize: true,
+            start: function() {
+                if (!hasSavedSortableSnapshot) {
+                    saveState();
+                    hasSavedSortableSnapshot = true;
+                }
+            },
             receive: function(e, ui) {
-                // Block folders from being moved into folders
                 if (ui.item.hasClass('timeline-folder')) {
                     $(this).sortable('cancel');
                 }
             },
             update: function(e, ui) {
                 updateStructureFromDOM();
+            },
+            stop: function() {
+                hasSavedSortableSnapshot = false;
             }
         });
     }
     
     // Update element and folder data from DOM structure
     function updateStructureFromDOM() {
-        saveState();
-
         const maxZIndex = elements.length + groups.length;
         let currentZIndex = maxZIndex;
         
@@ -4611,14 +4627,6 @@
     }
     
     function getExtensionFromDataUrl(dataUrl) {
-        if (dataUrl.includes('image/png')) return 'png';
-        if (dataUrl.includes('image/gif')) return 'gif';
-        if (dataUrl.includes('image/svg')) return 'svg';
-        if (dataUrl.includes('image/webp')) return 'webp';
-        return 'jpg';
-    }
-    
-        function getExtensionFromDataUrl(dataUrl) {
         if (dataUrl.includes('image/png')) return 'png';
         if (dataUrl.includes('image/gif')) return 'gif';
         if (dataUrl.includes('image/svg')) return 'svg';
