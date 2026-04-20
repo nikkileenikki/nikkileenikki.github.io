@@ -2387,7 +2387,7 @@
         if (!element) return;
         
         $propertiesPanel.removeClass('hidden');
-        
+        $('#interactionsSection').removeClass('hidden');
         // IMPORTANT: Always show all common properties grid for elements
         $('#commonPropertiesGrid').removeClass('hidden');
         
@@ -2545,19 +2545,8 @@
         $('#propOpacity').val(folderOpacity);
         $('#opacityValue').text(Math.round(folderOpacity * 100) + '%');
         
-        // Show interactions section for folders
-        $('#interactionsSection').removeClass('hidden');
-        
-        // Initialize folder interactions if not exists
-        if (!folder.interactions) {
-            folder.interactions = {
-                click: { enabled: false, targetElement: 'self', action: 'pauseAnimation' },
-                hover: { enabled: false, targetElement: 'self', action: 'addShadow' }
-            };
-        }
-        
-        // Update interaction UI for folder
-        updateInteractionUI(folder);
+        // Hide interactions section for folders
+        $('#interactionsSection').addClass('hidden');
         
         // Update panel heading to show folder name
         $('#propertiesPanel h2').text(`Folder: ${folder.name}`);
