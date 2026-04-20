@@ -1991,10 +1991,7 @@
         
         sortedElements.forEach((element, index) => {
             const $layer = renderLayerItem(element, index);
-            $layer.on('dragstart', window.handleDragStart);
-            $layer.on('dragover', window.handleDragOverLayer);
-            $layer.on('drop', window.handleLayerDrop);
-            $layer.on('dragend', window.handleDragEnd);
+            bindLayerDragEvents($layer);
             $layersList.append($layer);
         });
         
@@ -2294,6 +2291,16 @@
     function buildSortedLayerElements() {
         return window.adBuilderRender.layersUI.buildSortedLayerElements({
             elements
+        });
+    }
+
+    function bindLayerDragEvents($layer) {
+        return window.adBuilderRender.layersUI.bindLayerDragEvents({
+            $layer,
+            handleDragStart: window.handleDragStart,
+            handleDragOverLayer: window.handleDragOverLayer,
+            handleLayerDrop: window.handleLayerDrop,
+            handleDragEnd: window.handleDragEnd
         });
     }
 
