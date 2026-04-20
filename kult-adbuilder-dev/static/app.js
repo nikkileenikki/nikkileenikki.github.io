@@ -3872,41 +3872,14 @@
         });
     }
     
-    // Update canvas elements from state
     function updateCanvas() {
-        $canvas.find('.canvas-element, .canvas-folder').remove();
-        
-        // Create folder wrappers first
-        groups.forEach(folder => {
-            const bounds = calculateFolderBounds(folder.id);
-            const $folderWrapper = $(`
-                <div class="canvas-folder" id="${folder.id}" style="
-                    position: absolute;
-                    left: ${bounds.left}px;
-                    top: ${bounds.top}px;
-                    width: ${bounds.width}px;
-                    height: ${bounds.height}px;
-                    z-index: ${folder.zIndex};
-                    pointer-events: auto;
-                "></div>
-            `);
-            $canvas.append($folderWrapper);
-            
-            // Apply folder interactions
-            applyFolderInteractions(folder, $folderWrapper);
-        });
-        
-        // Restore elements and place them in folders or root
-        elements.forEach(element => {
-            const $element = createElementDOM(element);
-            
-            if (element.folderId) {
-                // Append to folder wrapper
-                $(`#${element.folderId}`).append($element);
-            } else {
-                // Append to canvas root
-                $canvas.append($element);
-            }
+        return window.adBuilderRender.canvasRender.updateCanvas({
+            $canvas,
+            groups,
+            elements,
+            calculateFolderBounds,
+            createElementDOM,
+            applyFolderInteractions
         });
     }
     
