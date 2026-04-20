@@ -1991,6 +1991,11 @@
         
         sortedElements.forEach((element, index) => {
             const $layer = renderLayerItem(element, index);
+            $layer.on('dragstart', window.handleDragStart);
+            $layer.on('dragover', window.handleDragOverLayer);
+            $layer.on('drop', window.handleLayerDrop);
+            $layer.on('dragend', window.handleDragEnd);
+            $layersList.append($layer);
         });
         
         updateTimelineTracks();
@@ -4596,10 +4601,10 @@
     }
     
     // Make functions available globally for event handlers
-    $layer.on('dragstart', window.handleDragStart);
-    $layer.on('dragover', window.handleDragOverLayer);
-    $layer.on('drop', window.handleLayerDrop);
-    $layer.on('dragend', window.handleDragEnd);
+    window.handleDragStart = handleDragStart;
+    window.handleDragOverLayer = handleDragOverLayer;
+    window.handleLayerDrop = handleLayerDrop;
+    window.handleDragEnd = handleDragEnd;
     
     // ============================================
     // ZOOM CONTROLS
