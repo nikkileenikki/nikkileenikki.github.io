@@ -65,3 +65,12 @@ export function renderLayerItem({ element, index, elements }) {
 export function buildSortedLayerElements({ elements }) {
     return [...elements].sort((a, b) => b.zIndex - a.zIndex);
 }
+
+export function bindLayerDragEvents({ $layer, handleDragStart, handleDragOverLayer, handleLayerDrop, handleDragEnd }) {
+    $layer.on('dragstart', handleDragStart);
+    $layer.on('dragover', handleDragOverLayer);
+    $layer.on('drop', handleLayerDrop);
+    $layer.on('dragend', handleDragEnd);
+
+    return $layer;
+}
