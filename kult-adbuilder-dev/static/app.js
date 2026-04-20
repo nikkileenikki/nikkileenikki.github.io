@@ -1726,7 +1726,7 @@
         } else {
             $('#customWidth, #customHeight').addClass('hidden');
             const [width, height] = value.split('x').map(Number);
-            window.adBuilderHistory.push(window.adBuilderStore.getState());
+            saveState();
             canvasWidth = width;
             canvasHeight = height;
             syncCanvasSizeToStore();
@@ -1737,7 +1737,7 @@
     function updateCustomCanvasSize() {
         const width = parseInt($('#customWidth').val()) || 300;
         const height = parseInt($('#customHeight').val()) || 250;
-        window.adBuilderHistory.push(window.adBuilderStore.getState());
+        saveState();
         canvasWidth = width;
         canvasHeight = height;
         syncCanvasSizeToStore();
@@ -2592,6 +2592,7 @@
     function updateElementWidth() {
         if (!selectedElement) return;
         const element = elements.find(el => el.id === selectedElement);
+        saveState();
         element.width = parseInt($(this).val()) || 100;
         $(`#${selectedElement}`).css('width', element.width + 'px');
     }
@@ -2599,6 +2600,7 @@
     function updateElementHeight() {
         if (!selectedElement) return;
         const element = elements.find(el => el.id === selectedElement);
+        saveState();
         element.height = parseInt($(this).val()) || 100;
         $(`#${selectedElement}`).css('height', element.height + 'px');
     }
@@ -2606,6 +2608,7 @@
     function updateElementX() {
         if (!selectedElement) return;
         const element = elements.find(el => el.id === selectedElement);
+        saveState();
         element.x = parseInt($(this).val()) || 0;
         $(`#${selectedElement}`).css('left', element.x + 'px');
     }
@@ -2613,6 +2616,7 @@
     function updateElementY() {
         if (!selectedElement) return;
         const element = elements.find(el => el.id === selectedElement);
+        saveState();
         element.y = parseInt($(this).val()) || 0;
         $(`#${selectedElement}`).css('top', element.y + 'px');
     }
@@ -2620,6 +2624,7 @@
     function updateElementRotation() {
         if (!selectedElement) return;
         const element = elements.find(el => el.id === selectedElement);
+        saveState();
         element.rotation = parseInt($(this).val()) || 0;
         $(`#${selectedElement}`).css('transform', `rotate(${element.rotation}deg)`);
     }
@@ -2631,6 +2636,7 @@
         if (selectedFolder) {
             // Update folder opacity
             const folder = groups.find(g => g.id === selectedFolder);
+            saveState();
             if (folder) {
                 folder.opacity = opacityValue;
                 // Apply opacity to folder wrapper and all child elements
@@ -2643,6 +2649,7 @@
         } else if (selectedElement) {
             // Update element opacity
             const element = elements.find(el => el.id === selectedElement);
+            saveState();
             if (element) {
                 element.opacity = opacityValue;
                 $(`#${selectedElement}`).css('opacity', opacityValue);
@@ -2656,6 +2663,7 @@
         if (!selectedElement) return;
         const element = elements.find(el => el.id === selectedElement);
         if (element.type !== 'text') return;
+        saveState();
         element.text = $(this).val();
         $(`#${selectedElement}`).text(element.text);
         updateLayersList();
@@ -2665,7 +2673,7 @@
         if (!selectedElement) return;
         const element = elements.find(el => el.id === selectedElement);
         if (element.type !== 'text') return;
-        
+        saveState();
         element.fontFamily = $(this).val();
         $(`#${selectedElement}`).css('font-family', element.fontFamily);
     }
@@ -2674,7 +2682,7 @@
         if (!selectedElement) return;
         const element = elements.find(el => el.id === selectedElement);
         if (element.type !== 'text') return;
-        
+        saveState();
         element.fontSize = parseInt($(this).val()) || 24;
         $(`#${selectedElement}`).css('font-size', element.fontSize + 'px');
     }
@@ -2692,7 +2700,7 @@
         if (!selectedElement) return;
         const element = elements.find(el => el.id === selectedElement);
         if (element.type !== 'text') return;
-        
+        saveState();
         element.bold = !element.bold;
         $(this).toggleClass('active', element.bold);
         $(`#${selectedElement}`).css('font-weight', element.bold ? 'bold' : 'normal');
@@ -2702,7 +2710,7 @@
         if (!selectedElement) return;
         const element = elements.find(el => el.id === selectedElement);
         if (element.type !== 'text') return;
-        
+        saveState();
         element.italic = !element.italic;
         $(this).toggleClass('active', element.italic);
         $(`#${selectedElement}`).css('font-style', element.italic ? 'italic' : 'normal');
@@ -2712,7 +2720,7 @@
         if (!selectedElement) return;
         const element = elements.find(el => el.id === selectedElement);
         if (element.type !== 'text') return;
-        
+        saveState();
         element.underline = !element.underline;
         $(this).toggleClass('active', element.underline);
         $(`#${selectedElement}`).css('text-decoration', element.underline ? 'underline' : 'none');
@@ -2722,7 +2730,7 @@
         if (!selectedElement) return;
         const element = elements.find(el => el.id === selectedElement);
         if (element.type !== 'text') return;
-        
+        saveState();
         const align = $(e.currentTarget).data('align');
         element.textAlign = align;
         
@@ -2740,7 +2748,7 @@
         if (!selectedElement) return;
         const element = elements.find(el => el.id === selectedElement);
         if (element.type !== 'clickthrough') return;
-        
+        saveState();
         element.url = $(this).val() || 'https://kult.my';
         updateClickthroughDisplay(element);
     }
@@ -2749,6 +2757,7 @@
         if (!selectedElement) return;
         const element = elements.find(el => el.id === selectedElement);
         if (element.type !== 'clickthrough') return;
+        saveState();
         element.clickIndex = Math.min(10, Math.max(1, parseInt($(this).val()) || 1));
     }
     
@@ -2756,7 +2765,7 @@
         if (!selectedElement) return;
         const element = elements.find(el => el.id === selectedElement);
         if (element.type !== 'clickthrough') return;
-        
+        saveState();
         element.target = $(this).val() || '_blank';
     }
     
@@ -2774,7 +2783,7 @@
         if (!selectedElement) return;
         const element = elements.find(el => el.id === selectedElement);
         if (element.type !== 'shape') return;
-        
+        saveState();
         element.shapeType = $(this).val();
         const $el = $(`#${selectedElement}`);
         
@@ -2791,7 +2800,7 @@
         if (!selectedElement) return;
         const element = elements.find(el => el.id === selectedElement);
         if (element.type !== 'shape') return;
-        
+        saveState();
         element.fillColor = $(this).val();
         const bgColor = element.transparent ? 'transparent' : element.fillColor;
         $(`#${selectedElement}`).css('background-color', bgColor);
@@ -2801,7 +2810,7 @@
         if (!selectedElement) return;
         const element = elements.find(el => el.id === selectedElement);
         if (element.type !== 'shape') return;
-        
+        saveState();
         element.transparent = $(this).is(':checked');
         const bgColor = element.transparent ? 'transparent' : element.fillColor;
         $(`#${selectedElement}`).css('background-color', bgColor);
@@ -2811,7 +2820,7 @@
         if (!selectedElement) return;
         const element = elements.find(el => el.id === selectedElement);
         if (element.type !== 'shape') return;
-        
+        saveState();
         element.borderWidth = parseInt($('#propShapeBorderWidth').val()) || 0;
         element.borderColor = $('#propShapeBorderColor').val();
         
@@ -2830,7 +2839,7 @@
         if (!selectedElement) return;
         const element = elements.find(el => el.id === selectedElement);
         if (element.type !== 'shape') return;
-        
+        saveState();
         element.borderRadius = parseInt($('#propShapeBorderRadius').val()) || 0;
         
         let borderRadius = '0';
@@ -2849,7 +2858,7 @@
         if (!selectedElement) return;
         const element = elements.find(el => el.id === selectedElement);
         if (element.type !== 'image') return;
-        
+        saveState();
         element.borderRadius = parseInt($('#propImageBorderRadius').val()) || 0;
         
         const borderRadius = element.borderRadius > 0 ? element.borderRadius + 'px' : '0';
@@ -2862,7 +2871,7 @@
         if (!selectedElement) return;
         const element = elements.find(el => el.id === selectedElement);
         if (element.type !== 'video') return;
-        
+        saveState();
         element.videoUrl = $(this).val() || '';
         updateVideoDisplay(element);
     }
@@ -2871,7 +2880,7 @@
         if (!selectedElement) return;
         const element = elements.find(el => el.id === selectedElement);
         if (element.type !== 'video') return;
-        
+        saveState();
         element.videoName = $(this).val() || 'video1';
         updateVideoDisplay(element);
     }
@@ -2880,7 +2889,7 @@
         if (!selectedElement) return;
         const element = elements.find(el => el.id === selectedElement);
         if (element.type !== 'video') return;
-        
+        saveState();
         element.playTrigger = $(this).val();
         updateVideoDisplay(element);
     }
@@ -2889,7 +2898,7 @@
         if (!selectedElement) return;
         const element = elements.find(el => el.id === selectedElement);
         if (element.type !== 'video') return;
-        
+        saveState();
         element.muted = $(this).is(':checked');
         updateVideoDisplay(element);
     }
@@ -2898,7 +2907,7 @@
         if (!selectedElement) return;
         const element = elements.find(el => el.id === selectedElement);
         if (element.type !== 'video') return;
-        
+        saveState();
         element.controls = $(this).is(':checked');
         updateVideoDisplay(element);
     }
@@ -2928,7 +2937,7 @@
         if (!selectedElement) return;
         const element = elements.find(el => el.id === selectedElement);
         if (element.type !== 'text') return;
-        
+        saveState();
         element.shadowX = parseInt($('#propTextShadowX').val()) || 0;
         element.shadowY = parseInt($('#propTextShadowY').val()) || 0;
         element.shadowBlur = parseInt($('#propTextShadowBlur').val()) || 0;
@@ -2942,7 +2951,7 @@
         if (!selectedElement) return;
         const element = elements.find(el => el.id === selectedElement);
         if (element.type !== 'text') return;
-        
+        saveState();
         element.glowX = parseInt($('#propTextGlowX').val()) || 0;
         element.glowY = parseInt($('#propTextGlowY').val()) || 0;
         element.glowBlur = parseInt($('#propTextGlowBlur').val()) || 0;
@@ -3025,7 +3034,7 @@
         if (!selectedElement) return;
         const element = elements.find(el => el.id === selectedElement);
         if (element.type !== 'shape') return;
-        
+        saveState();
         element.shadowX = parseInt($('#propShapeShadowX').val()) || 0;
         element.shadowY = parseInt($('#propShapeShadowY').val()) || 0;
         element.shadowBlur = parseInt($('#propShapeShadowBlur').val()) || 0;
@@ -3040,7 +3049,7 @@
         if (!selectedElement) return;
         const element = elements.find(el => el.id === selectedElement);
         if (element.type !== 'shape') return;
-        
+        saveState();
         element.glowX = parseInt($('#propShapeGlowX').val()) || 0;
         element.glowY = parseInt($('#propShapeGlowY').val()) || 0;
         element.glowBlur = parseInt($('#propShapeGlowBlur').val()) || 0;
@@ -3256,9 +3265,9 @@
         const start = Math.round(parseFloat($('#animStart').val()) * 10) / 10;
         const duration = Math.round(parseFloat($('#animDuration').val()) * 10) / 10;
         const ease = $('#animEase').val();
-        
+        saveState();
         _log('Animation params - start:', start, 'duration:', duration, 'ease:', ease);
-        
+       
         if (editingAnimation) {
             // Update existing animation
             _log('Updating existing animation:', editingAnimation);
