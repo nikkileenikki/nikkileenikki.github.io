@@ -709,162 +709,30 @@
     let hasSavedSortableSnapshot = false;
 
     function handleTimelineBlockDragStart(e) {
-        // Don't drag if clicking on resize handle or delete button
-        if ($(e.target).hasClass('timeline-block-resize-handle') || 
-            $(e.target).closest('.delete-anim').length > 0) {
-            return;
-        }
-        
-        e.preventDefault();
-        e.stopPropagation();
-        
-        const $block = $(e.currentTarget);
-        const animId = $block.data('anim-id');
-        const elementId = $block.data('element-id');
-        const folderId = $block.data('folder-id');
-        
-        // Don't set dragging flag yet - wait for actual movement
-        let hasMoved = false;
-        draggedBlock = { animId, elementId, folderId, $block };
-        
-        const $track = $block.parent();
-        const trackOffset = $track.offset().left;
-        const trackWidth = $track.width();
-        const blockOffset = $block.offset().left;
-        const startX = e.pageX;
-        const initialLeft = blockOffset - trackOffset;
-        
-        const moveHandler = function(moveEvent) {
-            const deltaX = moveEvent.pageX - startX;
-            
-            // Only start dragging if mouse moved more than 3px
-            if (!hasMoved && Math.abs(deltaX) > 3) {
-                saveState();
-                hasMoved = true;
-                isTimelineBlockDragging = true;
-            }
-            
-            if (!hasMoved) return;
-            
-            let newLeft = initialLeft + deltaX;
-            newLeft = Math.max(0, Math.min(trackWidth - $block.width(), newLeft));
-            
-            const newLeftPercent = (newLeft / trackWidth) * 100;
-            $block.css('left', newLeftPercent + '%');
-            
-            // Update animation start time (element or folder)
-            let target, anim;
-            if (folderId) {
-                target = groups.find(g => g.id === folderId);
-            } else {
-                target = elements.find(el => el.id === elementId);
-            }
-            
-            if (target) {
-                anim = target.animations.find(a => a.id === animId);
-                if (anim) {
-                    anim.start = Math.round(((newLeftPercent / 100) * totalDuration) * 10) / 10;
-                }
-            }
-        };
-        
-        const upHandler = function() {
-            $(document).off('mousemove', moveHandler);
-            $(document).off('mouseup', upHandler);
-            
-            if (hasMoved) {
-                rebuildTimeline();
-            }
-            
-            // Reset flags after a short delay to allow click event to check
-            setTimeout(() => {
-                isTimelineBlockDragging = false;
-                draggedBlock = null;
-            }, 50);
-        };
-        
-        $(document).on('mousemove', moveHandler);
-        $(document).on('mouseup', upHandler);
+        return window.adBuilderRender.timelineRender.handleTimelineBlockDragStart({
+            event: e,
+            saveState,
+            elements,
+            groups,
+            totalDuration,
+            setIsTimelineBlockDragging: (value) => { isTimelineBlockDragging = value; },
+            setDraggedBlock: (value) => { draggedBlock = value; },
+            rebuildTimeline
+        });
     }
     
     function handleTimelineBlockResizeStart(e) {
-        e.preventDefault();
-        e.stopPropagation();
-        
-        const $handle = $(e.currentTarget);
-        const $block = $handle.parent();
-        const animId = $block.data('anim-id');
-        const elementId = $block.data('element-id');
-        const folderId = $block.data('folder-id');
-        
-        saveState();
-        isTimelineBlockResizing = true;
-        resizeDirection = $handle.hasClass('left') ? 'left' : 'right';
-        draggedBlock = { animId, elementId, folderId, $block };
-        
-        const $track = $block.parent();
-        const trackOffset = $track.offset().left;
-        const trackWidth = $track.width();
-        const startX = e.pageX;
-        const initialLeft = parseFloat($block.css('left'));
-        const initialWidth = $block.width();
-        
-        const moveHandler = function(moveEvent) {
-            if (!isTimelineBlockResizing) return;
-            
-            const deltaX = moveEvent.pageX - startX;
-            const deltaPercent = (deltaX / trackWidth) * 100;
-            
-            // Find target (element or folder)
-            let target;
-            if (folderId) {
-                target = groups.find(g => g.id === folderId);
-            } else {
-                target = elements.find(el => el.id === elementId);
-            }
-            if (!target) return;
-            
-            const anim = target.animations.find(a => a.id === animId);
-            if (!anim) return;
-            
-            if (resizeDirection === 'left') {
-                // Resize from left - adjust start and duration
-                let newLeft = initialLeft + deltaPercent;
-                newLeft = Math.max(0, newLeft);
-                
-                const widthPercent = parseFloat($block.css('width'));
-                const newWidthPercent = widthPercent - (newLeft - initialLeft);
-                
-                if (newWidthPercent > 2) { // Minimum 2% width
-                    $block.css('left', newLeft + '%');
-                    $block.css('width', newWidthPercent + '%');
-                    
-                    anim.start = Math.round(((newLeft / 100) * totalDuration) * 10) / 10;
-                    anim.duration = Math.round(((newWidthPercent / 100) * totalDuration) * 10) / 10;
-                }
-            } else {
-                // Resize from right - adjust duration only
-                const currentWidthPx = initialWidth + deltaX;
-                const maxWidth = trackWidth - parseFloat($block.position().left);
-                const newWidthPx = Math.max(20, Math.min(currentWidthPx, maxWidth));
-                const newWidthPercent = (newWidthPx / trackWidth) * 100;
-                
-                $block.css('width', newWidthPercent + '%');
-                anim.duration = Math.round(((newWidthPercent / 100) * totalDuration) * 10) / 10;
-            }
-        };
-        
-        const upHandler = function() {
-            isTimelineBlockResizing = false;
-            resizeDirection = null;
-            draggedBlock = null;
-            $(document).off('mousemove', moveHandler);
-            $(document).off('mouseup', upHandler);
-            rebuildTimeline();
-        };
-        
-        $(document).on('mousemove', moveHandler);
-        $(document).on('mouseup', upHandler);
+        return window.adBuilderRender.timelineRender.handleTimelineBlockResizeStart({
+            event: e,
+            saveState,
+            elements,
+            groups,
+            totalDuration,
+            setIsTimelineBlockResizing: (value) => { isTimelineBlockResizing = value; },
+            setResizeDirection: (value) => { resizeDirection = value; },
+            setDraggedBlock: (value) => { draggedBlock = value; },
+            rebuildTimeline
+        });
     }
     
     // ============================================
