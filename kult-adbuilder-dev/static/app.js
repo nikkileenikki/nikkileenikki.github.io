@@ -2299,12 +2299,10 @@
         if (!element) return;
         
         $propertiesPanel.removeClass('hidden');
-        $('#interactionsSection').removeClass('hidden');
-        // IMPORTANT: Always show all common properties grid for elements
-        $('#commonPropertiesGrid').removeClass('hidden');
-        
-        // Reset panel heading to "Properties"
-        $('#propertiesPanel h2').text('Properties');
+        showInteractionsSection();
+        showCommonPropertiesGrid();
+        setPropertiesPanelTitle('Properties');
+        hideAllTypeSpecificProperties();
         
         // Show/hide text properties
         if (element.type === 'text') {
@@ -2323,10 +2321,9 @@
         
         // Show border radius for images
         if (element.type === 'image') {
-            $('#imageBorderRadius').removeClass('hidden');
-            $('#propImageBorderRadius').val(element.borderRadius || 0);
+            showImageBorderRadius(element);
         } else {
-            $('#imageBorderRadius').addClass('hidden');
+            hideImageBorderRadius();
         }
         
         // Show/hide shape properties
@@ -2369,25 +2366,17 @@
         $propertiesPanel.removeClass('hidden');
         
         // Hide ALL type-specific properties for folders
-        $textProps.addClass('hidden');
-        $('#clickthroughProps').addClass('hidden');
-        $('#shapeProps').addClass('hidden');
-        $('#videoProps').addClass('hidden');
-        
-        // Hide common properties grid for folders (folders don't have position/size)
-        $('#commonPropertiesGrid').addClass('hidden');
+        hideAllTypeSpecificProperties();
+        hideCommonPropertiesGrid();
+        hideInteractionsSection();
+        hideImageBorderRadius();
+        setPropertiesPanelTitle(`Folder: ${folder.name}`);
         
         // Set folder opacity
         const folderOpacity = folder.opacity !== undefined ? folder.opacity : 1;
         $('#propOpacity').val(folderOpacity);
         $('#opacityValue').text(Math.round(folderOpacity * 100) + '%');
-        
-        // Hide interactions section for folders
-        $('#interactionsSection').addClass('hidden');
-        
-        // Update panel heading to show folder name
-        $('#propertiesPanel h2').text(`Folder: ${folder.name}`);
-        
+
         _log('Folder properties panel updated:', folder);
     }
 
@@ -2421,6 +2410,42 @@
         });
     }
     
+    function hideAllTypeSpecificProperties() {
+        return window.adBuilderRender.propertiesUI.hideAllTypeSpecificProperties();
+    }
+
+    function showImageBorderRadius(element) {
+        return window.adBuilderRender.propertiesUI.showImageBorderRadius({
+            element
+        });
+    }
+
+    function hideImageBorderRadius() {
+        return window.adBuilderRender.propertiesUI.hideImageBorderRadius();
+    }
+
+    function showInteractionsSection() {
+        return window.adBuilderRender.propertiesUI.showInteractionsSection();
+    }
+
+    function hideInteractionsSection() {
+        return window.adBuilderRender.propertiesUI.hideInteractionsSection();
+    }
+
+    function showCommonPropertiesGrid() {
+        return window.adBuilderRender.propertiesUI.showCommonPropertiesGrid();
+    }
+
+    function hideCommonPropertiesGrid() {
+        return window.adBuilderRender.propertiesUI.hideCommonPropertiesGrid();
+    }
+
+    function setPropertiesPanelTitle(title) {
+        return window.adBuilderRender.propertiesUI.setPropertiesPanelTitle({
+            title
+        });
+    }
+
     // Common property updates
     function updateElementWidth() {
         if (!selectedElement) return;
