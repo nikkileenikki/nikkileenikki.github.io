@@ -183,8 +183,8 @@
             $('#shapeOpacityValue').text(Math.round(val * 100) + '%');
         });
         // Enter key support for shape
-        $('#shapeType, #shapeWidth, #shapeHeight, #shapeFillColor, #shapeOpacity, #shapeBorderRadius').on('keypress', function(e) {
-            if (e.which === 13) { // Enter key
+        $('#shapeType, #shapeWidth, #shapeHeight, #shapeFillColor, #shapeOpacity, #shapeBorderRadius').on('keydown', function(e) {
+            if (e.key === 'Enter' || e.keyCode === 13) {
                 e.preventDefault();
                 saveShape();
             }
@@ -348,12 +348,47 @@
         
         // Shape properties
         $('#propShapeType').on('change', updateShapeType);
-        $('#propShapeColor').on('change', updateShapeColor);
+        $('#propShapeColor').on('input change', updateShapeColor);
+        $('#propShapeColor').on('change blur', function() {
+            isEditingShapeColor = false;
+        });
         $('#propShapeTransparent').on('change', updateShapeTransparent);
         $('#propShapeBorderWidth').on('change', updateShapeBorder);
         $('#propShapeBorderColor').on('change', updateShapeBorder);
         $('#propShapeBorderRadius').on('change', updateShapeBorderRadius);
         $('#propImageBorderRadius').on('change', updateImageBorderRadius);
+        let shapeColorBeforeOpen = null;
+
+        $('#propShapeColor')
+            .on('focus', function() {
+                if (!selectedElement) return;
+                const element = elements.find(el => el.id === selectedElement);
+                if (!element || element.type !== 'shape') return;
+                shapeColorBeforeOpen = element.fillColor;
+            })
+            .on('blur', function() {
+                // When clicking away, apply whatever color is currently selected
+                updateShapeColor.call(this);
+            })
+            .on('keydown', function(e) {
+                if (e.key === 'Escape') {
+                    e.preventDefault();
+
+                    if (!selectedElement) return;
+                    const element = elements.find(el => el.id === selectedElement);
+                    if (!element || element.type !== 'shape') return;
+
+                    if (shapeColorBeforeOpen !== null) {
+                        $(this).val(shapeColorBeforeOpen);
+                        element.fillColor = shapeColorBeforeOpen;
+
+                        const bgColor = element.transparent ? 'transparent' : element.fillColor;
+                        $(`#${selectedElement}`).css('background-color', bgColor);
+                    }
+
+                    this.blur();
+                }
+            });
         
         // Video properties
         $('#propVideoUrl').on('change', updateVideoUrl);
@@ -2511,12 +2546,22 @@
         }
     }
     
+    let isEditingShapeColor = false;
+
     function updateShapeColor() {
         if (!selectedElement) return;
         const element = elements.find(el => el.id === selectedElement);
-        if (element.type !== 'shape') return;
-        saveState();
-        element.fillColor = $(this).val();
+        if (!element || element.type !== 'shape') return;
+
+        const newColor = $(this).val();
+        if (element.fillColor === newColor) return;
+
+        if (!isEditingShapeColor) {
+            saveState();
+            isEditingShapeColor = true;
+        }
+
+        element.fillColor = newColor;
         const bgColor = element.transparent ? 'transparent' : element.fillColor;
         $(`#${selectedElement}`).css('background-color', bgColor);
     }
