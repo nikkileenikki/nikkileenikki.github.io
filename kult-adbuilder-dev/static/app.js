@@ -189,11 +189,18 @@
                 saveShape();
             }
         });
+        
         // Escape key for shape modal
         $('#shapeModal').on('keydown', function(e) {
-            if (e.keyCode === 27) { // Escape
+            if (e.key === 'Escape' || e.keyCode === 27) {
                 e.preventDefault();
                 closeShapeModal();
+                return;
+            }
+
+            if (e.key === 'Enter' || e.keyCode === 13) {
+                e.preventDefault();
+                saveShape();
             }
         });
         
