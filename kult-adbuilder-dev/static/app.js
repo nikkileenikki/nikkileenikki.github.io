@@ -1987,7 +1987,7 @@
         $layersList.empty();
         
         // Sort by zIndex (highest first)
-        const sortedElements = [...elements].sort((a, b) => b.zIndex - a.zIndex);
+        const sortedElements = buildSortedLayerElements();
         
         sortedElements.forEach((element, index) => {
             const $layer = renderLayerItem(element, index);
@@ -2290,6 +2290,13 @@
             element
         });
     }
+
+    function buildSortedLayerElements() {
+        return window.adBuilderRender.layersUI.buildSortedLayerElements({
+            elements
+        });
+    }
+
     // Common property updates
     function updateElementWidth() {
         if (!selectedElement) return;
