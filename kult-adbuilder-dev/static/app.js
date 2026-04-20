@@ -3638,7 +3638,7 @@
                             // Move DOM element into folder wrapper
                             const $element = $(`#${element.id}`);
                             let $folderWrapper = $(`#${folderId}`);
-                            
+
                             // Create folder wrapper if it doesn't exist
                             if ($folderWrapper.length === 0) {
                                 $folderWrapper = $(`
@@ -3653,10 +3653,13 @@
                                     "></div>
                                 `);
                                 $canvas.append($folderWrapper);
-                                
+
                                 // Apply folder interactions
                                 applyFolderInteractions(group, $folderWrapper);
                             }
+
+                            // IMPORTANT: always sync wrapper z-index, even if it already existed
+                            $folderWrapper.css('z-index', group.zIndex);
                             
                             // Move element into folder wrapper
                             if ($element.parent().attr('id') !== folderId) {
@@ -3682,6 +3685,7 @@
                     }
                     
                     $element.css('z-index', element.zIndex);
+                    $element.appendTo($canvas);
                 }
             }
         });
