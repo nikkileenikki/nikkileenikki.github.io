@@ -504,12 +504,17 @@ export function handleTimelineBlockResizeStart({
     };
 
     const upHandler = function() {
-        setIsTimelineBlockResizing(false);
-        setResizeDirection(null);
-        setDraggedBlock(null);
         $(document).off('mousemove', moveHandler);
         $(document).off('mouseup', upHandler);
+
         rebuildTimeline();
+
+        // Keep resize flag alive briefly so click-after-mouseup does not open modal
+        setTimeout(() => {
+            setIsTimelineBlockResizing(false);
+            setResizeDirection(null);
+            setDraggedBlock(null);
+        }, 50);
     };
 
     $(document).on('mousemove', moveHandler);
