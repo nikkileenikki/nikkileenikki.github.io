@@ -244,3 +244,23 @@ export function hideCommonPropertiesGrid() {
 export function setPropertiesPanelTitle({ title }) {
     $('#propertiesPanel h2').text(title);
 }
+
+export function isTextElement({ element }) {
+    return element && element.type === 'text';
+}
+
+export function isClickthroughElement({ element }) {
+    return element && element.type === 'clickthrough';
+}
+
+export function isShapeElement({ element }) {
+    return element && element.type === 'shape';
+}
+
+export function isVideoElement({ element }) {
+    return element && element.type === 'video';
+}
+
+export function isImageElement({ element }) {
+    return element && element.type === 'image';
+}
