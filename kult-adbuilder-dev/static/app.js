@@ -666,7 +666,7 @@
             event: e,
             timeline,
             totalDuration,
-            isPlaying,
+            getIsPlaying: () => isPlaying,
             setIsPlayheadDragging: (value) => {
                 isPlayheadDragging = value;
             }
