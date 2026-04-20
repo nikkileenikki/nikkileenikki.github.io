@@ -5,7 +5,10 @@ export function getAbsolutePosition({ element }) {
     };
 }
 
-export function calculateFolderBounds({ folderId, canvasWidth, canvasHeight }) {
+export function calculateFolderBounds({ folderId, groups, elements, canvasWidth, canvasHeight }) {
+    const folder = groups.find(g => g.id === folderId);
+    const folderElements = elements.filter(el => el.folderId === folderId);
+
     return {
         left: 0,
         top: 0,
@@ -14,48 +17,7 @@ export function calculateFolderBounds({ folderId, canvasWidth, canvasHeight }) {
     };
 }
 
-export function updateFolderBounds({
-    folderId,
-    $canvas,
-    groups,
-    canvasWidth,
-    canvasHeight
-}) {
-    const $folder = $canvas.find(`#${folderId}`);
-    if ($folder.length === 0) return;
-
-    const bounds = calculateFolderBounds({
-        folderId,
-        canvasWidth,
-        canvasHeight
-    });
-
-    $folder.css({
-        left: bounds.left + 'px',
-        top: bounds.top + 'px',
-        width: bounds.width + 'px',
-        height: bounds.height + 'px'
-    });
-}
-
-export function updateAllFolderBounds({
-    $canvas,
-    groups,
-    canvasWidth,
-    canvasHeight
-}) {
-    groups.forEach(folder => {
-        updateFolderBounds({
-            folderId: folder.id,
-            $canvas,
-            groups,
-            canvasWidth,
-            canvasHeight
-        });
-    });
-}
-
-export function createElementDOM({ element, canvasWidth, canvasHeight }) {
+export function createElementDOM({ element, getAbsolutePosition }) {
     const pos = getAbsolutePosition({ element });
     let $element;
 
@@ -231,91 +193,4 @@ export function createElementDOM({ element, canvasWidth, canvasHeight }) {
     }
 
     return $element;
-}
-
-export function appendElementToCanvas({
-    $canvas,
-    element,
-    $element,
-    groups
-}) {
-    if (!$element) return;
-
-    if (element.folderId) {
-        let $folder = $canvas.find(`#${element.folderId}`);
-
-        if ($folder.length === 0) {
-            const folder = groups.find(g => g.id === element.folderId);
-
-            if (folder) {
-                $folder = $(`
-                    <div class="canvas-folder" id="${folder.id}" style="
-                        position: absolute;
-                        left: 0;
-                        top: 0;
-                        width: 100%;
-                        height: 100%;
-                        pointer-events: none;
-                        z-index: ${folder.zIndex};
-                    "></div>
-                `);
-                $canvas.append($folder);
-            }
-        }
-
-        $folder.append($element);
-    } else {
-        $canvas.append($element);
-    }
-}
-
-export function updateCanvas({
-    $canvas,
-    elements,
-    groups,
-    canvasWidth,
-    canvasHeight,
-    applyFolderInteractions
-}) {
-    $canvas.find('.canvas-element, .canvas-folder').remove();
-
-    groups.forEach(folder => {
-        const bounds = calculateFolderBounds({
-            folderId: folder.id,
-            canvasWidth,
-            canvasHeight
-        });
-
-        const $folderWrapper = $(`
-            <div class="canvas-folder" id="${folder.id}" style="
-                position: absolute;
-                left: ${bounds.left}px;
-                top: ${bounds.top}px;
-                width: ${bounds.width}px;
-                height: ${bounds.height}px;
-                z-index: ${folder.zIndex};
-                pointer-events: auto;
-            "></div>
-        `);
-
-        $canvas.append($folderWrapper);
-
-        if (applyFolderInteractions) {
-            applyFolderInteractions(folder, $folderWrapper);
-        }
-    });
-
-    elements.forEach(element => {
-        const $element = createElementDOM({
-            element,
-            canvasWidth,
-            canvasHeight
-        });
-
-        if (element.folderId) {
-            $canvas.find(`#${element.folderId}`).append($element);
-        } else {
-            $canvas.append($element);
-        }
-    });
 }
