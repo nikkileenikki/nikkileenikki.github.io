@@ -2093,27 +2093,6 @@
         }
     }
     
-    // Update folder visual bounds to wrap child elements
-    function updateFolderBounds(folderId) {
-        const $folder = $(`#${folderId}`);
-        if ($folder.length === 0) return;
-        
-        const bounds = calculateFolderBounds(folderId);
-        $folder.css({
-            left: bounds.left + 'px',
-            top: bounds.top + 'px',
-            width: bounds.width + 'px',
-            height: bounds.height + 'px'
-        });
-    }
-    
-    // Update all folder bounds
-    function updateAllFolderBounds() {
-        groups.forEach(folder => {
-            updateFolderBounds(folder.id);
-        });
-    }
-    
     function handleMouseUp() {
         if (isDragging || isResizing) {
 
@@ -3430,231 +3409,72 @@
     }
     
     function updateTimelineRuler() {
-        $timelineRuler.empty();
-        
-        const steps = Math.ceil(totalDuration);
-        const stepWidth = 100 / steps;
-        
-        for (let i = 0; i <= steps; i++) {
-            const left = (i / steps) * 100;
-            $timelineRuler.append(`
-                <div class="timeline-time-marker" style="left: ${left}%" data-time="${i}">
-                    <div class="timeline-time-label" data-time="${i}">${i}s</div>
-                </div>
-            `);
-        }
-        
-        // Add click handler for time markers
-        $('.timeline-time-label, .timeline-time-marker').off('click').on('click', function(e) {
-            e.stopPropagation();
-            const time = parseFloat($(this).data('time'));
-            const percent = (time / totalDuration) * 100;
-            
-            $('#timelinePlayhead').css('left', percent + '%');
-            
-            if (!isPlaying && timeline) {
-                timeline.seek(time);
-            }
+        return window.adBuilderRender.timelineRender.updateTimelineRuler({
+            $timelineRuler,
+            totalDuration
         });
     }
-    
-    function updateTimelineTracks() {
-        if (elements.length === 0 && groups.length === 0) {
-            $timelineTracks.html('<div class="text-center text-gray-500 text-sm py-8">Add elements and animations to see timeline</div>');
-            return;
-        }
-        
-        $timelineTracks.empty();
-        
-        // Helper function to get element icon and label
-        function getElementIconAndLabel(element) {
-            let icon, label;
-            
-            if (element.type === 'text') {
-                icon = 'fa-font';
-                label = element.name || element.text.substring(0, 15);
-            } else if (element.type === 'clickthrough') {
-                icon = 'fa-mouse-pointer';
-                const clickthroughElements = elements.filter(el => el.type === 'clickthrough');
-                const clickIndex = clickthroughElements.findIndex(el => el.id === element.id) + 1;
-                label = element.name || `Click${clickIndex}`;
-            } else if (element.type === 'invisible') {
-                icon = 'fa-eye-slash';
-                const invisibleElements = elements.filter(el => el.type === 'invisible');
-                const invisibleIndex = invisibleElements.findIndex(el => el.id === element.id) + 1;
-                label = element.name || `Invisible${invisibleIndex}`;
-            } else if (element.type === 'shape') {
-                icon = 'fa-shapes';
-                const shapeElements = elements.filter(el => el.type === 'shape');
-                const shapeIndex = shapeElements.findIndex(el => el.id === element.id) + 1;
-                label = element.name || `Shape${shapeIndex}`;
-            } else if (element.type === 'video') {
-                icon = 'fa-video';
-                label = element.name || element.videoName;
-            } else {
-                icon = 'fa-image';
-                label = element.name || (element.filename || 'Image').substring(0, 15);
-            }
-            
-            return { icon, label };
-        }
-        
-        // Helper function to render a timeline track for an element
-        function renderTrack(element) {
-            const { icon, label } = getElementIconAndLabel(element);
-            
-            const $track = $(`
-                <li class="timeline-track layer" data-element-id="${element.id}">
-                    <div class="timeline-track-label">
-                        <span class="timeline-handle">⋮⋮</span>
-                        <i class="fas ${icon} text-blue-400 mr-2"></i>
-                        <span class="truncate flex-1 track-name-label" data-element-id="${element.id}">${label}</span>
-                        <div class="flex items-center gap-1 ml-2">
-                            <button class="timeline-layer-btn toggle-visibility" data-id="${element.id}" title="Toggle visibility">
-                                <i class="fas ${element.hidden ? 'fa-eye-slash' : 'fa-eye'} text-xs"></i>
-                            </button>
-                            <button class="timeline-layer-btn add-layer-anim" data-id="${element.id}" title="Add animation">
-                                <i class="fas fa-plus text-xs"></i>
-                            </button>
-                            <button class="timeline-layer-btn delete-layer" data-id="${element.id}" title="Delete layer">
-                                <i class="fas fa-trash text-xs"></i>
-                            </button>
-                        </div>
-                    </div>
-                    <div class="timeline-track-content" id="track_${element.id}"></div>
-                </li>
-            `);
-            
-            // Add animation blocks
-            element.animations.forEach(anim => {
-                const leftPercent = (anim.start / totalDuration) * 100;
-                const widthPercent = (anim.duration / totalDuration) * 100;
-                
-                const types = anim.types || [anim.type];
-                const animLabel = types.length > 1 ? `${types.length} effects` : types[0];
-                
-                const $block = $(`
-                    <div class="timeline-block" style="left: ${leftPercent}%; width: ${widthPercent}%;" 
-                         data-anim-id="${anim.id}" data-element-id="${element.id}">
-                        <div class="timeline-block-resize-handle left"></div>
-                        <div class="timeline-block-label">${animLabel}</div>
-                        <button class="delete-anim" data-anim-id="${anim.id}" data-element-id="${element.id}">
-                            <i class="fas fa-times"></i>
-                        </button>
-                        <div class="timeline-block-resize-handle right"></div>
-                    </div>
-                `);
-                
-                $track.find('.timeline-track-content').append($block);
-            });
-            
-            return $track;
-        }
-        
-        // Combine folders and root elements, sort by zIndex (highest first)
-        const elementsInFolders = new Set();
-        
-        // Create array of items with their type and zIndex for sorting
-        const timelineItems = [];
-        
-        // Add folders
-        groups.forEach(group => {
-            timelineItems.push({
-                type: 'folder',
-                data: group,
-                zIndex: group.zIndex
-            });
+
+    function getAbsolutePosition(element) {
+        return window.adBuilderRender.canvasRender.getAbsolutePosition({
+            element
         });
-        
-        // Add root elements (not in folders)
-        elements.forEach(element => {
-            if (!element.folderId) {
-                timelineItems.push({
-                    type: 'element',
-                    data: element,
-                    zIndex: element.zIndex
-                });
-            }
-        });
-        
-        // Sort all items by zIndex (highest first) to maintain proper order
-        timelineItems.sort((a, b) => b.zIndex - a.zIndex);
-        
-        // Render items in sorted order (folders and elements mixed)
-        timelineItems.forEach(item => {
-            if (item.type === 'folder') {
-                const group = item.data;
-                const $folder = $(`
-                    <li class="timeline-folder${group.collapsed ? ' collapsed' : ''}" data-folder-id="${group.id}">
-                        <div class="timeline-folder-row">
-                            <div class="timeline-folder-header">
-                                <span class="timeline-handle">⋮⋮</span>
-                                <span class="timeline-folder-toggle">${group.collapsed ? '▸' : '▾'}</span>
-                                <i class="fas fa-folder text-yellow-400 mr-2"></i>
-                                <span class="flex-1 track-name-label" data-folder-id="${group.id}">${group.name}</span>
-                                <div class="flex items-center gap-1 ml-2">
-                                    <button class="timeline-layer-btn toggle-folder-visibility" data-id="${group.id}" title="Toggle folder visibility">
-                                        <i class="fas ${group.visible === false ? 'fa-eye-slash' : 'fa-eye'} text-xs"></i>
-                                    </button>
-                                    <button class="timeline-layer-btn add-layer-anim" data-id="${group.id}" title="Add animation to folder">
-                                        <i class="fas fa-plus text-xs"></i>
-                                    </button>
-                                    <button class="timeline-layer-btn delete-folder" data-id="${group.id}" title="Delete folder">
-                                        <i class="fas fa-trash text-xs"></i>
-                                    </button>
-                                </div>
-                            </div>
-                            <div class="timeline-track-content folder-track-content" id="track_${group.id}"></div>
-                        </div>
-                        <ul class="timeline-folder-children"></ul>
-                    </li>
-                `);
-                
-                // Add folder animation blocks
-                if (group.animations && group.animations.length > 0) {
-                    group.animations.forEach(anim => {
-                        const leftPercent = (anim.start / totalDuration) * 100;
-                        const widthPercent = (anim.duration / totalDuration) * 100;
-                        
-                        const types = anim.types || [anim.type];
-                        const animLabel = types.length > 1 ? `${types.length} effects` : types[0];
-                        
-                        const $block = $(`
-                            <div class="timeline-block folder-anim-block" style="left: ${leftPercent}%; width: ${widthPercent}%; background-color: #fbbf24;" 
-                                 data-anim-id="${anim.id}" data-folder-id="${group.id}">
-                                <div class="timeline-block-resize-handle left"></div>
-                                <div class="timeline-block-label">${animLabel}</div>
-                                <button class="delete-anim" data-anim-id="${anim.id}" data-folder-id="${group.id}">
-                                    <i class="fas fa-times"></i>
-                                </button>
-                                <div class="timeline-block-resize-handle right"></div>
-                            </div>
-                        `);
-                        
-                        $folder.find('.folder-track-content').append($block);
-                    });
-                }
-                
-                // Add elements that belong to this folder
-                const folderElements = elements.filter(el => el.folderId === group.id);
-                folderElements.sort((a, b) => b.zIndex - a.zIndex);
-                
-                folderElements.forEach(element => {
-                    elementsInFolders.add(element.id);
-                    $folder.find('.timeline-folder-children').append(renderTrack(element));
-                });
-                
-                $timelineTracks.append($folder);
-            } else {
-                // Render root element
-                $timelineTracks.append(renderTrack(item.data));
-            }
-        });
-        
-        // Initialize jQuery UI sortable
-        initTimelineSortable();
     }
-    
+
+    function calculateFolderBounds(folderId) {
+        return window.adBuilderRender.canvasRender.calculateFolderBounds({
+            folderId,
+            canvasWidth,
+            canvasHeight
+        });
+    }
+
+    function updateFolderBounds(folderId) {
+        return window.adBuilderRender.canvasRender.updateFolderBounds({
+            folderId,
+            $canvas,
+            groups,
+            canvasWidth,
+            canvasHeight
+        });
+    }
+
+    function updateAllFolderBounds() {
+        return window.adBuilderRender.canvasRender.updateAllFolderBounds({
+            $canvas,
+            groups,
+            canvasWidth,
+            canvasHeight
+        });
+    }
+
+    function appendElementToCanvas($element, element) {
+        return window.adBuilderRender.canvasRender.appendElementToCanvas({
+            $canvas,
+            element,
+            $element,
+            groups
+        });
+    }
+
+    function createElementDOM(element) {
+        return window.adBuilderRender.canvasRender.createElementDOM({
+            element,
+            canvasWidth,
+            canvasHeight
+        });
+    }
+
+    function updateCanvas() {
+        return window.adBuilderRender.canvasRender.updateCanvas({
+            $canvas,
+            elements,
+            groups,
+            canvasWidth,
+            canvasHeight,
+            applyFolderInteractions
+        });
+    }
     // Initialize timeline sortable system
     function initTimelineSortable() {
         // Destroy existing sortables
@@ -3962,275 +3782,10 @@
         _log('Redo performed. Undo stack:', undoStack.length, 'Redo stack:', redoStack.length);
     }
     
-    // Calculate bounding box for folder based on child elements
-    function calculateFolderBounds(folderId) {
-        const folder = groups.find(g => g.id === folderId);
-        const folderElements = elements.filter(el => el.folderId === folderId);
-        
-        // Folder always fills the entire canvas
-        return {
-            left: 0,
-            top: 0,
-            width: canvasWidth,
-            height: canvasHeight
-        };
-    }
+
     
-    // Update canvas elements from state
-    function updateCanvas() {
-        $canvas.find('.canvas-element, .canvas-folder').remove();
-        
-        // Create folder wrappers first
-        groups.forEach(folder => {
-            const bounds = calculateFolderBounds(folder.id);
-            const $folderWrapper = $(`
-                <div class="canvas-folder" id="${folder.id}" style="
-                    position: absolute;
-                    left: ${bounds.left}px;
-                    top: ${bounds.top}px;
-                    width: ${bounds.width}px;
-                    height: ${bounds.height}px;
-                    z-index: ${folder.zIndex};
-                    pointer-events: auto;
-                "></div>
-            `);
-            $canvas.append($folderWrapper);
-            
-            // Apply folder interactions
-            applyFolderInteractions(folder, $folderWrapper);
-        });
-        
-        // Restore elements and place them in folders or root
-        elements.forEach(element => {
-            const $element = createElementDOM(element);
-            
-            if (element.folderId) {
-                // Append to folder wrapper
-                $(`#${element.folderId}`).append($element);
-            } else {
-                // Append to canvas root
-                $canvas.append($element);
-            }
-        });
-    }
-    
-    // Create DOM element from element data
-    // Get absolute position for element (always use element.x, element.y as absolute positions)
-    function getAbsolutePosition(element) {
-        // Elements always store absolute positions, even when in folders
-        return {
-            x: element.x,
-            y: element.y
-        };
-    }
-    
-    function createElementDOM(element) {
-        const pos = getAbsolutePosition(element);
-        let $element;
-        
-        if (element.type === 'text') {
-            $element = $(`
-                <div class="canvas-element text-element" id="${element.id}" style="
-                    left: ${pos.x}px;
-                    top: ${pos.y}px;
-                    width: ${element.width}px;
-                    height: ${element.height}px;
-                    opacity: ${element.opacity};
-                    transform: rotate(${element.rotation}deg);
-                    font-size: ${element.fontSize}px;
-                    font-family: ${element.fontFamily};
-                    color: ${element.color};
-                    font-weight: ${element.bold ? 'bold' : 'normal'};
-                    font-style: ${element.italic ? 'italic' : 'normal'};
-                    text-decoration: ${element.underline ? 'underline' : 'none'};
-                    text-align: ${element.textAlign};
-                    line-height: 1.2;
-                    word-wrap: break-word;
-                    z-index: ${element.zIndex};
-                ">
-                    ${element.text}
-                    <div class="resize-handle nw"></div>
-                    <div class="resize-handle ne"></div>
-                    <div class="resize-handle sw"></div>
-                    <div class="resize-handle se"></div>
-                </div>
-            `);
-        } else if (element.type === 'shape') {
-            let shapeStyle = `background-color: ${element.fillColor};`;
-            if (element.shapeType === 'circle') {
-                shapeStyle += ' border-radius: 50%;';
-            } else if (element.shapeType === 'rounded-rectangle') {
-                shapeStyle += ' border-radius: 12px;';
-            } else if (element.borderRadius > 0) {
-                shapeStyle += ` border-radius: ${element.borderRadius}px;`;
-            }
-            
-            $element = $(`
-                <div class="canvas-element" id="${element.id}" style="
-                    left: ${pos.x}px;
-                    top: ${pos.y}px;
-                    width: ${element.width}px;
-                    height: ${element.height}px;
-                    opacity: ${element.opacity};
-                    transform: rotate(${element.rotation}deg);
-                    z-index: ${element.zIndex};
-                    ${shapeStyle}
-                ">
-                    <div class="resize-handle nw"></div>
-                    <div class="resize-handle ne"></div>
-                    <div class="resize-handle sw"></div>
-                    <div class="resize-handle se"></div>
-                </div>
-            `);
-        } else if (element.type === 'clickthrough') {
-            $element = $(`
-                <div class="canvas-element clickthrough-element" id="${element.id}" style="
-                    left: ${pos.x}px;
-                    top: ${pos.y}px;
-                    width: ${element.width}px;
-                    height: ${element.height}px;
-                    opacity: ${element.opacity};
-                    transform: rotate(${element.rotation}deg);
-                    z-index: ${element.zIndex};
-                    background: repeating-linear-gradient(
-                        45deg,
-                        rgba(168, 85, 247, 0.1),
-                        rgba(168, 85, 247, 0.1) 10px,
-                        rgba(168, 85, 247, 0.2) 10px,
-                        rgba(168, 85, 247, 0.2) 20px
-                    );
-                    border: 2px dashed rgba(168, 85, 247, 0.5);
-                ">
-                    <div style="text-align: center; color: rgba(168, 85, 247, 0.8); pointer-events: none;">
-                        <i class="fas fa-mouse-pointer text-2xl mb-2"></i>
-                        <div class="text-xs">Clickthrough</div>
-                        ${element.url ? `<div class="text-xs font-bold">${element.url}</div>` : ''}
-                    </div>
-                    <div class="resize-handle nw"></div>
-                    <div class="resize-handle ne"></div>
-                    <div class="resize-handle sw"></div>
-                    <div class="resize-handle se"></div>
-                </div>
-            `);
-        } else if (element.type === 'invisible') {
-            $element = $(`
-                <div class="canvas-element invisible-element" id="${element.id}" style="
-                    left: ${pos.x}px;
-                    top: ${pos.y}px;
-                    width: ${element.width}px;
-                    height: ${element.height}px;
-                    opacity: 0.3;
-                    transform: rotate(${element.rotation}deg);
-                    z-index: ${element.zIndex};
-                    background: repeating-linear-gradient(
-                        45deg,
-                        rgba(200, 200, 200, 0.3),
-                        rgba(200, 200, 200, 0.3) 10px,
-                        rgba(150, 150, 150, 0.3) 10px,
-                        rgba(150, 150, 150, 0.3) 20px
-                    );
-                    border: 2px dashed rgba(100, 100, 100, 0.5);
-                ">
-                    <div style="text-align: center; color: rgba(100, 100, 100, 0.8); pointer-events: none; padding-top: 40%;">
-                        <i class="fas fa-eye-slash text-2xl mb-2"></i>
-                        <div class="text-xs">Invisible Layer</div>
-                    </div>
-                    <div class="resize-handle nw"></div>
-                    <div class="resize-handle ne"></div>
-                    <div class="resize-handle sw"></div>
-                    <div class="resize-handle se"></div>
-                </div>
-            `);
-        } else if (element.type === 'image') {
-            $element = $(`
-                <div class="canvas-element" id="${element.id}" style="
-                    left: ${pos.x}px;
-                    top: ${pos.y}px;
-                    width: ${element.width}px;
-                    height: ${element.height}px;
-                    opacity: ${element.opacity};
-                    transform: rotate(${element.rotation}deg);
-                    z-index: ${element.zIndex};
-                ">
-                    <img src="${element.src}" style="width: 100%; height: 100%; object-fit: contain; pointer-events: none;" />
-                    <div class="resize-handle nw"></div>
-                    <div class="resize-handle ne"></div>
-                    <div class="resize-handle sw"></div>
-                    <div class="resize-handle se"></div>
-                </div>
-            `);
-        } else if (element.type === 'video') {
-            const playText = element.playTrigger === 'autoplay' ? '▶ Autoplay' : 
-                           element.playTrigger === 'onclick' ? '👆 Click to Play' : 
-                           '👁 On View';
-            
-            $element = $(`
-                <div class="canvas-element" id="${element.id}" style="
-                    left: ${pos.x}px;
-                    top: ${pos.y}px;
-                    width: ${element.width}px;
-                    height: ${element.height}px;
-                    opacity: ${element.opacity};
-                    transform: rotate(${element.rotation}deg);
-                    z-index: ${element.zIndex};
-                    background-color: #000;
-                    display: flex;
-                    align-items: center;
-                    justify-content: center;
-                    overflow: hidden;
-                    color: #fff;
-                    font-size: 14px;
-                    border: 2px solid #e53e3e;
-                ">
-                    <div style="text-align: center; width: 100%; padding: 0 8px; box-sizing: border-box; overflow: hidden;">
-                        <i class="fas fa-video" style="font-size: 32px; margin-bottom: 8px;"></i>
-                        <div>${element.videoName}</div>
-                        <div style="font-size: 11px; opacity: 0.7; word-break: break-all; overflow: hidden;">${element.videoUrl}</div>
-                        <div style="font-size: 11px; margin-top: 4px;">
-                            ${playText} ${element.muted ? '🔇 Muted' : '🔊 Sound'} ${element.controls ? '⚙ Controls' : ''}
-                        </div>
-                    </div>
-                    <div class="resize-handle nw"></div>
-                    <div class="resize-handle ne"></div>
-                    <div class="resize-handle sw"></div>
-                    <div class="resize-handle se"></div>
-                </div>
-            `);
-        }
-        
-        return $element;
-    }
-    
-    // Helper function to append element to canvas or folder
-    function appendElementToCanvas($element, element) {
-        if (!$element) return;
-        
-        if (element.folderId) {
-            // Check if folder wrapper exists, create if not
-            let $folder = $(`#${element.folderId}`);
-            if ($folder.length === 0) {
-                const folder = groups.find(g => g.id === element.folderId);
-                if (folder) {
-                    $folder = $(`
-                        <div class="canvas-folder" id="${folder.id}" style="
-                            position: absolute;
-                            left: 0;
-                            top: 0;
-                            width: 100%;
-                            height: 100%;
-                            pointer-events: none;
-                            z-index: ${folder.zIndex};
-                        "></div>
-                    `);
-                    $canvas.append($folder);
-                }
-            }
-            $folder.append($element);
-        } else {
-            $canvas.append($element);
-        }
-    }
-    
+
+
     // ============================================
     // REBUILD TIMELINE
     // ============================================
