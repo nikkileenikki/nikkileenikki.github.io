@@ -93,3 +93,24 @@ export function updateInteractionUI({
     updateHoverActionSettings(interactions.hover.action);
     updateTargetElementDropdowns();
 }
+
+export function updateTargetElementDropdowns({ elements, getElementLabel }) {
+    const clickSelect = $('#clickTargetElement');
+    const hoverSelect = $('#hoverTargetElement');
+
+    const clickValue = clickSelect.val() || 'self';
+    const hoverValue = hoverSelect.val() || 'self';
+
+    clickSelect.find('option:not([value="self"])').remove();
+    hoverSelect.find('option:not([value="self"])').remove();
+
+    elements.forEach(el => {
+        const label = getElementLabel(el);
+        const option = `<option value="${el.id}">${label}</option>`;
+        clickSelect.append(option);
+        hoverSelect.append(option);
+    });
+
+    clickSelect.val(clickValue);
+    hoverSelect.val(hoverValue);
+}
