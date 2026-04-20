@@ -106,3 +106,94 @@ export function renderTrack({ element, elements, totalDuration }) {
 
     return $track;
 }
+
+export function renderEmptyTimelineState({ $timelineTracks }) {
+    $timelineTracks.html('<div class="text-center text-gray-500 text-sm py-8">Add elements and animations to see timeline</div>');
+}
+
+export function buildTimelineItems({ groups, elements }) {
+    const timelineItems = [];
+
+    groups.forEach(group => {
+        timelineItems.push({
+            type: 'folder',
+            data: group,
+            zIndex: group.zIndex
+        });
+    });
+
+    elements.forEach(element => {
+        if (!element.folderId) {
+            timelineItems.push({
+                type: 'element',
+                data: element,
+                zIndex: element.zIndex
+            });
+        }
+    });
+
+    timelineItems.sort((a, b) => b.zIndex - a.zIndex);
+
+    return timelineItems;
+}
+
+export function renderFolderTrack({ group, elements, totalDuration, renderTrack }) {
+    const $folder = $(`
+        <li class="timeline-folder${group.collapsed ? ' collapsed' : ''}" data-folder-id="${group.id}">
+            <div class="timeline-folder-row">
+                <div class="timeline-folder-header">
+                    <span class="timeline-handle">⋮⋮</span>
+                    <span class="timeline-folder-toggle">${group.collapsed ? '▸' : '▾'}</span>
+                    <i class="fas fa-folder text-yellow-400 mr-2"></i>
+                    <span class="flex-1 track-name-label" data-folder-id="${group.id}">${group.name}</span>
+                    <div class="flex items-center gap-1 ml-2">
+                        <button class="timeline-layer-btn toggle-folder-visibility" data-id="${group.id}" title="Toggle folder visibility">
+                            <i class="fas ${group.visible === false ? 'fa-eye-slash' : 'fa-eye'} text-xs"></i>
+                        </button>
+                        <button class="timeline-layer-btn add-layer-anim" data-id="${group.id}" title="Add animation to folder">
+                            <i class="fas fa-plus text-xs"></i>
+                        </button>
+                        <button class="timeline-layer-btn delete-folder" data-id="${group.id}" title="Delete folder">
+                            <i class="fas fa-trash text-xs"></i>
+                        </button>
+                    </div>
+                </div>
+                <div class="timeline-track-content folder-track-content" id="track_${group.id}"></div>
+            </div>
+            <ul class="timeline-folder-children"></ul>
+        </li>
+    `);
+
+    if (group.animations && group.animations.length > 0) {
+        group.animations.forEach(anim => {
+            const leftPercent = (anim.start / totalDuration) * 100;
+            const widthPercent = (anim.duration / totalDuration) * 100;
+
+            const types = anim.types || [anim.type];
+            const animLabel = types.length > 1 ? `${types.length} effects` : types[0];
+
+            const $block = $(`
+                <div class="timeline-block folder-anim-block" style="left: ${leftPercent}%; width: ${widthPercent}%; background-color: #fbbf24;" 
+                     data-anim-id="${anim.id}" data-folder-id="${group.id}">
+                    <div class="timeline-block-resize-handle left"></div>
+                    <div class="timeline-block-label">${animLabel}</div>
+                    <button class="delete-anim" data-anim-id="${anim.id}" data-folder-id="${group.id}">
+                        <i class="fas fa-times"></i>
+                    </button>
+                    <div class="timeline-block-resize-handle right"></div>
+                </div>
+            `);
+
+            $folder.find('.folder-track-content').append($block);
+        });
+    }
+
+    const folderElements = elements.filter(el => el.folderId === group.id);
+    folderElements.sort((a, b) => b.zIndex - a.zIndex);
+
+    folderElements.forEach(element => {
+        $folder.find('.timeline-folder-children').append(renderTrack(element));
+    });
+
+    return $folder;
+}
