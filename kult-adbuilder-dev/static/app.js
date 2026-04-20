@@ -3430,31 +3430,11 @@
     }
     
     function updateTimelineRuler() {
-        $timelineRuler.empty();
-        
-        const steps = Math.ceil(totalDuration);
-        const stepWidth = 100 / steps;
-        
-        for (let i = 0; i <= steps; i++) {
-            const left = (i / steps) * 100;
-            $timelineRuler.append(`
-                <div class="timeline-time-marker" style="left: ${left}%" data-time="${i}">
-                    <div class="timeline-time-label" data-time="${i}">${i}s</div>
-                </div>
-            `);
-        }
-        
-        // Add click handler for time markers
-        $('.timeline-time-label, .timeline-time-marker').off('click').on('click', function(e) {
-            e.stopPropagation();
-            const time = parseFloat($(this).data('time'));
-            const percent = (time / totalDuration) * 100;
-            
-            $('#timelinePlayhead').css('left', percent + '%');
-            
-            if (!isPlaying && timeline) {
-                timeline.seek(time);
-            }
+        return window.adBuilderRender.timelineRender.updateTimelineRuler({
+            $timelineRuler,
+            totalDuration,
+            timeline,
+            isPlaying
         });
     }
     
@@ -3964,16 +3944,13 @@
     
     // Calculate bounding box for folder based on child elements
     function calculateFolderBounds(folderId) {
-        const folder = groups.find(g => g.id === folderId);
-        const folderElements = elements.filter(el => el.folderId === folderId);
-        
-        // Folder always fills the entire canvas
-        return {
-            left: 0,
-            top: 0,
-            width: canvasWidth,
-            height: canvasHeight
-        };
+        return window.adBuilderRender.canvasRender.calculateFolderBounds({
+            folderId,
+            groups,
+            elements,
+            canvasWidth,
+            canvasHeight
+        });
     }
     
     // Update canvas elements from state
@@ -4017,188 +3994,16 @@
     // Create DOM element from element data
     // Get absolute position for element (always use element.x, element.y as absolute positions)
     function getAbsolutePosition(element) {
-        // Elements always store absolute positions, even when in folders
-        return {
-            x: element.x,
-            y: element.y
-        };
+        return window.adBuilderRender.canvasRender.getAbsolutePosition({
+            element
+        });
     }
     
     function createElementDOM(element) {
-        const pos = getAbsolutePosition(element);
-        let $element;
-        
-        if (element.type === 'text') {
-            $element = $(`
-                <div class="canvas-element text-element" id="${element.id}" style="
-                    left: ${pos.x}px;
-                    top: ${pos.y}px;
-                    width: ${element.width}px;
-                    height: ${element.height}px;
-                    opacity: ${element.opacity};
-                    transform: rotate(${element.rotation}deg);
-                    font-size: ${element.fontSize}px;
-                    font-family: ${element.fontFamily};
-                    color: ${element.color};
-                    font-weight: ${element.bold ? 'bold' : 'normal'};
-                    font-style: ${element.italic ? 'italic' : 'normal'};
-                    text-decoration: ${element.underline ? 'underline' : 'none'};
-                    text-align: ${element.textAlign};
-                    line-height: 1.2;
-                    word-wrap: break-word;
-                    z-index: ${element.zIndex};
-                ">
-                    ${element.text}
-                    <div class="resize-handle nw"></div>
-                    <div class="resize-handle ne"></div>
-                    <div class="resize-handle sw"></div>
-                    <div class="resize-handle se"></div>
-                </div>
-            `);
-        } else if (element.type === 'shape') {
-            let shapeStyle = `background-color: ${element.fillColor};`;
-            if (element.shapeType === 'circle') {
-                shapeStyle += ' border-radius: 50%;';
-            } else if (element.shapeType === 'rounded-rectangle') {
-                shapeStyle += ' border-radius: 12px;';
-            } else if (element.borderRadius > 0) {
-                shapeStyle += ` border-radius: ${element.borderRadius}px;`;
-            }
-            
-            $element = $(`
-                <div class="canvas-element" id="${element.id}" style="
-                    left: ${pos.x}px;
-                    top: ${pos.y}px;
-                    width: ${element.width}px;
-                    height: ${element.height}px;
-                    opacity: ${element.opacity};
-                    transform: rotate(${element.rotation}deg);
-                    z-index: ${element.zIndex};
-                    ${shapeStyle}
-                ">
-                    <div class="resize-handle nw"></div>
-                    <div class="resize-handle ne"></div>
-                    <div class="resize-handle sw"></div>
-                    <div class="resize-handle se"></div>
-                </div>
-            `);
-        } else if (element.type === 'clickthrough') {
-            $element = $(`
-                <div class="canvas-element clickthrough-element" id="${element.id}" style="
-                    left: ${pos.x}px;
-                    top: ${pos.y}px;
-                    width: ${element.width}px;
-                    height: ${element.height}px;
-                    opacity: ${element.opacity};
-                    transform: rotate(${element.rotation}deg);
-                    z-index: ${element.zIndex};
-                    background: repeating-linear-gradient(
-                        45deg,
-                        rgba(168, 85, 247, 0.1),
-                        rgba(168, 85, 247, 0.1) 10px,
-                        rgba(168, 85, 247, 0.2) 10px,
-                        rgba(168, 85, 247, 0.2) 20px
-                    );
-                    border: 2px dashed rgba(168, 85, 247, 0.5);
-                ">
-                    <div style="text-align: center; color: rgba(168, 85, 247, 0.8); pointer-events: none;">
-                        <i class="fas fa-mouse-pointer text-2xl mb-2"></i>
-                        <div class="text-xs">Clickthrough</div>
-                        ${element.url ? `<div class="text-xs font-bold">${element.url}</div>` : ''}
-                    </div>
-                    <div class="resize-handle nw"></div>
-                    <div class="resize-handle ne"></div>
-                    <div class="resize-handle sw"></div>
-                    <div class="resize-handle se"></div>
-                </div>
-            `);
-        } else if (element.type === 'invisible') {
-            $element = $(`
-                <div class="canvas-element invisible-element" id="${element.id}" style="
-                    left: ${pos.x}px;
-                    top: ${pos.y}px;
-                    width: ${element.width}px;
-                    height: ${element.height}px;
-                    opacity: 0.3;
-                    transform: rotate(${element.rotation}deg);
-                    z-index: ${element.zIndex};
-                    background: repeating-linear-gradient(
-                        45deg,
-                        rgba(200, 200, 200, 0.3),
-                        rgba(200, 200, 200, 0.3) 10px,
-                        rgba(150, 150, 150, 0.3) 10px,
-                        rgba(150, 150, 150, 0.3) 20px
-                    );
-                    border: 2px dashed rgba(100, 100, 100, 0.5);
-                ">
-                    <div style="text-align: center; color: rgba(100, 100, 100, 0.8); pointer-events: none; padding-top: 40%;">
-                        <i class="fas fa-eye-slash text-2xl mb-2"></i>
-                        <div class="text-xs">Invisible Layer</div>
-                    </div>
-                    <div class="resize-handle nw"></div>
-                    <div class="resize-handle ne"></div>
-                    <div class="resize-handle sw"></div>
-                    <div class="resize-handle se"></div>
-                </div>
-            `);
-        } else if (element.type === 'image') {
-            $element = $(`
-                <div class="canvas-element" id="${element.id}" style="
-                    left: ${pos.x}px;
-                    top: ${pos.y}px;
-                    width: ${element.width}px;
-                    height: ${element.height}px;
-                    opacity: ${element.opacity};
-                    transform: rotate(${element.rotation}deg);
-                    z-index: ${element.zIndex};
-                ">
-                    <img src="${element.src}" style="width: 100%; height: 100%; object-fit: contain; pointer-events: none;" />
-                    <div class="resize-handle nw"></div>
-                    <div class="resize-handle ne"></div>
-                    <div class="resize-handle sw"></div>
-                    <div class="resize-handle se"></div>
-                </div>
-            `);
-        } else if (element.type === 'video') {
-            const playText = element.playTrigger === 'autoplay' ? '▶ Autoplay' : 
-                           element.playTrigger === 'onclick' ? '👆 Click to Play' : 
-                           '👁 On View';
-            
-            $element = $(`
-                <div class="canvas-element" id="${element.id}" style="
-                    left: ${pos.x}px;
-                    top: ${pos.y}px;
-                    width: ${element.width}px;
-                    height: ${element.height}px;
-                    opacity: ${element.opacity};
-                    transform: rotate(${element.rotation}deg);
-                    z-index: ${element.zIndex};
-                    background-color: #000;
-                    display: flex;
-                    align-items: center;
-                    justify-content: center;
-                    overflow: hidden;
-                    color: #fff;
-                    font-size: 14px;
-                    border: 2px solid #e53e3e;
-                ">
-                    <div style="text-align: center; width: 100%; padding: 0 8px; box-sizing: border-box; overflow: hidden;">
-                        <i class="fas fa-video" style="font-size: 32px; margin-bottom: 8px;"></i>
-                        <div>${element.videoName}</div>
-                        <div style="font-size: 11px; opacity: 0.7; word-break: break-all; overflow: hidden;">${element.videoUrl}</div>
-                        <div style="font-size: 11px; margin-top: 4px;">
-                            ${playText} ${element.muted ? '🔇 Muted' : '🔊 Sound'} ${element.controls ? '⚙ Controls' : ''}
-                        </div>
-                    </div>
-                    <div class="resize-handle nw"></div>
-                    <div class="resize-handle ne"></div>
-                    <div class="resize-handle sw"></div>
-                    <div class="resize-handle se"></div>
-                </div>
-            `);
-        }
-        
-        return $element;
+        return window.adBuilderRender.canvasRender.createElementDOM({
+            element,
+            getAbsolutePosition
+        });
     }
     
     // Helper function to append element to canvas or folder
