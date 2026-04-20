@@ -197,3 +197,64 @@ export function renderFolderTrack({ group, elements, totalDuration, renderTrack 
 
     return $folder;
 }
+
+export function buildRootSortableConfig({
+    saveState,
+    updateStructureFromDOM,
+    getHasSavedSortableSnapshot,
+    setHasSavedSortableSnapshot
+}) {
+    return {
+        items: '> .layer, > .timeline-folder',
+        connectWith: '.timeline-folder-children',
+        handle: '.timeline-handle',
+        placeholder: 'ui-sortable-placeholder',
+        tolerance: 'pointer',
+        forcePlaceholderSize: true,
+        start: function() {
+            if (!getHasSavedSortableSnapshot()) {
+                saveState();
+                setHasSavedSortableSnapshot(true);
+            }
+        },
+        update: function() {
+            updateStructureFromDOM();
+        },
+        stop: function() {
+            setHasSavedSortableSnapshot(false);
+        }
+    };
+}
+
+export function buildFolderChildrenSortableConfig({
+    saveState,
+    updateStructureFromDOM,
+    getHasSavedSortableSnapshot,
+    setHasSavedSortableSnapshot
+}) {
+    return {
+        items: '> .layer',
+        connectWith: '#timelineTracks, .timeline-folder-children',
+        handle: '.timeline-handle',
+        placeholder: 'ui-sortable-placeholder',
+        tolerance: 'pointer',
+        forcePlaceholderSize: true,
+        start: function() {
+            if (!getHasSavedSortableSnapshot()) {
+                saveState();
+                setHasSavedSortableSnapshot(true);
+            }
+        },
+        receive: function(e, ui) {
+            if (ui.item.hasClass('timeline-folder')) {
+                $(this).sortable('cancel');
+            }
+        },
+        update: function() {
+            updateStructureFromDOM();
+        },
+        stop: function() {
+            setHasSavedSortableSnapshot(false);
+        }
+    };
+}
