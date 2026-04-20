@@ -2,6 +2,8 @@ function round1(value) {
     return Math.round(value * 10) / 10;
 }
 
+const FOLDER_ZINDEX_STRIDE = 100;
+
 export function updateTimelineRuler({ $timelineRuler, totalDuration, timeline, isPlaying }) {
     $timelineRuler.empty();
 
@@ -282,7 +284,7 @@ export function updateStructureFromDOM({
             if (group) {
                 group.zIndex = currentZIndex--;
 
-                let folderZIndex = group.zIndex * 100;
+                let folderZIndex = group.zIndex * FOLDER_ZINDEX_STRIDE;
                 $(this).find('.timeline-folder-children > li').each(function() {
                     const elementId = $(this).data('element-id');
                     const element = elements.find(el => el.id === elementId);
@@ -519,4 +521,41 @@ export function handleTimelineBlockResizeStart({
 
     $(document).on('mousemove', moveHandler);
     $(document).on('mouseup', upHandler);
+}
+
+export function handlePlayheadDragStart({
+    event,
+    timeline,
+    totalDuration,
+    isPlaying,
+    setIsPlayheadDragging
+}) {
+    event.preventDefault();
+    event.stopPropagation();
+    setIsPlayheadDragging(true);
+
+    const moveHandler = function(moveEvent) {
+        const $ruler = $('#timelineRuler');
+        const rulerOffset = $ruler.offset().left;
+        const rulerWidth = $ruler.width();
+        const mouseX = moveEvent.pageX - rulerOffset;
+
+        let percent = (mouseX / rulerWidth) * 100;
+        percent = Math.max(0, Math.min(100, percent));
+
+        $('#timelinePlayhead').css('left', percent + '%');
+
+        if (!isPlaying && timeline) {
+            const time = (percent / 100) * totalDuration;
+            timeline.seek(time);
+        }
+    };
+
+    const upHandler = function() {
+        setIsPlayheadDragging(false);
+        $(document).off('mousemove.playhead mouseup.playhead');
+    };
+
+    $(document).on('mousemove.playhead', moveHandler);
+    $(document).on('mouseup.playhead', upHandler);
 }
