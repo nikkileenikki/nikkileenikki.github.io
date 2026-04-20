@@ -182,14 +182,7 @@
             const val = $(this).val();
             $('#shapeOpacityValue').text(Math.round(val * 100) + '%');
         });
-        // Enter key support for shape
-        $('#shapeType, #shapeWidth, #shapeHeight, #shapeFillColor, #shapeOpacity, #shapeBorderRadius').on('keydown', function(e) {
-            if (e.key === 'Enter' || e.keyCode === 13) {
-                e.preventDefault();
-                saveShape();
-            }
-        });
-        
+
         // Escape key for shape modal
         $('#shapeModal').on('keydown', function(e) {
             if (e.key === 'Escape' || e.keyCode === 27) {
