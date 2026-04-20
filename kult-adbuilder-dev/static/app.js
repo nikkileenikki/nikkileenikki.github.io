@@ -1814,6 +1814,27 @@
         isResizing = false;
         resizeHandle = null;
     }
+
+    function renderLayersEmptyState() {
+        return window.adBuilderRender.layersUI.renderLayersEmptyState({
+            $layersList
+        });
+    }
+
+    function getLayerIconAndLabel(element) {
+        return window.adBuilderRender.layersUI.getLayerIconAndLabel({
+            element,
+            elements
+        });
+    }
+
+    function renderLayerItem(element, index) {
+        return window.adBuilderRender.layersUI.renderLayerItem({
+            element,
+            index,
+            elements
+        });
+    }
     
     // ============================================
     // ARROW KEY POSITIONING
@@ -1958,7 +1979,7 @@
     // ============================================
     function updateLayersList() {
         if (elements.length === 0) {
-            $layersList.html('<p class="text-sm text-gray-500 text-center py-4">No layers yet</p>');
+            renderLayersEmptyState();
             updateTimelineTracks();
             return;
         }
@@ -1969,62 +1990,7 @@
         const sortedElements = [...elements].sort((a, b) => b.zIndex - a.zIndex);
         
         sortedElements.forEach((element, index) => {
-            let icon, label;
-            
-            if (element.type === 'text') {
-                icon = 'fa-font';
-                label = element.text.substring(0, 20);
-            } else if (element.type === 'clickthrough') {
-                icon = 'fa-mouse-pointer';
-                // Count clickthrough elements to generate click1, click2, etc.
-                const clickthroughElements = elements.filter(el => el.type === 'clickthrough');
-                const clickIndex = clickthroughElements.findIndex(el => el.id === element.id) + 1;
-                label = `Click${clickIndex}`;
-            } else if (element.type === 'shape') {
-                icon = 'fa-shapes';
-                // Count shape elements to generate shape1, shape2, etc.
-                const shapeElements = elements.filter(el => el.type === 'shape');
-                const shapeIndex = shapeElements.findIndex(el => el.id === element.id) + 1;
-                label = `Shape${shapeIndex}`;
-            } else if (element.type === 'video') {
-                icon = 'fa-video';
-                label = element.videoName;
-            } else {
-                icon = 'fa-image';
-                label = (element.filename || 'Image').substring(0, 20);
-            }
-            
-            const $layer = $(`
-                <div class="layer-item p-2 rounded border border-gray-700 flex items-center justify-between" 
-                     data-id="${element.id}" 
-                     draggable="true" 
-                     data-index="${index}">
-                    <div class="flex items-center flex-1">
-                        <i class="fas fa-grip-vertical text-gray-600 mr-2 cursor-move"></i>
-                        <i class="fas ${icon} text-blue-400 mr-2"></i>
-                        <span class="text-sm">${label}</span>
-                    </div>
-                    <div class="flex items-center space-x-1">
-                        <button class="toggle-layer-visibility text-gray-400 hover:text-white px-2 py-1" data-id="${element.id}" title="Toggle Visibility">
-                            <i class="fas ${element.visible === false ? 'fa-eye-slash' : 'fa-eye'} text-xs"></i>
-                        </button>
-                        <button class="add-layer-anim text-blue-400 hover:text-blue-300 px-2 py-1" data-id="${element.id}" title="Add Animation">
-                            <i class="fas fa-plus-circle text-xs"></i>
-                        </button>
-                        <button class="delete-layer text-red-400 hover:text-red-300 px-2 py-1" data-id="${element.id}">
-                            <i class="fas fa-trash text-xs"></i>
-                        </button>
-                    </div>
-                </div>
-            `);
-            
-            // Add drag and drop events
-            $layer.on('dragstart', window.handleDragStart);
-            $layer.on('dragover', window.handleDragOverLayer);
-            $layer.on('drop', window.handleLayerDrop);
-            $layer.on('dragend', window.handleDragEnd);
-            
-            $layersList.append($layer);
+            const $layer = renderLayerItem(element, index);
         });
         
         updateTimelineTracks();
@@ -4630,10 +4596,10 @@
     }
     
     // Make functions available globally for event handlers
-    window.handleDragStart = handleDragStart;
-    window.handleDragOverLayer = handleDragOverLayer;
-    window.handleLayerDrop = handleLayerDrop;
-    window.handleDragEnd = handleDragEnd;
+    $layer.on('dragstart', window.handleDragStart);
+    $layer.on('dragover', window.handleDragOverLayer);
+    $layer.on('drop', window.handleLayerDrop);
+    $layer.on('dragend', window.handleDragEnd);
     
     // ============================================
     // ZOOM CONTROLS
