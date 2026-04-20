@@ -2,8 +2,8 @@ import { createStore } from './state/store.js';
 import { createBannerState } from './state/schema.js';
 import { createHistory } from './state/history.js';
 import { _log } from './core/debug.js';
-import * as timelineRender from './js/render/timeline.js';
-import * as canvasRender from './js/render/canvas.js';
+import * as timelineRender from './render/timeline.js';
+import * as canvasRender from './render/canvas.js';
 
 const store = createStore(createBannerState());
 const history = createHistory();
