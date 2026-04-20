@@ -2093,24 +2093,25 @@
         }
     }
     
-    // Update folder visual bounds to wrap child elements
     function updateFolderBounds(folderId) {
-        const $folder = $(`#${folderId}`);
-        if ($folder.length === 0) return;
-        
-        const bounds = calculateFolderBounds(folderId);
-        $folder.css({
-            left: bounds.left + 'px',
-            top: bounds.top + 'px',
-            width: bounds.width + 'px',
-            height: bounds.height + 'px'
+        return window.adBuilderRender.canvasRender.updateFolderBounds({
+            folderId,
+            $canvas,
+            calculateFolderBounds: ({ folderId }) =>
+                window.adBuilderRender.canvasRender.calculateFolderBounds({
+                    folderId,
+                    groups,
+                    elements,
+                    canvasWidth,
+                    canvasHeight
+                })
         });
     }
     
-    // Update all folder bounds
     function updateAllFolderBounds() {
-        groups.forEach(folder => {
-            updateFolderBounds(folder.id);
+        return window.adBuilderRender.canvasRender.updateAllFolderBounds({
+            groups,
+            updateFolderBounds
         });
     }
     
