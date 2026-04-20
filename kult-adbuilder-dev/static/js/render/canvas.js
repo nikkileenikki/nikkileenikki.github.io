@@ -243,3 +243,45 @@ export function updateAllFolderBounds({ groups, updateFolderBounds }) {
         updateFolderBounds(folder.id);
     });
 }
+
+export function updateCanvas({
+    $canvas,
+    groups,
+    elements,
+    calculateFolderBounds,
+    createElementDOM,
+    applyFolderInteractions
+}) {
+    $canvas.find('.canvas-element, .canvas-folder').remove();
+
+    // Create folder wrappers first
+    groups.forEach(folder => {
+        const bounds = calculateFolderBounds(folder.id);
+        const $folderWrapper = $(`
+            <div class="canvas-folder" id="${folder.id}" style="
+                position: absolute;
+                left: ${bounds.left}px;
+                top: ${bounds.top}px;
+                width: ${bounds.width}px;
+                height: ${bounds.height}px;
+                z-index: ${folder.zIndex};
+                pointer-events: auto;
+            "></div>
+        `);
+        $canvas.append($folderWrapper);
+
+        // Re-apply folder interactions from app.js
+        applyFolderInteractions(folder, $folderWrapper);
+    });
+
+    // Restore elements and place them in folders or root
+    elements.forEach(element => {
+        const $element = createElementDOM(element);
+
+        if (element.folderId) {
+            $(`#${element.folderId}`).append($element);
+        } else {
+            $canvas.append($element);
+        }
+    });
+}
