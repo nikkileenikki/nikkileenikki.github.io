@@ -4,6 +4,7 @@ import { createHistory } from './state/history.js';
 import { _log } from './core/debug.js';
 import * as timelineRender from './render/timeline.js';
 import * as canvasRender from './render/canvas.js';
+import * as propertiesUI from './ui/properties.js';
 
 const store = createStore(createBannerState());
 const history = createHistory();
@@ -13,7 +14,8 @@ window.adBuilderHistory = history;
 window.adBuilderRender = {
   ...(window.adBuilderRender || {}),
   timelineRender,
-  canvasRender
+  canvasRender,
+  propertiesUI
 };
 
 _log('Ad Builder Phase 1 bootstrap loaded');
