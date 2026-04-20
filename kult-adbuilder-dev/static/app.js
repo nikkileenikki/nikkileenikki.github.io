@@ -489,23 +489,39 @@
             function commitRename() {
                 if (committed) return;
                 committed = true;
+
                 const newName = $input.val().trim();
+
                 if (elementId) {
                     const el = elements.find(e => e.id === elementId);
-                    if (el) el.name = newName || undefined;
+                    if (!el) return rebuildTimeline();
+
+                    const nextName = newName || undefined;
+                    if (el.name === nextName) return rebuildTimeline();
+
+                    saveState();
+                    el.name = nextName;
                 } else if (folderId) {
                     const group = groups.find(g => g.id === folderId);
-                    if (group) group.name = newName || group.name;
+                    if (!group) return rebuildTimeline();
+
+                    const nextName = newName || group.name;
+                    if (group.name === nextName) return rebuildTimeline();
+
+                    saveState();
+                    group.name = nextName;
                 }
-                // Remove focus from active element before rebuilding
-                if (document.activeElement) document.activeElement.blur();
+
                 rebuildTimeline();
             }
             
             // Prevent any mousedown inside timelineTracks from stealing focus away from input
             function blockMousedown(e) {
                 if ($(e.target).is('.track-rename-input')) return;
-                e.preventDefault();
+                if ($(e.target).closest('.track-rename-input').length) return;
+
+                // Commit rename first, then allow the click to continue normally
+                $input.blur();
             }
             $timelineTracks[0].addEventListener('mousedown', blockMousedown, true);
             
@@ -2659,7 +2675,6 @@
     
     // Text property updates
     function updateTextContent() {
-        saveState();
         if (!selectedElement) return;
         const element = elements.find(el => el.id === selectedElement);
         if (element.type !== 'text') return;
@@ -2691,7 +2706,7 @@
         if (!selectedElement) return;
         const element = elements.find(el => el.id === selectedElement);
         if (element.type !== 'text') return;
-        
+        saveState();
         element.color = $(this).val();
         $(`#${selectedElement}`).css('color', element.color);
     }
