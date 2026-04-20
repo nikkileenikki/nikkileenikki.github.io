@@ -223,3 +223,23 @@ export function appendElementToCanvas({ $canvas, $element, element, groups }) {
         $canvas.append($element);
     }
 }
+
+export function updateFolderBounds({ folderId, $canvas, calculateFolderBounds }) {
+    const $folder = $canvas.find(`#${folderId}`);
+    if ($folder.length === 0) return;
+
+    const bounds = calculateFolderBounds({ folderId });
+
+    $folder.css({
+        left: bounds.left + 'px',
+        top: bounds.top + 'px',
+        width: bounds.width + 'px',
+        height: bounds.height + 'px'
+    });
+}
+
+export function updateAllFolderBounds({ groups, updateFolderBounds }) {
+    groups.forEach(folder => {
+        updateFolderBounds(folder.id);
+    });
+}
