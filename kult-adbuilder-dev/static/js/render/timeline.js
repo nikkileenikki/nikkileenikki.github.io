@@ -68,7 +68,7 @@ export function renderTrack({ element, elements, totalDuration }) {
                 <span class="truncate flex-1 track-name-label" data-element-id="${element.id}">${label}</span>
                 <div class="flex items-center gap-1 ml-2">
                     <button class="timeline-layer-btn toggle-visibility" data-id="${element.id}" title="Toggle visibility">
-                        <i class="fas ${element.hidden ? 'fa-eye-slash' : 'fa-eye'} text-xs"></i>
+                        <i class="fas ${element.visible === false ? 'fa-eye-slash' : 'fa-eye'} text-xs"></i>
                     </button>
                     <button class="timeline-layer-btn add-layer-anim" data-id="${element.id}" title="Add animation">
                         <i class="fas fa-plus text-xs"></i>
