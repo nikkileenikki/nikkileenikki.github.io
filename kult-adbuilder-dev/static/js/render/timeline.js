@@ -1,3 +1,7 @@
+function round1(value) {
+    return Math.round(value * 10) / 10;
+}
+
 export function updateTimelineRuler({ $timelineRuler, totalDuration, timeline, isPlaying }) {
     $timelineRuler.empty();
 
@@ -83,8 +87,8 @@ export function renderTrack({ element, elements, totalDuration }) {
     `);
 
     element.animations.forEach(anim => {
-        const leftPercent = (anim.start / totalDuration) * 100;
-        const widthPercent = (anim.duration / totalDuration) * 100;
+        const leftPercent = round1((anim.start / totalDuration) * 100);
+        const widthPercent = round1((anim.duration / totalDuration) * 100);
 
         const types = anim.types || [anim.type];
         const animLabel = types.length > 1 ? `${types.length} effects` : types[0];
@@ -166,8 +170,8 @@ export function renderFolderTrack({ group, elements, totalDuration, renderTrack 
 
     if (group.animations && group.animations.length > 0) {
         group.animations.forEach(anim => {
-            const leftPercent = (anim.start / totalDuration) * 100;
-            const widthPercent = (anim.duration / totalDuration) * 100;
+            const leftPercent = round1((anim.start / totalDuration) * 100);
+            const widthPercent = round1((anim.duration / totalDuration) * 100);
 
             const types = anim.types || [anim.type];
             const animLabel = types.length > 1 ? `${types.length} effects` : types[0];
@@ -385,7 +389,7 @@ export function handleTimelineBlockDragStart({
         let newLeft = initialLeft + deltaX;
         newLeft = Math.max(0, Math.min(trackWidth - $block.width(), newLeft));
 
-        const newLeftPercent = (newLeft / trackWidth) * 100;
+        const newLeftPercent = round1((newLeft / trackWidth) * 100);
         $block.css('left', newLeftPercent + '%');
 
         let target, anim;
@@ -398,7 +402,7 @@ export function handleTimelineBlockDragStart({
         if (target) {
             anim = target.animations.find(a => a.id === animId);
             if (anim) {
-                anim.start = Math.round(((newLeftPercent / 100) * totalDuration) * 10) / 10;
+                anim.start = round1((newLeftPercent / 100) * totalDuration);
             }
         }
     };
@@ -449,12 +453,13 @@ export function handleTimelineBlockResizeStart({
     const $track = $block.parent();
     const trackWidth = $track.width();
     const startX = event.pageX;
-    const initialLeft = parseFloat($block.css('left'));
-    const initialWidth = $block.width();
+    const initialLeftPercent = parseFloat($block[0].style.left) || 0;
+    const initialWidthPercent = parseFloat($block[0].style.width) || 0;
+    const initialLeftPx = (initialLeftPercent / 100) * trackWidth;
+    const initialWidthPx = (initialWidthPercent / 100) * trackWidth;
 
     const moveHandler = function(moveEvent) {
         const deltaX = moveEvent.pageX - startX;
-        const deltaPercent = (deltaX / trackWidth) * 100;
 
         let target;
         if (folderId) {
@@ -467,28 +472,34 @@ export function handleTimelineBlockResizeStart({
         const anim = target.animations.find(a => a.id === animId);
         if (!anim) return;
 
+        const minWidthPx = Math.max(20, trackWidth * 0.02);
+
         if ($handle.hasClass('left')) {
-            let newLeft = initialLeft + deltaPercent;
-            newLeft = Math.max(0, newLeft);
+            const rightEdgePx = initialLeftPx + initialWidthPx;
 
-            const widthPercent = parseFloat($block.css('width'));
-            const newWidthPercent = widthPercent - (newLeft - initialLeft);
+            let newLeftPx = initialLeftPx + deltaX;
+            newLeftPx = Math.max(0, Math.min(rightEdgePx - minWidthPx, newLeftPx));
 
-            if (newWidthPercent > 2) {
-                $block.css('left', newLeft + '%');
-                $block.css('width', newWidthPercent + '%');
+            let newWidthPx = rightEdgePx - newLeftPx;
+            newWidthPx = Math.max(minWidthPx, newWidthPx);
 
-                anim.start = Math.round(((newLeft / 100) * totalDuration) * 10) / 10;
-                anim.duration = Math.round(((newWidthPercent / 100) * totalDuration) * 10) / 10;
-            }
+            const newLeftPercent = round1((newLeftPx / trackWidth) * 100);
+            const newWidthPercent = round1((newWidthPx / trackWidth) * 100);
+
+            $block.css('left', newLeftPercent + '%');
+            $block.css('width', newWidthPercent + '%');
+
+            anim.start = round1((newLeftPercent / 100) * totalDuration);
+            anim.duration = round1((newWidthPercent / 100) * totalDuration);
         } else {
-            const currentWidthPx = initialWidth + deltaX;
-            const maxWidth = trackWidth - parseFloat($block.position().left);
-            const newWidthPx = Math.max(20, Math.min(currentWidthPx, maxWidth));
-            const newWidthPercent = (newWidthPx / trackWidth) * 100;
+            let newWidthPx = initialWidthPx + deltaX;
+            const maxWidthPx = trackWidth - initialLeftPx;
+            newWidthPx = Math.max(minWidthPx, Math.min(maxWidthPx, newWidthPx));
+
+            const newWidthPercent = round1((newWidthPx / trackWidth) * 100);
 
             $block.css('width', newWidthPercent + '%');
-            anim.duration = Math.round(((newWidthPercent / 100) * totalDuration) * 10) / 10;
+            anim.duration = round1((newWidthPercent / 100) * totalDuration);
         }
     };
 
