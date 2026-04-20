@@ -4002,7 +4002,8 @@
     function createElementDOM(element) {
         return window.adBuilderRender.canvasRender.createElementDOM({
             element,
-            getAbsolutePosition
+            getAbsolutePosition: ({ element }) =>
+                window.adBuilderRender.canvasRender.getAbsolutePosition({ element })
         });
     }
     
