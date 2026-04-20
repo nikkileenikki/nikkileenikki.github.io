@@ -2308,32 +2308,7 @@
         
         // Show/hide text properties
         if (element.type === 'text') {
-            $textProps.removeClass('hidden');
-            $('#propText').val(element.text);
-            $('#propFontFamily').val(element.fontFamily);
-            $('#propFontSize').val(element.fontSize);
-            $('#propColor').val(element.color);
-            
-            $('#propBold').toggleClass('active', element.bold);
-            $('#propItalic').toggleClass('active', element.italic);
-            $('#propUnderline').toggleClass('active', element.underline);
-            
-            $('.text-align-btn').removeClass('active');
-            $(`.text-align-btn[data-align="${element.textAlign}"]`).addClass('active');
-            
-            // Text shadow and glow
-            $('#propTextShadowX').val(element.shadowX || 0);
-            $('#propTextShadowY').val(element.shadowY || 0);
-            $('#propTextShadowBlur').val(element.shadowBlur || 0);
-            $('#propTextShadowColor').val(element.shadowColor || '#000000');
-            $('#propTextShadowHover').prop('checked', element.shadowHover || false);
-            
-            $('#propTextGlowX').val(element.glowX || 0);
-            $('#propTextGlowY').val(element.glowY || 0);
-            $('#propTextGlowBlur').val(element.glowBlur || 0);
-            $('#propTextGlowSpread').val(element.glowSpread || 0);
-            $('#propTextGlowColor').val(element.glowColor || '#ffffff');
-            $('#propTextGlowHover').prop('checked', element.glowHover || false);
+            fillTextProperties(element);
         } else {
             $textProps.addClass('hidden');
         }
@@ -2341,11 +2316,7 @@
         // Show/hide clickthrough properties
         const $clickthroughProps = $('#clickthroughProps');
         if (element.type === 'clickthrough') {
-            $clickthroughProps.removeClass('hidden');
-            $('#propClickUrl').val(element.url || ''); // Show empty if no URL
-            $('#propClickIndex').val(element.clickIndex || 1);
-            $('#propClickTarget').val(element.target || '_blank');
-            $('#imageBorderRadius').addClass('hidden');
+            fillClickthroughProperties(element);
         } else {
             $clickthroughProps.addClass('hidden');
         }
@@ -2361,28 +2332,7 @@
         // Show/hide shape properties
         const $shapeProps = $('#shapeProps');
         if (element.type === 'shape') {
-            $shapeProps.removeClass('hidden');
-            $('#propShapeType').val(element.shapeType);
-            $('#propShapeColor').val(element.fillColor);
-            $('#propShapeTransparent').prop('checked', element.transparent || false);
-            $('#propShapeBorderWidth').val(element.borderWidth || 0);
-            $('#propShapeBorderColor').val(element.borderColor || '#000000');
-            $('#propShapeBorderRadius').val(element.borderRadius || 0);
-            
-            // Shape shadow and glow
-            $('#propShapeShadowX').val(element.shadowX || 0);
-            $('#propShapeShadowY').val(element.shadowY || 0);
-            $('#propShapeShadowBlur').val(element.shadowBlur || 0);
-            $('#propShapeShadowSpread').val(element.shadowSpread || 0);
-            $('#propShapeShadowColor').val(element.shadowColor || '#000000');
-            $('#propShapeShadowHover').prop('checked', element.shadowHover || false);
-            
-            $('#propShapeGlowX').val(element.glowX || 0);
-            $('#propShapeGlowY').val(element.glowY || 0);
-            $('#propShapeGlowBlur').val(element.glowBlur || 0);
-            $('#propShapeGlowSpread').val(element.glowSpread || 0);
-            $('#propShapeGlowColor').val(element.glowColor || '#ffffff');
-            $('#propShapeGlowHover').prop('checked', element.glowHover || false);
+            fillShapeProperties(element);
         } else {
             $shapeProps.addClass('hidden');
         }
@@ -2390,38 +2340,13 @@
         // Show/hide video properties
         const $videoProps = $('#videoProps');
         if (element.type === 'video') {
-            $videoProps.removeClass('hidden');
-            $('#propVideoUrl').val(element.videoUrl);
-            $('#propVideoName').val(element.videoName);
-            $('#propVideoPlayTrigger').val(element.playTrigger || 'autoplay');
-            $('#propVideoMuted').prop('checked', element.muted);
-            $('#propVideoControls').prop('checked', element.controls);
-            
-            // Enable/disable muted based on play trigger
-            if (element.playTrigger === 'autoplay') {
-                $('#propVideoMuted').prop('disabled', true);
-            } else {
-                $('#propVideoMuted').prop('disabled', false);
-            }
+            fillVideoProperties(element);
         } else {
             $videoProps.addClass('hidden');
         }
         
         // Common properties - Always ensure they are visible for elements
-        $('#propWidth').closest('div').removeClass('hidden');
-        $('#propHeight').closest('div').removeClass('hidden');
-        $('#propX').closest('div').removeClass('hidden');
-        $('#propY').closest('div').removeClass('hidden');
-        $('#propRotation').closest('div').removeClass('hidden');
-        $('#propOpacity').closest('div').removeClass('hidden');
-        
-        $('#propWidth').val(Math.round(element.width));
-        $('#propHeight').val(Math.round(element.height));
-        $('#propX').val(Math.round(element.x));
-        $('#propY').val(Math.round(element.y));
-        $('#propRotation').val(element.rotation);
-        $('#propOpacity').val(element.opacity);
-        $('#opacityValue').text(Math.round(element.opacity * 100) + '%');
+        fillCommonProperties(element);
         
         // Update interaction UI
         updateInteractionUI(element);
@@ -2464,6 +2389,36 @@
         $('#propertiesPanel h2').text(`Folder: ${folder.name}`);
         
         _log('Folder properties panel updated:', folder);
+    }
+
+    function fillCommonProperties(element) {
+        return window.adBuilderRender.propertiesUI.fillCommonProperties({
+            element
+        });
+    }
+
+    function fillTextProperties(element) {
+        return window.adBuilderRender.propertiesUI.fillTextProperties({
+            element
+        });
+    }
+
+    function fillClickthroughProperties(element) {
+        return window.adBuilderRender.propertiesUI.fillClickthroughProperties({
+            element
+        });
+    }
+
+    function fillShapeProperties(element) {
+        return window.adBuilderRender.propertiesUI.fillShapeProperties({
+            element
+        });
+    }
+
+    function fillVideoProperties(element) {
+        return window.adBuilderRender.propertiesUI.fillVideoProperties({
+            element
+        });
     }
     
     // Common property updates
