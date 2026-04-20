@@ -471,21 +471,24 @@
         $timelineTracks.on('dblclick', '.track-name-label', function(e) {
             e.stopPropagation();
             e.preventDefault();
-            
-            // Cancel the pending single-click select so properties panel doesn't flicker
+
             clearTimeout(trackClickTimer);
-            
+
             const $span = $(this);
             const currentName = $span.text();
             const elementId = $span.data('element-id');
             const folderId = $span.data('folder-id');
-            
-            // Replace span with input
+
             const $input = $(`<input type="text" class="track-rename-input" value="${currentName.replace(/"/g, '&quot;')}" />`);
             $span.replaceWith($input);
             $input.focus().select();
-            
+
             let committed = false;
+
+            function cleanupRenameHandlers() {
+                $(document).off('.trackRename');
+            }
+
             function commitRename() {
                 if (committed) return;
                 committed = true;
@@ -494,49 +497,63 @@
 
                 if (elementId) {
                     const el = elements.find(e => e.id === elementId);
-                    if (!el) return rebuildTimeline();
+                    if (!el) {
+                        cleanupRenameHandlers();
+                        rebuildTimeline();
+                        return;
+                    }
 
                     const nextName = newName || undefined;
-                    if (el.name === nextName) return rebuildTimeline();
-
-                    saveState();
-                    el.name = nextName;
+                    if (el.name !== nextName) {
+                        saveState();
+                        el.name = nextName;
+                    }
                 } else if (folderId) {
                     const group = groups.find(g => g.id === folderId);
-                    if (!group) return rebuildTimeline();
+                    if (!group) {
+                        cleanupRenameHandlers();
+                        rebuildTimeline();
+                        return;
+                    }
 
                     const nextName = newName || group.name;
-                    if (group.name === nextName) return rebuildTimeline();
-
-                    saveState();
-                    group.name = nextName;
+                    if (group.name !== nextName) {
+                        saveState();
+                        group.name = nextName;
+                    }
                 }
 
+                cleanupRenameHandlers();
                 rebuildTimeline();
             }
-            
-            // Prevent any mousedown inside timelineTracks from stealing focus away from input
-            function blockMousedown(e) {
-                if ($(e.target).is('.track-rename-input')) return;
-                if ($(e.target).closest('.track-rename-input').length) return;
 
-                // Commit rename first, then allow the click to continue normally
-                $input.blur();
+            function cancelRename() {
+                if (committed) return;
+                committed = true;
+                cleanupRenameHandlers();
+                rebuildTimeline();
             }
-            $timelineTracks[0].addEventListener('mousedown', blockMousedown, true);
-            
+
             $input.on('blur', function() {
-                $timelineTracks[0].removeEventListener('mousedown', blockMousedown, true);
                 commitRename();
             });
+
             $input.on('keydown', function(e) {
-                if (e.key === 'Enter') { e.preventDefault(); $input.blur(); }
-                if (e.key === 'Escape') {
-                    committed = true; // skip save
-                    $timelineTracks[0].removeEventListener('mousedown', blockMousedown, true);
-                    rebuildTimeline();
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    commitRename();
+                } else if (e.key === 'Escape') {
+                    e.preventDefault();
+                    cancelRename();
                 }
             });
+
+            setTimeout(() => {
+                $(document).on('mousedown.trackRename', function(e) {
+                    if ($(e.target).closest('.track-rename-input').length) return;
+                    commitRename();
+                });
+            }, 0);
         });
         
         $timelineTracks.on('click', '.toggle-visibility', function(e) {
