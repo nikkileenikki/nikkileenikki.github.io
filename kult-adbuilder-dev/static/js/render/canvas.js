@@ -194,3 +194,32 @@ export function createElementDOM({ element, getAbsolutePosition }) {
 
     return $element;
 }
+export function appendElementToCanvas({ $canvas, $element, element, groups }) {
+    if (!$element) return;
+
+    if (element.folderId) {
+        let $folder = $canvas.find(`#${element.folderId}`);
+
+        if ($folder.length === 0) {
+            const folder = groups.find(g => g.id === element.folderId);
+            if (folder) {
+                $folder = $(`
+                    <div class="canvas-folder" id="${folder.id}" style="
+                        position: absolute;
+                        left: 0;
+                        top: 0;
+                        width: 100%;
+                        height: 100%;
+                        pointer-events: none;
+                        z-index: ${folder.zIndex};
+                    "></div>
+                `);
+                $canvas.append($folder);
+            }
+        }
+
+        $folder.append($element);
+    } else {
+        $canvas.append($element);
+    }
+}
