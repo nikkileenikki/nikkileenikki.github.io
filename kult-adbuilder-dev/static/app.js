@@ -479,81 +479,89 @@
             const elementId = $span.data('element-id');
             const folderId = $span.data('folder-id');
 
-            const $input = $(`<input type="text" class="track-rename-input" value="${currentName.replace(/"/g, '&quot;')}" />`);
+            // close any existing rename input first
+            $('.track-rename-input').each(function() {
+                this.blur();
+            });
+
+            const safeValue = currentName.replace(/"/g, '&quot;');
+            const $input = $(`<input type="text" class="track-rename-input" value="${safeValue}" />`);
             $span.replaceWith($input);
             $input.focus().select();
 
-            let committed = false;
+            let finished = false;
 
-            function cleanupRenameHandlers() {
-                $(document).off('.trackRename');
+            function cleanup() {
+                document.removeEventListener('pointerdown', onDocPointerDown, true);
             }
 
-            function commitRename() {
-                if (committed) return;
-                committed = true;
+            function finishRename(saveChanges) {
+                if (finished) return;
+                finished = true;
 
                 const newName = $input.val().trim();
 
-                if (elementId) {
-                    const el = elements.find(e => e.id === elementId);
-                    if (!el) {
-                        cleanupRenameHandlers();
-                        rebuildTimeline();
-                        return;
-                    }
-
-                    const nextName = newName || undefined;
-                    if (el.name !== nextName) {
-                        saveState();
-                        el.name = nextName;
-                    }
-                } else if (folderId) {
-                    const group = groups.find(g => g.id === folderId);
-                    if (!group) {
-                        cleanupRenameHandlers();
-                        rebuildTimeline();
-                        return;
-                    }
-
-                    const nextName = newName || group.name;
-                    if (group.name !== nextName) {
-                        saveState();
-                        group.name = nextName;
+                if (saveChanges) {
+                    if (elementId) {
+                        const el = elements.find(e => e.id === elementId);
+                        if (el) {
+                            const nextName = newName || undefined;
+                            if (el.name !== nextName) {
+                                saveState();
+                                el.name = nextName;
+                            }
+                        }
+                    } else if (folderId) {
+                        const group = groups.find(g => g.id === folderId);
+                        if (group) {
+                            const nextName = newName || group.name;
+                            if (group.name !== nextName) {
+                                saveState();
+                                group.name = nextName;
+                            }
+                        }
                     }
                 }
 
-                cleanupRenameHandlers();
+                // immediately restore normal label so input never gets stuck
+                const finalLabel = elementId
+                    ? ((elements.find(e => e.id === elementId) || {}).name || newName || currentName)
+                    : ((groups.find(g => g.id === folderId) || {}).name || currentName);
+
+                const dataAttr = elementId
+                    ? `data-element-id="${elementId}"`
+                    : `data-folder-id="${folderId}"`;
+
+                const $newSpan = $(`<span class="truncate flex-1 track-name-label" ${dataAttr}>${finalLabel}</span>`);
+                $input.replaceWith($newSpan);
+
+                cleanup();
+
+                // optional but keeps timeline labels consistent everywhere
                 rebuildTimeline();
             }
 
-            function cancelRename() {
-                if (committed) return;
-                committed = true;
-                cleanupRenameHandlers();
-                rebuildTimeline();
+            function onDocPointerDown(ev) {
+                if (ev.target === $input[0]) return;
+                if ($input[0].contains(ev.target)) return;
+                finishRename(true);
             }
+
+            document.addEventListener('pointerdown', onDocPointerDown, true);
 
             $input.on('blur', function() {
-                commitRename();
+                finishRename(true);
             });
 
             $input.on('keydown', function(e) {
                 if (e.key === 'Enter') {
                     e.preventDefault();
-                    commitRename();
+                    finishRename(true);
                 } else if (e.key === 'Escape') {
                     e.preventDefault();
-                    cancelRename();
+                    finishRename(false);
                 }
             });
-
-            setTimeout(() => {
-                $(document).on('mousedown.trackRename', function(e) {
-                    if ($(e.target).closest('.track-rename-input').length) return;
-                    commitRename();
-                });
-            }, 0);
         });
         
         $timelineTracks.on('click', '.toggle-visibility', function(e) {
