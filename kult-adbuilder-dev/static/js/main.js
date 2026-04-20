@@ -11,6 +11,7 @@ const history = createHistory();
 window.adBuilderStore = store;
 window.adBuilderHistory = history;
 window.adBuilderRender = {
+  ...(window.adBuilderRender || {}),
   timelineRender,
   canvasRender
 };
