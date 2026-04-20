@@ -1409,30 +1409,11 @@
         });
     }
     
-    // Update target element dropdowns with available elements
     function updateTargetElementDropdowns() {
-        const clickSelect = $('#clickTargetElement');
-        const hoverSelect = $('#hoverTargetElement');
-        
-        // Save current values that should be preserved
-        const clickValue = clickSelect.val() || 'self';
-        const hoverValue = hoverSelect.val() || 'self';
-        
-        // Clear existing options except "self"
-        clickSelect.find('option:not([value="self"])').remove();
-        hoverSelect.find('option:not([value="self"])').remove();
-        
-        // Add all elements as options
-        elements.forEach(el => {
-            const label = getElementLabel(el);
-            const option = `<option value="${el.id}">${label}</option>`;
-            clickSelect.append(option);
-            hoverSelect.append(option);
+        return window.adBuilderRender.propertiesUI.updateTargetElementDropdowns({
+            elements,
+            getElementLabel
         });
-        
-        // Restore the saved values
-        clickSelect.val(clickValue);
-        hoverSelect.val(hoverValue);
     }
     
     function getElementLabel(element) {
