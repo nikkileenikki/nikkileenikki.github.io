@@ -3328,6 +3328,28 @@
         initTimelineSortable();
     }
     
+    function buildRootSortableConfig() {
+        return window.adBuilderRender.timelineRender.buildRootSortableConfig({
+            saveState,
+            updateStructureFromDOM,
+            getHasSavedSortableSnapshot: () => hasSavedSortableSnapshot,
+            setHasSavedSortableSnapshot: (value) => {
+                hasSavedSortableSnapshot = value;
+            }
+        });
+    }
+
+    function buildFolderChildrenSortableConfig() {
+        return window.adBuilderRender.timelineRender.buildFolderChildrenSortableConfig({
+            saveState,
+            updateStructureFromDOM,
+            getHasSavedSortableSnapshot: () => hasSavedSortableSnapshot,
+            setHasSavedSortableSnapshot: (value) => {
+                hasSavedSortableSnapshot = value;
+            }
+        });
+    }
+
     // Initialize timeline sortable system
     function initTimelineSortable() {
         // Destroy existing sortables
@@ -3341,53 +3363,10 @@
         });
         
         // Root sortable: accepts both layers and folders, they can be mixed
-        $timelineTracks.sortable({
-            items: '> .layer, > .timeline-folder',
-            connectWith: '.timeline-folder-children',
-            handle: '.timeline-handle',
-            placeholder: 'ui-sortable-placeholder',
-            tolerance: 'pointer',
-            forcePlaceholderSize: true,
-            start: function() {
-                if (!hasSavedSortableSnapshot) {
-                    saveState();
-                    hasSavedSortableSnapshot = true;
-                }
-            },
-            update: function(e, ui) {
-                updateStructureFromDOM();
-            },
-            stop: function() {
-                hasSavedSortableSnapshot = false;
-            }
-        });
+        $timelineTracks.sortable(buildRootSortableConfig());
         
         // Folder children sortable: only accepts layers
-        $('.timeline-folder-children').sortable({
-            items: '> .layer',
-            connectWith: '#timelineTracks, .timeline-folder-children',
-            handle: '.timeline-handle',
-            placeholder: 'ui-sortable-placeholder',
-            tolerance: 'pointer',
-            forcePlaceholderSize: true,
-            start: function() {
-                if (!hasSavedSortableSnapshot) {
-                    saveState();
-                    hasSavedSortableSnapshot = true;
-                }
-            },
-            receive: function(e, ui) {
-                if (ui.item.hasClass('timeline-folder')) {
-                    $(this).sortable('cancel');
-                }
-            },
-            update: function(e, ui) {
-                updateStructureFromDOM();
-            },
-            stop: function() {
-                hasSavedSortableSnapshot = false;
-            }
-        });
+        $('.timeline-folder-children').sortable(buildFolderChildrenSortableConfig());
     }
     
     // Update element and folder data from DOM structure
