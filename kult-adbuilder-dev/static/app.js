@@ -1399,52 +1399,14 @@
         };
     }
     
-    // Update interaction UI when element is selected
     function updateInteractionUI(element) {
-        if (!element.interactions) {
-            element.interactions = initInteractionProperties();
-        }
-        
-        const interactions = element.interactions;
-        
-        // Click settings
-        $('#enableClickInteraction').prop('checked', interactions.click.enabled);
-        $('#clickTargetElement').val(interactions.click.targetElement);
-        $('#clickAction').val(interactions.click.action);
-        $('#clickShadowX').val(interactions.click.shadowX);
-        $('#clickShadowY').val(interactions.click.shadowY);
-        $('#clickShadowBlur').val(interactions.click.shadowBlur);
-        $('#clickShadowColor').val(interactions.click.shadowColor);
-        $('#clickGlowX').val(interactions.click.glowX);
-        $('#clickGlowY').val(interactions.click.glowY);
-        $('#clickGlowBlur').val(interactions.click.glowBlur);
-        $('#clickGlowColor').val(interactions.click.glowColor);
-        $('#clickScaleAmount').val(interactions.click.scaleAmount);
-        
-        // Hover settings
-        $('#enableHoverInteraction').prop('checked', interactions.hover.enabled);
-        $('#hoverTargetElement').val(interactions.hover.targetElement);
-        $('#hoverAction').val(interactions.hover.action);
-        $('#hoverShadowX').val(interactions.hover.shadowX);
-        $('#hoverShadowY').val(interactions.hover.shadowY);
-        $('#hoverShadowBlur').val(interactions.hover.shadowBlur);
-        $('#hoverShadowColor').val(interactions.hover.shadowColor);
-        $('#hoverGlowX').val(interactions.hover.glowX);
-        $('#hoverGlowY').val(interactions.hover.glowY);
-        $('#hoverGlowBlur').val(interactions.hover.glowBlur);
-        $('#hoverGlowColor').val(interactions.hover.glowColor);
-        $('#hoverScaleAmount').val(interactions.hover.scaleAmount);
-        
-        // Show/hide settings based on enabled state
-        $('#clickInteractionSettings').toggleClass('hidden', !interactions.click.enabled);
-        $('#hoverInteractionSettings').toggleClass('hidden', !interactions.hover.enabled);
-        
-        // Show/hide action-specific settings
-        updateClickActionSettings(interactions.click.action);
-        updateHoverActionSettings(interactions.hover.action);
-        
-        // Update target element dropdowns
-        updateTargetElementDropdowns();
+        return window.adBuilderRender.propertiesUI.updateInteractionUI({
+            element,
+            initInteractionProperties,
+            updateClickActionSettings,
+            updateHoverActionSettings,
+            updateTargetElementDropdowns
+        });
     }
     
     // Update target element dropdowns with available elements
