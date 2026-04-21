@@ -3881,6 +3881,7 @@
         const usePoliteLoad = $('#politeLoadCheckbox').is(':checked');
         
         const zip = new JSZip();
+        updateStructureFromDOM();
         const html = generateHTML(usePoliteLoad);
         zip.file('index.html', html);
         
@@ -5026,6 +5027,7 @@
             updateCanvas();
             updateLayersList();
             updateTimelineTracks();
+            updateStructureFromDOM();
             rebuildTimeline();
             updatePropertiesPanel();
             
