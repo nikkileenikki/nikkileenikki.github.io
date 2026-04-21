@@ -2057,6 +2057,7 @@
         selectElement(id);
     }
     
+    
     function handleDeleteLayer(e) {
         e.stopPropagation();
         const id = $(e.currentTarget).data('id');
@@ -2903,16 +2904,7 @@
         
         // Reset for new animation
         editingAnimation = null;
-        $('#animBtnText').text('Add Animation');
-        $('#deleteAnimBtn').addClass('hidden');
-        $('#animStart').val(0);
-        $('#animDuration').val(1);
-        
-        // Reset all dropdowns to "None"
-        $('#animFade').val('');
-        $('#animSlide').val('');
-        $('#animZoom').val('');
-        $('#animRotate').val('');
+        resetAnimationModal();
         
         _log('Opening animation modal');
         $animModal.removeClass('hidden');
@@ -2964,31 +2956,7 @@
         }
         
         // Reset all dropdowns first
-        $('#animFade').val('');
-        $('#animSlide').val('');
-        $('#animZoom').val('');
-        $('#animRotate').val('');
-        
-        // Set the dropdown values based on animation types
-        const types = anim.types || [anim.type];
-        types.forEach(type => {
-            if (type === 'fadeIn' || type === 'fadeOut') {
-                $('#animFade').val(type);
-            } else if (type.startsWith('slide')) {
-                $('#animSlide').val(type);
-            } else if (type === 'scaleIn' || type === 'scaleOut') {
-                $('#animZoom').val(type);
-            } else if (type.startsWith('rotate')) {
-                $('#animRotate').val(type);
-            }
-        });
-        
-        $('#animStart').val(anim.start.toFixed(1));
-        $('#animDuration').val(anim.duration.toFixed(1));
-        $('#animEase').val(anim.ease);
-        
-        $('#animBtnText').text('Update Animation');
-        $('#deleteAnimBtn').removeClass('hidden');
+        populateAnimationModal(anim);
         
         $animModal.removeClass('hidden');
     }
@@ -3020,19 +2988,8 @@
         }
         
         // Get all selected animation types from dropdowns
-        const selectedTypes = [];
-        const fade = $('#animFade').val();
-        const slide = $('#animSlide').val();
-        const zoom = $('#animZoom').val();
-        const rotate = $('#animRotate').val();
-        
-        _log('Animation values - fade:', fade, 'slide:', slide, 'zoom:', zoom, 'rotate:', rotate);
-        
-        if (fade) selectedTypes.push(fade);
-        if (slide) selectedTypes.push(slide);
-        if (zoom) selectedTypes.push(zoom);
-        if (rotate) selectedTypes.push(rotate);
-        
+        const selectedTypes = getSelectedAnimationTypes();
+
         _log('selectedTypes:', selectedTypes);
         
         if (selectedTypes.length === 0) {
@@ -3273,6 +3230,19 @@
         });
     }
     
+    function resetAnimationModal() {
+        return window.adBuilderRender.animationUI.resetAnimationModal();
+    }
+
+    function populateAnimationModal(anim) {
+        return window.adBuilderRender.animationUI.populateAnimationModal({
+            anim
+        });
+    }
+
+    function getSelectedAnimationTypes() {
+        return window.adBuilderRender.animationUI.getSelectedAnimationTypes();
+    }
     // ============================================
     // FOLDER MANAGEMENT
     // ============================================
