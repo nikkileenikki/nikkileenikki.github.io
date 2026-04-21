@@ -562,22 +562,25 @@ input, select, button, textarea, label {
 }
 
 .timeline-folder-header {
+    width: 200px;
+    min-width: 200px;
+    max-width: 200px;
+    box-sizing: border-box;
     display: flex;
     align-items: center;
     gap: 8px;
-    background: #4a4a52;
+    padding: 5px 8px;
+    background: rgb(31, 41, 55);
+    border-right: 1px solid rgb(55, 65, 81);
+    border-radius: 0;
     color: #fff;
-    padding: 7px 8px;
-    border-radius: 8px;
-    font-size: 13px;
+    font-size: 12px;
     cursor: pointer;
-    max-width: 300px; /* Limit width so it doesn't cover whole timeline */
-    position: relative;
-    z-index: 10;
+    overflow: hidden;
 }
 
 .timeline-folder-header:hover {
-    background: #5a5a62;
+    background: rgba(59, 130, 246, 0.1);
 }
 
 .timeline-folder-toggle {
@@ -629,9 +632,9 @@ input, select, button, textarea, label {
 }
 
 /* Folder selection and animation styles */
-.timeline-folder.selected {
-    background-color: #5a5a62;
-    box-shadow: 0 0 0 2px #3b82f6;
+.timeline-folder.selected .timeline-folder-header {
+    background: rgba(59, 130, 246, 0.2);
+    border-right-color: rgb(59, 130, 246);
 }
 
 /* Folder animations should always be visible, even when folder is collapsed */
@@ -647,15 +650,17 @@ input, select, button, textarea, label {
 .timeline-folder-row {
     display: flex;
     align-items: stretch;
+    min-height: 38px;
+    border-bottom: 1px solid rgb(55, 65, 81);
 }
 
 .folder-track-content {
     position: relative;
-    height: 40px;
+    height: 38px;
     flex: 1;
-    background-color: rgba(0, 0, 0, 0.2);
-    border-radius: 3px;
-    margin-left: 8px;
+    background: rgb(17, 24, 39);
+    border-radius: 0;
+    margin-left: 0;
 }
 
 .folder-anim-block {
