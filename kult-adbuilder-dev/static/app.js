@@ -145,24 +145,81 @@
     // ============================================
     // EVENT LISTENERS
     // ============================================
+
+    function bindTextModalEvents() {
+        $('#addTextBtn').on('click', openTextModal);
+        $('#closeTextModal').on('click', closeTextModal);
+        $('#saveTextBtn').on('click', saveText);
+
+        bindEnterToSubmit($('#textContent'), saveText);
+        bindEscapeToClose($('#textModal'), closeTextModal);
+    }
+
+    function bindClickthroughModalEvents() {
+        $('#addClickthroughBtn').on('click', openClickthroughModal);
+        $('#closeClickthroughModal').on('click', closeClickthroughModal);
+        $('#saveClickthroughBtn').on('click', saveClickthrough);
+
+        bindEnterToSubmit($('#clickthroughUrl, #clickthroughTarget'), saveClickthrough);
+        bindEscapeToClose($('#clickthroughModal'), closeClickthroughModal);
+    }
+
+    function bindShapeModalEvents() {
+        $('#addShapeBtn').on('click', openShapeModal);
+        $('#closeShapeModal').on('click', closeShapeModal);
+        $('#saveShapeBtn').on('click', saveShape);
+
+        $('#shapeOpacity').on('input', function() {
+            const val = $(this).val();
+            $('#shapeOpacityValue').text(Math.round(val * 100) + '%');
+        });
+
+        bindEnterAndEscape($('#shapeModal'), saveShape, closeShapeModal);
+    }
+
+    function bindVideoModalEvents() {
+        $('#addVideoBtn').on('click', openVideoModal);
+        $('#closeVideoModal').on('click', closeVideoModal);
+        $('#saveVideoBtn').on('click', saveVideo);
+
+        bindEnterToSubmit($('#videoUrl, #videoName'), saveVideo);
+        bindEscapeToClose($('#videoModal'), closeVideoModal);
+
+        $('#videoPlayTrigger').on('change', function() {
+            const playTrigger = $(this).val();
+            if (playTrigger === 'autoplay') {
+                $('#videoMuted').prop('checked', true).prop('disabled', true);
+            } else {
+                $('#videoMuted').prop('disabled', false);
+            }
+        });
+    }
+
+    function bindAnimationModalEvents() {
+        $('#closeModal').on('click', closeAnimationModal);
+        $('#saveAnimBtn').on('click', saveAnimation);
+        $('#deleteAnimBtn').on('click', deleteEditingAnimation);
+
+        $timelineTracks.on('click', '.timeline-block', editAnimation);
+        $timelineTracks.on('click', '.delete-anim', function(e) {
+            e.stopPropagation();
+            handleDeleteAnimation(e);
+        });
+
+        bindEnterAndEscape($('#animModal'), saveAnimation, closeAnimationModal);
+    }
     function initEventListeners() {
         // File upload
         $dropzone.on('click', () => $fileInput.click());
         $dropzone.on('dragover', handleDragOver);
         $dropzone.on('drop', handleDrop);
         $fileInput.on('change', handleFileSelect);
-        
-        // Text
-        $('#addTextBtn').on('click', openTextModal);
-        $('#closeTextModal').on('click', closeTextModal);
-        $('#saveTextBtn').on('click', saveText);
-        bindEnterToSubmit($('#textContent'), saveText);
-        bindEscapeToClose($('#textModal'), closeTextModal);
-        
-        // Clickthrough
-        $('#addClickthroughBtn').on('click', openClickthroughModal);
-        $('#closeClickthroughModal').on('click', closeClickthroughModal);
-        $('#saveClickthroughBtn').on('click', saveClickthrough);
+
+        bindTextModalEvents();
+        bindClickthroughModalEvents();
+        bindShapeModalEvents();
+        bindVideoModalEvents();
+        bindAnimationModalEvents();
         
         // Invisible Layer
         $('#addInvisibleBtn').on('click', addInvisibleLayer);
