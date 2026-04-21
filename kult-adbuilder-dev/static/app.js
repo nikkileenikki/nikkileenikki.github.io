@@ -2023,16 +2023,19 @@
         
         // Sort by zIndex (highest first)
         const sortedElements = buildSortedLayerElements();
-        
-        sortedElements.forEach((element, index) => {
-            const $layer = renderLayerItem(element, index);
-            bindLayerDragEvents($layer);
-            $layersList.append($layer);
-        });
-        
+        appendRenderedLayers(sortedElements);
         updateTimelineTracks();
     }
     
+    function appendRenderedLayers(sortedElements) {
+        return window.adBuilderRender.layersUI.appendRenderedLayers({
+            $layersList,
+            sortedElements,
+            renderLayerItem,
+            bindLayerDragEvents
+        });
+    }
+
     function handleLayerClick(e) {
         if ($(e.target).closest('button').length) return;
         const id = $(e.currentTarget).data('id');
