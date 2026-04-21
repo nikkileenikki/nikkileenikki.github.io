@@ -1774,8 +1774,6 @@
         const element = elements.find(el => el.id === selectedElement);
         if (!element) return;
         
-        const $element = $(`#${selectedElement}`);
-        
         if (isDragging) {
             ensureDragSnapshotSaved(e);
             // Account for zoom, scroll, and canvas offset
@@ -1839,17 +1837,7 @@
                     break;
             }
 
-            element.width = newWidth;
-            element.height = newHeight;
-            element.x = newX;
-            element.y = newY;
-            
-            $element.css({
-                width: newWidth + 'px',
-                height: newHeight + 'px',
-                left: newX + 'px',
-                top: newY + 'px'
-            });
+            applyElementResize(element, newWidth, newHeight, newX, newY);
             
             updatePropertiesPanel();
         }
@@ -1905,6 +1893,16 @@
         });
     }
     
+    function applyElementResize(element, newWidth, newHeight, newX, newY) {
+        return window.adBuilderRender.moveUI.applyElementResize({
+            element,
+            newWidth,
+            newHeight,
+            newX,
+            newY
+        });
+    }
+
     function updateAllFolderBounds() {
         return window.adBuilderRender.canvasRender.updateAllFolderBounds({
             groups,
