@@ -2,8 +2,6 @@ function round1(value) {
     return Math.round(value * 10) / 10;
 }
 
-const FOLDER_ZINDEX_STRIDE = 100;
-
 export function updateTimelineRuler({ $timelineRuler, totalDuration, timeline, isPlaying }) {
     $timelineRuler.empty();
 
@@ -284,14 +282,15 @@ export function updateStructureFromDOM({
             if (group) {
                 group.zIndex = currentZIndex--;
 
-                let folderZIndex = group.zIndex * FOLDER_ZINDEX_STRIDE;
+                let childZIndex = group.zIndex - 0.1;
                 $(this).find('.timeline-folder-children > li').each(function() {
                     const elementId = $(this).data('element-id');
                     const element = elements.find(el => el.id === elementId);
 
                     if (element) {
                         element.folderId = folderId;
-                        element.zIndex = folderZIndex--;
+                        element.zIndex = childZIndex;
+                        childZIndex -= 0.1;
 
                         const $element = $(`#${element.id}`);
                         let $folderWrapper = $(`#${folderId}`);
