@@ -21,3 +21,17 @@ export function moveFolderByDelta({ folderId, elements, deltaX, deltaY }) {
         });
     });
 }
+
+export function applyElementResize({ element, newWidth, newHeight, newX, newY }) {
+    element.width = newWidth;
+    element.height = newHeight;
+    element.x = newX;
+    element.y = newY;
+
+    $(`#${element.id}`).css({
+        width: newWidth + 'px',
+        height: newHeight + 'px',
+        left: newX + 'px',
+        top: newY + 'px'
+    });
+}
