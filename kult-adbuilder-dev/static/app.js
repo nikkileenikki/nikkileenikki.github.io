@@ -245,6 +245,7 @@
         $layersList.on('click', '.add-layer-anim', handleAddLayerAnimation);
         $layersList.on('click', '.toggle-layer-visibility', toggleLayerVisibility);
         $layersList.on('click', '.toggle-folder-visibility', toggleFolderVisibility);
+        $layersList.on('click', '.duplicate-layer', handleDuplicateLayer);
     }
 
     function bindTimelineSelectionEvents() {
@@ -395,6 +396,12 @@
         $timelineTracks.on('click', '.delete-layer', function(e) {
             e.stopPropagation();
             handleDeleteLayer(e);
+        });
+
+        $timelineTracks.on('click', '.duplicate-layer', function(e) {
+            e.stopPropagation();
+            const id = $(e.currentTarget).data('id');
+            duplicateElement(id);
         });
 
         $timelineTracks.on('mousedown', '.timeline-block', handleTimelineBlockDragStart);
@@ -2120,7 +2127,45 @@
         updateLayersList();
         rebuildTimeline();
     }
+
+    function duplicateElement(id) {
+        const source = elements.find(el => el.id === id);
+        if (!source) return;
+
+        saveState();
+
+        elementCounter++;
+        const newId = `element_${elementCounter}`;
+
+        const copy = JSON.parse(JSON.stringify(source));
+        copy.id = newId;
+        copy.x = (copy.x || 0) + 20;
+        copy.y = (copy.y || 0) + 20;
+        copy.zIndex = getNextElementZIndex();
+
+        if (Array.isArray(copy.animations)) {
+            copy.animations = copy.animations.map(anim => ({
+                ...anim,
+                id: `anim_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`
+            }));
+        } else {
+            copy.animations = [];
+        }
+
+        elements.push(copy);
+
+        updateCanvas();
+        updateLayersList();
+        rebuildTimeline();
+        selectElement(newId);
+    }
     
+    function handleDuplicateLayer(e) {
+        e.stopPropagation();
+        const id = $(e.currentTarget).data('id');
+        duplicateElement(id);
+    }
+
     function handleAddLayerAnimation(e) {
         e.stopPropagation();
         const id = $(e.currentTarget).data('id');
