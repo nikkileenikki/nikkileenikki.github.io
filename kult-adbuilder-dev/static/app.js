@@ -156,19 +156,8 @@
         $('#addTextBtn').on('click', openTextModal);
         $('#closeTextModal').on('click', closeTextModal);
         $('#saveTextBtn').on('click', saveText);
-        $('#textContent').on('keypress', function(e) {
-            if (e.which === 13) { // Enter key
-                e.preventDefault();
-                saveText();
-            }
-        });
-        // Escape key for text modal
-        $('#textModal').on('keydown', function(e) {
-            if (e.keyCode === 27) { // Escape
-                e.preventDefault();
-                closeTextModal();
-            }
-        });
+        bindEnterToSubmit($('#textContent'), saveText);
+        bindEscapeToClose($('#textModal'), closeTextModal);
         
         // Clickthrough
         $('#addClickthroughBtn').on('click', openClickthroughModal);
@@ -179,19 +168,8 @@
         $('#addInvisibleBtn').on('click', addInvisibleLayer);
         
         // Enter key support for clickthrough
-        $('#clickthroughUrl, #clickthroughTarget').on('keypress', function(e) {
-            if (e.which === 13) { // Enter key
-                e.preventDefault();
-                saveClickthrough();
-            }
-        });
-        // Escape key for clickthrough modal
-        $('#clickthroughModal').on('keydown', function(e) {
-            if (e.keyCode === 27) { // Escape
-                e.preventDefault();
-                closeClickthroughModal();
-            }
-        });
+        bindEnterToSubmit($('#clickthroughUrl, #clickthroughTarget'), saveClickthrough);
+        bindEscapeToClose($('#clickthroughModal'), closeClickthroughModal);
         
         // Shape
         $('#addShapeBtn').on('click', openShapeModal);
@@ -203,18 +181,7 @@
         });
 
         // Escape key for shape modal
-        $('#shapeModal').on('keydown', function(e) {
-            if (e.key === 'Escape' || e.keyCode === 27) {
-                e.preventDefault();
-                closeShapeModal();
-                return;
-            }
-
-            if (e.key === 'Enter' || e.keyCode === 13) {
-                e.preventDefault();
-                saveShape();
-            }
-        });
+        bindEnterAndEscape($('#shapeModal'), saveShape, closeShapeModal);
         
         // Video
         $('#addVideoBtn').on('click', openVideoModal);
@@ -228,19 +195,8 @@
         $(document).on('click', '.toggle-folder-visibility', toggleFolderVisibility);
         
         // Enter key support for video
-        $('#videoUrl, #videoName').on('keypress', function(e) {
-            if (e.which === 13) { // Enter key
-                e.preventDefault();
-                saveVideo();
-            }
-        });
-        // Escape key for video modal
-        $('#videoModal').on('keydown', function(e) {
-            if (e.keyCode === 27) { // Escape
-                e.preventDefault();
-                closeVideoModal();
-            }
-        });
+        bindEnterToSubmit($('#videoUrl, #videoName'), saveVideo);
+        bindEscapeToClose($('#videoModal'), closeVideoModal);
         
         // Video play trigger change handler (modal)
         $('#videoPlayTrigger').on('change', function() {
@@ -438,15 +394,7 @@
             handleDeleteAnimation(e);
         });
         // Escape key for animation modal
-        $('#animModal').on('keydown', function(e) {
-            if (e.keyCode === 27) { // Escape
-                e.preventDefault();
-                closeAnimationModal();
-            } else if (e.keyCode === 13) { // Enter
-                e.preventDefault();
-                saveAnimation();
-            }
-        });
+        bindEnterAndEscape($('#animModal'), saveAnimation, closeAnimationModal);
         
         // Timeline layer controls
         // Use a timer to distinguish single click (select) from double-click (rename)
@@ -2437,6 +2385,28 @@
             handleDragOverLayer: window.handleDragOverLayer,
             handleLayerDrop: window.handleLayerDrop,
             handleDragEnd: window.handleDragEnd
+        });
+    }
+
+    function bindEscapeToClose($modal, onClose) {
+        return window.adBuilderRender.modalKeysUI.bindEscapeToClose({
+            $modal,
+            onClose
+        });
+    }
+
+    function bindEnterToSubmit($inputs, onSubmit) {
+        return window.adBuilderRender.modalKeysUI.bindEnterToSubmit({
+            $inputs,
+            onSubmit
+        });
+    }
+
+    function bindEnterAndEscape($modal, onSubmit, onClose) {
+        return window.adBuilderRender.modalKeysUI.bindEnterAndEscape({
+            $modal,
+            onSubmit,
+            onClose
         });
     }
 
