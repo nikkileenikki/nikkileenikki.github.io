@@ -224,7 +224,6 @@ export function buildRootSortableConfig({
         placeholder: 'ui-sortable-placeholder',
         tolerance: 'pointer',
         forcePlaceholderSize: true,
-        cancel: '.is-locked, .is-locked *',
         start: function() {
             if (!getHasSavedSortableSnapshot()) {
                 saveState();
@@ -253,7 +252,6 @@ export function buildFolderChildrenSortableConfig({
         placeholder: 'ui-sortable-placeholder',
         tolerance: 'pointer',
         forcePlaceholderSize: true,
-        cancel: '.is-locked, .is-locked *',
         start: function() {
             if (!getHasSavedSortableSnapshot()) {
                 saveState();
