@@ -2030,6 +2030,10 @@
         
         const element = elements.find(el => el.id === selectedElement);
         if (!element) return;
+
+        const parentFolder = element.folderId ? groups.find(g => g.id === element.folderId) : null;
+        const isLocked = element.locked || (parentFolder && parentFolder.locked);
+        if (isLocked) return;
         
         // Shift key: move 10px; default: move 1px
         saveState();
@@ -2167,6 +2171,8 @@
     }
 
     function duplicateElement(id) {
+        const parentFolder = source.folderId ? groups.find(g => g.id === source.folderId) : null;
+        if (source.locked || (parentFolder && parentFolder.locked)) return;
         const source = elements.find(el => el.id === id);
         if (!source) return;
 
@@ -2201,8 +2207,12 @@
     function handleDuplicateLayer(e) {
         e.stopPropagation();
         const id = $(e.currentTarget).data('id');
+        const source = elements.find(el => el.id === id);
+        if (!source) return;
+
         const parentFolder = source.folderId ? groups.find(g => g.id === source.folderId) : null;
         if (source.locked || (parentFolder && parentFolder.locked)) return;
+
         duplicateElement(id);
     }
 
@@ -3160,6 +3170,13 @@
         const { isFolder, target } = resolveClickedAnimationTarget(folderId, elementId);
         if (!target) return;
 
+        if (target.locked) return;
+
+        if (!isFolder && target.folderId) {
+            const parentFolder = groups.find(g => g.id === target.folderId);
+            if (parentFolder && parentFolder.locked) return;
+        }
+
         const anim = target.animations.find(a => a.id === animId);
         if (!anim) return;
 
@@ -3178,10 +3195,11 @@
     }
     
     function saveAnimation() {
+        
         _log('saveAnimation called');
         _log('selectedElement:', selectedElement);
         _log('selectedFolder:', selectedFolder);
-        
+        if (isSelectedTargetLocked()) return;
         // Check if we're editing a folder or element
         const { isFolder, target } = resolveAnimationTarget();
 
@@ -3245,43 +3263,51 @@
     }
     
     function deleteEditingAnimation() {
-        saveState();
         if (!editingAnimation) return;
-        
-        // Check if it's a folder or element animation
+
         const { isFolderAnim, target } = resolveEditingAnimationTarget();
-        
-        if (target) {
-            target.animations = target.animations.filter(a => a.id !== editingAnimation.animId);
-            rebuildTimeline();
-            updateTimelineTracks();
+        if (!target) return;
+
+        if (target.locked) return;
+
+        if (!isFolderAnim && target.folderId) {
+            const parentFolder = groups.find(g => g.id === target.folderId);
+            if (parentFolder && parentFolder.locked) return;
         }
-        
+
+        saveState();
+
+        target.animations = target.animations.filter(a => a.id !== editingAnimation.animId);
+        rebuildTimeline();
+        updateTimelineTracks();
+
         closeAnimationModal();
     }
     
     function handleDeleteAnimation(e) {
-        saveState();
         const animId = $(e.currentTarget).data('anim-id');
         const elementId = $(e.currentTarget).data('element-id');
         const folderId = $(e.currentTarget).data('folder-id');
-        
+
         if (folderId) {
-            // Delete folder animation
             const folder = groups.find(g => g.id === folderId);
-            if (folder) {
-                folder.animations = folder.animations.filter(a => a.id !== animId);
-                rebuildTimeline();
-                updateTimelineTracks();
-            }
+            if (!folder || folder.locked) return;
+
+            saveState();
+            folder.animations = folder.animations.filter(a => a.id !== animId);
+            rebuildTimeline();
+            updateTimelineTracks();
         } else if (elementId) {
-            // Delete element animation
             const element = elements.find(el => el.id === elementId);
-            if (element) {
-                element.animations = element.animations.filter(a => a.id !== animId);
-                rebuildTimeline();
-                updateTimelineTracks();
-            }
+            if (!element) return;
+
+            const parentFolder = element.folderId ? groups.find(g => g.id === element.folderId) : null;
+            if (element.locked || (parentFolder && parentFolder.locked)) return;
+
+            saveState();
+            element.animations = element.animations.filter(a => a.id !== animId);
+            rebuildTimeline();
+            updateTimelineTracks();
         }
     }
     
@@ -3551,13 +3577,14 @@
     
     // Delete folder
     function deleteFolder(e) {
-        saveState(); // Save state before deletion
         e.stopPropagation();
         const folderId = $(this).data('id');
         const group = groups.find(g => g.id === folderId);
-        
         if (!group) return;
-        
+        if (group.locked) return;
+
+        saveState(); // Save state before deletion
+
         
         
         // Move elements out of folder back to root
