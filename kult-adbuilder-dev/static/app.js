@@ -1711,6 +1711,19 @@
         const $canvasContainer = $('#canvasContainer').parent();
         const scrollLeft = $canvasContainer.scrollLeft() || 0;
         const scrollTop = $canvasContainer.scrollTop() || 0;
+
+        function ensureDragSnapshotSaved(moveEvent) {
+            if (!isDragging || hasSavedDragSnapshot || !dragStartPointer) return;
+
+            const movedX = moveEvent.pageX - dragStartPointer.x;
+            const movedY = moveEvent.pageY - dragStartPointer.y;
+            const movedEnough = Math.abs(movedX) > 2 || Math.abs(movedY) > 2;
+
+            if (movedEnough) {
+                saveState();
+                hasSavedDragSnapshot = true;
+            }
+        }
         
         if (isDragging && selectedFolder) {
             ensureDragSnapshotSaved(e);
@@ -1774,18 +1787,6 @@
             // Check if this is an individually selected element in a folder
             const isIndividuallySelected = selectedElement && element.folderId && !selectedFolder;
             
-            function ensureDragSnapshotSaved(moveEvent) {
-                if (!isDragging || hasSavedDragSnapshot || !dragStartPointer) return;
-
-                const movedX = moveEvent.pageX - dragStartPointer.x;
-                const movedY = moveEvent.pageY - dragStartPointer.y;
-                const movedEnough = Math.abs(movedX) > 2 || Math.abs(movedY) > 2;
-
-                if (movedEnough) {
-                    saveState();
-                    hasSavedDragSnapshot = true;
-                }
-            }
 
             if (element.folderId && !isIndividuallySelected) {
                 // Element in folder but folder is selected - move all elements
