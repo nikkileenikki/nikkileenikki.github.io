@@ -208,6 +208,275 @@
 
         bindEnterAndEscape($('#animModal'), saveAnimation, closeAnimationModal);
     }
+
+    function bindCanvasInteractionEvents() {
+        $canvas.on('mousedown', '.canvas-element', handleElementMouseDown);
+        $canvas.on('mousedown', '.canvas-folder', handleFolderMouseDown);
+        $canvas.on('mousedown', '.resize-handle', handleResizeStart);
+        $canvas.on('mousedown', handleCanvasMouseDown);
+
+        $(document).on('mousemove', handleMouseMove);
+        $(document).on('mouseup', handleMouseUp);
+
+        $(document).on('mousedown', function(e) {
+            const $target = $(e.target);
+
+            if (shouldDeselectFromOutsideClick($target)) {
+                clearSelectionState();
+                deselectAllUI();
+                updatePropertiesPanel();
+            }
+        });
+
+        $(document).on('mousedown', '#canvasContainer', function(e) {
+            if (isCanvasContainerBackgroundClick(e.target)) {
+                if (selectedElement || selectedFolder) {
+                    clearSelectionState();
+                    deselectAllUI();
+                    $propertiesPanel.addClass('hidden');
+                }
+            }
+        });
+    }
+
+    function bindLayerPanelEvents() {
+        $layersList.on('click', '.layer-item', handleLayerClick);
+        $layersList.on('click', '.delete-layer', handleDeleteLayer);
+        $layersList.on('click', '.add-layer-anim', handleAddLayerAnimation);
+        $layersList.on('click', '.toggle-layer-visibility', toggleLayerVisibility);
+        $layersList.on('click', '.toggle-folder-visibility', toggleFolderVisibility);
+    }
+
+    function bindTimelineSelectionEvents() {
+        let trackClickTimer = null;
+
+        $timelineTracks.on('click', '.timeline-track-label', function(e) {
+            if ($(e.target).closest('button').length > 0) return;
+            if ($(e.target).is('.track-rename-input')) return;
+
+            e.stopPropagation();
+
+            const elementId = $(e.currentTarget).closest('.timeline-track').data('element-id');
+            if (!elementId) return;
+
+            clearTimeout(trackClickTimer);
+            trackClickTimer = setTimeout(function() {
+                selectElement(elementId);
+            }, 220);
+        });
+
+        $timelineTracks.on('click', '.timeline-folder-children .timeline-track-label', function(e) {
+            if ($(e.target).closest('button').length > 0) return;
+            if ($(e.target).is('.track-rename-input')) return;
+
+            e.stopPropagation();
+            e.preventDefault();
+
+            const elementId = $(e.currentTarget).closest('.timeline-track').data('element-id');
+            if (!elementId) return;
+
+            clearTimeout(trackClickTimer);
+            trackClickTimer = setTimeout(function() {
+                selectElement(elementId);
+            }, 220);
+        });
+
+        $timelineTracks.on('click', '.timeline-folder-header', function(e) {
+            if ($(e.target).closest('.timeline-folder-toggle, button').length > 0) return;
+
+            const folderId = $(this).closest('.timeline-folder').data('folder-id');
+            if (folderId) {
+                selectFolder(folderId);
+            }
+        });
+
+        $timelineTracks.on('dblclick', '.track-name-label', function(e) {
+            e.stopPropagation();
+            e.preventDefault();
+
+            clearTimeout(trackClickTimer);
+
+            const $span = $(this);
+            const currentName = $span.text();
+            const elementId = $span.data('element-id');
+            const folderId = $span.data('folder-id');
+
+            $('.track-rename-input').each(function() {
+                this.blur();
+            });
+
+            const safeValue = currentName.replace(/"/g, '&quot;');
+            const $input = $(`<input type="text" class="track-rename-input" value="${safeValue}" />`);
+            $span.replaceWith($input);
+            $input.focus().select();
+
+            let finished = false;
+
+            function cleanup() {
+                document.removeEventListener('pointerdown', onDocPointerDown, true);
+            }
+
+            function finishRename(saveChanges) {
+                if (finished) return;
+                finished = true;
+
+                const newName = $input.val().trim();
+
+                if (saveChanges) {
+                    if (elementId) {
+                        const el = elements.find(e => e.id === elementId);
+                        if (el) {
+                            const nextName = newName || undefined;
+                            if (el.name !== nextName) {
+                                saveState();
+                                el.name = nextName;
+                            }
+                        }
+                    } else if (folderId) {
+                        const group = groups.find(g => g.id === folderId);
+                        if (group) {
+                            const nextName = newName || group.name;
+                            if (group.name !== nextName) {
+                                saveState();
+                                group.name = nextName;
+                            }
+                        }
+                    }
+                }
+
+                const finalLabel = elementId
+                    ? ((elements.find(e => e.id === elementId) || {}).name || newName || currentName)
+                    : ((groups.find(g => g.id === folderId) || {}).name || currentName);
+
+                const dataAttr = elementId
+                    ? `data-element-id="${elementId}"`
+                    : `data-folder-id="${folderId}"`;
+
+                const $newSpan = $(`<span class="truncate flex-1 track-name-label" ${dataAttr}>${finalLabel}</span>`);
+                $input.replaceWith($newSpan);
+
+                cleanup();
+                rebuildTimeline();
+            }
+
+            function onDocPointerDown(ev) {
+                if (ev.target === $input[0]) return;
+                if ($input[0].contains(ev.target)) return;
+                finishRename(true);
+            }
+
+            document.addEventListener('pointerdown', onDocPointerDown, true);
+
+            $input.on('blur', function() {
+                finishRename(true);
+            });
+
+            $input.on('keydown', function(e) {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    finishRename(true);
+                } else if (e.key === 'Escape') {
+                    e.preventDefault();
+                    finishRename(false);
+                }
+            });
+        });
+
+        $timelineTracks.on('click', '.toggle-visibility', function(e) {
+            e.stopPropagation();
+            toggleLayerVisibility(e);
+        });
+
+        $timelineTracks.on('click', '.add-layer-anim', function(e) {
+            e.stopPropagation();
+            handleAddLayerAnimation(e);
+        });
+
+        $timelineTracks.on('click', '.delete-layer', function(e) {
+            e.stopPropagation();
+            handleDeleteLayer(e);
+        });
+
+        $timelineTracks.on('mousedown', '.timeline-block', handleTimelineBlockDragStart);
+        $timelineTracks.on('mousedown', '.timeline-block-resize-handle', handleTimelineBlockResizeStart);
+    }
+
+    function bindTimelineControlEvents() {
+        $('#timelineDuration').on('change', updateTimelineDuration);
+        $('#animLoop').on('change', updateAnimLoop);
+        $('#zoomIn').on('click', zoomIn);
+        $('#zoomOut').on('click', zoomOut);
+        $('#playTimeline').on('click', playTimeline);
+        $('#stopTimeline').on('click', stopTimeline);
+        $('#timelinePlayhead').on('mousedown', handlePlayheadDragStart);
+
+        $('#createGroupBtn').on('click', createFolder);
+        $(document).on('click', '.timeline-folder-toggle', toggleFolder);
+        $(document).on('click', '.delete-folder', deleteFolder);
+        $(document).on('click', '.toggle-folder-visibility', toggleFolderVisibility);
+    }
+
+    function bindGlobalUIEvents() {
+        $('#canvasSize').on('change', handleCanvasSizeChange);
+        $('#customWidth, #customHeight').on('change', updateCustomCanvasSize);
+
+        $('#previewBtn').on('click', function() {
+            $('#importExportMenu').addClass('hidden');
+            playTimeline();
+        });
+
+        $('#exportBtn').on('click', function() {
+            $('#importExportMenu').addClass('hidden');
+            exportToZip();
+        });
+
+        $('#saveProjectBtn').on('click', function() {
+            $('#importExportMenu').addClass('hidden');
+            saveProject();
+        });
+
+        $('#loadProjectBtn').on('click', function() {
+            $('#importExportMenu').addClass('hidden');
+            $('#loadProjectInput').click();
+        });
+
+        $('#loadProjectInput').on('change', loadProject);
+        $('#clearBtn').on('click', clearAll);
+
+        $('#importExportBtn').on('click', function(e) {
+            e.stopPropagation();
+            $('#importExportMenu').toggleClass('hidden');
+        });
+
+        $(document).on('click.importExport', function(e) {
+            if (!$(e.target).closest('#importExportDropdownWrapper').length) {
+                $('#importExportMenu').addClass('hidden');
+            }
+        });
+
+        $('#bannerName').on('input', function() {
+            let value = $(this).val();
+            value = value.replace(/\s+/g, '-').replace(/[^a-zA-Z0-9-_]/g, '');
+            $(this).val(value);
+        });
+
+        $('#stageZoomIn').on('click', stageZoomIn);
+        $('#stageZoomOut').on('click', stageZoomOut);
+        $('#stageZoomReset').on('click', stageZoomReset);
+
+        $(document).on('keydown', function(e) {
+            const $focused = $(':focus');
+            const isInputFocused = $focused.is('input, textarea');
+
+            if ((e.ctrlKey || e.metaKey) && e.key === 'z' && !e.shiftKey && !isInputFocused) {
+                e.preventDefault();
+                undo();
+            } else if ((e.ctrlKey || e.metaKey) && e.key === 'z' && e.shiftKey && !isInputFocused) {
+                e.preventDefault();
+                redo();
+            }
+        });
+    }
     function initEventListeners() {
         // File upload
         $dropzone.on('click', () => $fileInput.click());
@@ -220,9 +489,14 @@
         bindShapeModalEvents();
         bindVideoModalEvents();
         bindAnimationModalEvents();
-        
-        // Invisible Layer
+
         $('#addInvisibleBtn').on('click', addInvisibleLayer);
+
+        bindCanvasInteractionEvents();
+        bindLayerPanelEvents();
+        bindTimelineSelectionEvents();
+        bindTimelineControlEvents();
+        bindGlobalUIEvents();
         
         // Folder creation
         $('#createGroupBtn').on('click', createFolder);
