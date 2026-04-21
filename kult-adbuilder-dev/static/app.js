@@ -267,44 +267,20 @@
         // Click outside canvas to unfocus
         $(document).on('mousedown', function(e) {
             const $target = $(e.target);
-            // Check if click is outside canvas container and not on UI elements (panels, modals, etc.)
-            if (!$target.closest('#canvasContainer').length && 
-                !$target.closest('.properties-panel').length &&
-                !$target.closest('#propertiesPanel').length &&
-                !$target.closest('.modal').length &&
-                !$target.closest('#animModal').length && // Animation modal
-                !$target.closest('#textModal').length && // Text modal
-                !$target.closest('#shapeModal').length && // Shape modal
-                !$target.closest('#videoModal').length && // Video modal
-                !$target.closest('#clickthroughModal').length && // Clickthrough modal
-                !$target.closest('.layers-panel').length &&
-                !$target.closest('.timeline').length &&
-                !$target.closest('.w-80').length) { // Left sidebar
-                // Clicking outside canvas area - deselect everything
-                selectedElement = null;
-                selectedFolder = null;
-                clickCount = 0;
-                lastClickedElement = null;
-                
-                $('.canvas-element').removeClass('selected');
-                $('.canvas-folder').removeClass('selected');
-                $('.layer-item').removeClass('selected');
-                $('.timeline-track').removeClass('selected');
-                $('.timeline-folder').removeClass('selected');
-                
+
+            if (shouldDeselectFromOutsideClick($target)) {
+                clearSelectionState();
+                deselectAllUI();
                 updatePropertiesPanel();
             }
         });
         
         // Deselect element when clicking on canvas container background only
         $(document).on('mousedown', '#canvasContainer', function(e) {
-            // Only deselect if clicked directly on canvasContainer, not on its children
-            if (e.target.id === 'canvasContainer') {
-                if (selectedElement) {
-                    selectedElement = null;
-                    $('.canvas-element').removeClass('selected');
-                    $('.layer-item').removeClass('selected');
-                    $('.timeline-track').removeClass('selected');
+            if (isCanvasContainerBackgroundClick(e.target)) {
+                if (selectedElement || selectedFolder) {
+                    clearSelectionState();
+                    deselectAllUI();
                     $propertiesPanel.addClass('hidden');
                 }
             }
@@ -1919,6 +1895,22 @@
         });
     }
 
+    function deselectAllUI() {
+        return window.adBuilderRender.deselectUI.deselectAllUI();
+    }
+
+    function shouldDeselectFromOutsideClick($target) {
+        return window.adBuilderRender.deselectUI.shouldDeselectFromOutsideClick({
+            $target
+        });
+    }
+
+    function isCanvasContainerBackgroundClick(target) {
+        return window.adBuilderRender.deselectUI.isCanvasContainerBackgroundClick({
+            target
+        });
+    }
+
     function handleMouseUp() {
         if (isDragging || isResizing) {
 
@@ -2091,6 +2083,14 @@
         updateFolderPropertiesPanel();
     }
     
+    function clearSelectionState() {
+        selectedElement = null;
+        syncSelectedElementToStore();
+        selectedFolder = null;
+        clickCount = 0;
+        lastClickedElement = null;
+    }
+
     function clearSelectionUI() {
         return window.adBuilderRender.selectionUI.clearSelectionUI();
     }
