@@ -2171,10 +2171,11 @@
     }
 
     function duplicateElement(id) {
-        const parentFolder = source.folderId ? groups.find(g => g.id === source.folderId) : null;
-        if (source.locked || (parentFolder && parentFolder.locked)) return;
         const source = elements.find(el => el.id === id);
         if (!source) return;
+
+        const parentFolder = source.folderId ? groups.find(g => g.id === source.folderId) : null;
+        if (source.locked || (parentFolder && parentFolder.locked)) return;
 
         saveState();
 
