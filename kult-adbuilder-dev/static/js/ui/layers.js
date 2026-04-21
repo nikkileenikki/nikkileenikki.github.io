@@ -57,6 +57,9 @@ export function renderLayerItem({ element, index, elements }) {
                 <button class="duplicate-layer timeline-layer-btn" data-id="${element.id}" title="Duplicate layer">
                     <i class="fas fa-clone text-xs"></i>
                 </button>
+                <button class="toggle-layer-lock text-gray-400 hover:text-white px-2 py-1" data-id="${element.id}" title="Toggle Lock">
+                    <i class="fas ${element.locked ? 'fa-lock' : 'fa-lock-open'} text-xs"></i>
+                </button>
                 <button class="delete-layer text-red-400 hover:text-red-300 px-2 py-1" data-id="${element.id}">
                     <i class="fas fa-trash text-xs"></i>
                 </button>
