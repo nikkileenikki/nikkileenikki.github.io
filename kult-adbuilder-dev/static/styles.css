@@ -158,10 +158,10 @@ input, select, button, textarea, label {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    width: 32px;
-    min-width: 32px;
-    height: 28px;
-    margin-right: 6px;
+    width: 30px;
+    min-width: 30px;
+    height: 30px;
+    margin-right: 0px;
     border-radius: 6px;
     cursor: grab;
     user-select: none;
@@ -354,17 +354,22 @@ input, select, button, textarea, label {
 }
 
 .timeline-track-label {
-    width: 200px;
-    padding: 5px 8px;
+    width: 250px;
+    min-width: 250px;
+    max-width: 250px;
+    box-sizing: border-box;
+    padding: 4px 8px 4px 0px;
     background: rgb(31, 41, 55);
     border-right: 1px solid rgb(55, 65, 81);
     display: flex;
     align-items: center;
     justify-content: space-between;
+    gap: 5px;
     font-size: 12px;
-    user-select: none; /* Disable text selection */
+    user-select: none;
     cursor: pointer;
     transition: background 0.2s;
+    overflow: hidden;
 }
 
 .timeline-track-label:hover {
@@ -562,14 +567,14 @@ input, select, button, textarea, label {
 }
 
 .timeline-folder-header {
-    width: 200px;
-    min-width: 200px;
-    max-width: 200px;
+    width: 250px;
+    min-width: 250px;
+    max-width: 250px;
     box-sizing: border-box;
     display: flex;
     align-items: center;
-    gap: 8px;
-    padding: 5px 8px;
+    gap: 5px;
+    padding: 4px 8px 4px 0px;
     background: rgb(31, 41, 55);
     border-right: 1px solid rgb(55, 65, 81);
     border-radius: 0;
@@ -589,7 +594,7 @@ input, select, button, textarea, label {
     cursor: pointer;
     user-select: none;
     opacity: 0.9;
-    font-size: 14px;
+    font-size: 20px;
 }
 
 .timeline-folder-children {
