@@ -20,6 +20,7 @@ export function calculateFolderBounds({ folderId, groups, elements, canvasWidth,
 export function createElementDOM({ element, getAbsolutePosition }) {
     const pos = getAbsolutePosition({ element });
     let $element;
+    const visibilityStyle = element.visible === false ? 'visibility: hidden;' : 'visibility: visible;';
 
     if (element.type === 'text') {
         $element = $(`
@@ -40,6 +41,7 @@ export function createElementDOM({ element, getAbsolutePosition }) {
                 line-height: 1.2;
                 word-wrap: break-word;
                 z-index: ${element.zIndex};
+                ${visibilityStyle}
             ">
                 ${element.text}
                 <div class="resize-handle nw"></div>
@@ -67,6 +69,7 @@ export function createElementDOM({ element, getAbsolutePosition }) {
                 opacity: ${element.opacity};
                 transform: rotate(${element.rotation}deg);
                 z-index: ${element.zIndex};
+                ${visibilityStyle}
                 ${shapeStyle}
             ">
                 <div class="resize-handle nw"></div>
@@ -85,6 +88,7 @@ export function createElementDOM({ element, getAbsolutePosition }) {
                 opacity: ${element.opacity};
                 transform: rotate(${element.rotation}deg);
                 z-index: ${element.zIndex};
+                ${visibilityStyle}
                 background: repeating-linear-gradient(
                     45deg,
                     rgba(168, 85, 247, 0.1),
@@ -115,6 +119,7 @@ export function createElementDOM({ element, getAbsolutePosition }) {
                 opacity: 0.3;
                 transform: rotate(${element.rotation}deg);
                 z-index: ${element.zIndex};
+                ${visibilityStyle}
                 background: repeating-linear-gradient(
                     45deg,
                     rgba(200, 200, 200, 0.3),
@@ -144,6 +149,7 @@ export function createElementDOM({ element, getAbsolutePosition }) {
                 opacity: ${element.opacity};
                 transform: rotate(${element.rotation}deg);
                 z-index: ${element.zIndex};
+                ${visibilityStyle}
             ">
                 <img src="${element.src}" style="width: 100%; height: 100%; object-fit: contain; pointer-events: none;" />
                 <div class="resize-handle nw"></div>
@@ -167,6 +173,7 @@ export function createElementDOM({ element, getAbsolutePosition }) {
                 opacity: ${element.opacity};
                 transform: rotate(${element.rotation}deg);
                 z-index: ${element.zIndex};
+                ${visibilityStyle}
                 background-color: #000;
                 display: flex;
                 align-items: center;
@@ -258,16 +265,17 @@ export function updateCanvas({
     groups.forEach(folder => {
         const bounds = calculateFolderBounds(folder.id);
         const $folderWrapper = $(`
-            <div class="canvas-folder" id="${folder.id}" style="
-                position: absolute;
-                left: ${bounds.left}px;
-                top: ${bounds.top}px;
-                width: ${bounds.width}px;
-                height: ${bounds.height}px;
-                z-index: ${folder.zIndex};
-                pointer-events: auto;
-            "></div>
-        `);
+                <div class="canvas-folder" id="${folder.id}" style="
+                    position: absolute;
+                    left: ${bounds.left}px;
+                    top: ${bounds.top}px;
+                    width: ${bounds.width}px;
+                    height: ${bounds.height}px;
+                    z-index: ${folder.zIndex};
+                    pointer-events: auto;
+                    visibility: ${folder.visible === false ? 'hidden' : 'visible'};
+                "></div>
+            `);
         $canvas.append($folderWrapper);
 
         applyFolderInteractions(folder, $folderWrapper);
