@@ -246,6 +246,7 @@
         $layersList.on('click', '.toggle-layer-visibility', toggleLayerVisibility);
         $layersList.on('click', '.toggle-folder-visibility', toggleFolderVisibility);
         $layersList.on('click', '.duplicate-layer', handleDuplicateLayer);
+        $layersList.on('click', '.toggle-layer-lock', toggleLayerLock);
     }
 
     function bindTimelineSelectionEvents() {
@@ -404,6 +405,11 @@
             duplicateElement(id);
         });
 
+        $timelineTracks.on('click', '.toggle-layer-lock', function(e) {
+            e.stopPropagation();
+            toggleLayerLock(e);
+        });
+
         $timelineTracks.on('mousedown', '.timeline-block', handleTimelineBlockDragStart);
         $timelineTracks.on('mousedown', '.timeline-block-resize-handle', handleTimelineBlockResizeStart);
     }
@@ -421,6 +427,7 @@
         $(document).on('click', '.timeline-folder-toggle', toggleFolder);
         $(document).on('click', '.delete-folder', deleteFolder);
         $(document).on('click', '.toggle-folder-visibility', toggleFolderVisibility);
+        $(document).on('click', '.toggle-folder-lock', toggleFolderLock);
     }
 
     function bindGlobalUIEvents() {
@@ -800,6 +807,7 @@
         
         const element = {
             id: id,
+            locked: false,
             type: 'text',
             text: text,
             x: 50,
@@ -920,6 +928,7 @@
         
         const element = {
             id: id,
+            locked: false,
             type: 'shape',
             shapeType: shapeType,
             fillColor: fillColor,
@@ -1024,6 +1033,7 @@
         
         const element = {
             id: id,
+            locked: false,
             type: 'video',
             videoUrl: videoUrl,
             videoName: videoName,
@@ -1097,6 +1107,7 @@
         
         const element = {
             id: id,
+            locked: false,
             type: 'clickthrough',
             url: url,
             target: target,
@@ -1159,6 +1170,7 @@
         
         const element = {
             id: id,
+            locked: false,
             type: 'invisible',
             x: 50,
             y: 50,
@@ -1282,6 +1294,7 @@
     
     // Save interaction settings to selected element or folder
     function saveInteractionSettings() {
+        if (isSelectedTargetLocked()) return;
         let target = null;
         
         if (selectedFolder) {
@@ -1386,6 +1399,7 @@
             
             const element = {
                 id: id,
+                locked: false,
                 type: 'image',
                 src: url,
                 filename: filename,
@@ -1496,6 +1510,12 @@
         const id = $element.attr('id');
         const element = elements.find(el => el.id === id);
         if (!element) return;
+
+        const parentFolder = element.folderId ? groups.find(g => g.id === element.folderId) : null;
+        if (element.locked || (parentFolder && parentFolder.locked)) {
+            selectElement(id);
+            return;
+        }
         
         // Check if element is in a folder
         const inFolder = element.folderId !== undefined && element.folderId !== null;
@@ -1611,6 +1631,11 @@
         
         const folder = groups.find(g => g.id === folderId);
         if (!folder) return;
+
+        if (folder.locked) {
+            selectFolder(folderId);
+            return;
+        }
         
         const canvasOffset = $canvas.offset();
         const $canvasContainer = $('#canvasContainer').parent();
@@ -1660,7 +1685,17 @@
         resizeHandle = $(e.target).attr('class').split(' ')[1];
         
         const $element = $(e.target).closest('.canvas-element');
-        selectElement($element.attr('id'));
+        const id = $element.attr('id');
+        const element = elements.find(el => el.id === id);
+        if (!element) return;
+
+        const parentFolder = element.folderId ? groups.find(g => g.id === element.folderId) : null;
+        if (element.locked || (parentFolder && parentFolder.locked)) {
+            selectElement(id);
+            return;
+        }
+
+        selectElement(id);
     }
     
     function handleMouseMove(e) {
@@ -2114,6 +2149,9 @@
     function handleDeleteLayer(e) {
         e.stopPropagation();
         const id = $(e.currentTarget).data('id');
+        const element = elements.find(el => el.id === id);
+        const parentFolder = element && element.folderId ? groups.find(g => g.id === element.folderId) : null;
+        if (!element || element.locked || (parentFolder && parentFolder.locked)) return;
         saveState();
         elements = elements.filter(el => el.id !== id);
         $(`#${id}`).remove();
@@ -2163,7 +2201,26 @@
     function handleDuplicateLayer(e) {
         e.stopPropagation();
         const id = $(e.currentTarget).data('id');
+        const parentFolder = source.folderId ? groups.find(g => g.id === source.folderId) : null;
+        if (source.locked || (parentFolder && parentFolder.locked)) return;
         duplicateElement(id);
+    }
+
+    function isSelectedTargetLocked() {
+        if (selectedFolder) {
+            const folder = groups.find(g => g.id === selectedFolder);
+            return !!(folder && folder.locked);
+        }
+
+        if (selectedElement) {
+            const element = elements.find(el => el.id === selectedElement);
+            if (!element) return false;
+
+            const parentFolder = element.folderId ? groups.find(g => g.id === element.folderId) : null;
+            return !!element.locked || !!(parentFolder && parentFolder.locked);
+        }
+
+        return false;
     }
 
     function handleAddLayerAnimation(e) {
@@ -2187,6 +2244,14 @@
             selectElement(id);
         }
         
+        if (id.startsWith('folder_')) {
+            const folder = groups.find(g => g.id === id);
+            if (!folder || folder.locked) return;
+        } else {
+            const element = elements.find(el => el.id === id);
+            const parentFolder = element && element.folderId ? groups.find(g => g.id === element.folderId) : null;
+            if (!element || element.locked || (parentFolder && parentFolder.locked)) return;
+        }
         _log('selectedElement after selection:', selectedElement);
         
         openAnimationModal();
@@ -2220,6 +2285,35 @@
         updateTimelineTracks();
     }
     
+    function toggleLayerLock(e) {
+        e.stopPropagation();
+        const id = $(e.currentTarget).data('id');
+        const element = elements.find(el => el.id === id);
+        if (!element) return;
+
+        saveState();
+        element.locked = !element.locked;
+
+        updateCanvas();
+        updateLayersList();
+        updateTimelineTracks();
+        updatePropertiesPanel();
+    }
+
+    function toggleFolderLock(e) {
+        e.stopPropagation();
+        const id = $(e.currentTarget).data('id') || $(e.currentTarget).data('folder-id');
+        const folder = groups.find(g => g.id === id);
+        if (!folder) return;
+
+        saveState();
+        folder.locked = !folder.locked;
+
+        updateCanvas();
+        updateLayersList();
+        updateTimelineTracks();
+        updateFolderPropertiesPanel();
+    }
     // ============================================
     // PROPERTIES PANEL
     // ============================================
@@ -2450,6 +2544,7 @@
 
     // Common property updates
     function updateElementWidth() {
+        if (isSelectedTargetLocked()) return;
         if (!selectedElement) return;
         const element = elements.find(el => el.id === selectedElement);
         saveState();
@@ -2458,6 +2553,7 @@
     }
     
     function updateElementHeight() {
+        if (isSelectedTargetLocked()) return;
         if (!selectedElement) return;
         const element = elements.find(el => el.id === selectedElement);
         saveState();
@@ -2466,6 +2562,7 @@
     }
     
     function updateElementX() {
+        if (isSelectedTargetLocked()) return;
         if (!selectedElement) return;
         const element = elements.find(el => el.id === selectedElement);
         saveState();
@@ -2474,6 +2571,7 @@
     }
     
     function updateElementY() {
+        if (isSelectedTargetLocked()) return;
         if (!selectedElement) return;
         const element = elements.find(el => el.id === selectedElement);
         saveState();
@@ -2482,6 +2580,7 @@
     }
     
     function updateElementRotation() {
+        if (isSelectedTargetLocked()) return;
         if (!selectedElement) return;
         const element = elements.find(el => el.id === selectedElement);
         saveState();
@@ -2490,10 +2589,12 @@
     }
     
     function updateElementOpacity() {
+        
         const opacityValue = parseFloat($(this).val());
         $('#opacityValue').text(Math.round(opacityValue * 100) + '%');
         
         if (selectedFolder) {
+            if (isSelectedTargetLocked()) return;
             // Update folder opacity
             const folder = groups.find(g => g.id === selectedFolder);
             saveState();
@@ -2507,6 +2608,7 @@
                 });
             }
         } else if (selectedElement) {
+            if (isSelectedTargetLocked()) return;
             // Update element opacity
             const element = elements.find(el => el.id === selectedElement);
             saveState();
@@ -2519,6 +2621,7 @@
     
     // Text property updates
     function updateTextContent() {
+        if (isSelectedTargetLocked()) return;
         if (!selectedElement) return;
         const element = elements.find(el => el.id === selectedElement);
         if (element.type !== 'text') return;
@@ -2536,6 +2639,7 @@
     }
     
     function updateFontFamily() {
+        if (isSelectedTargetLocked()) return;
         if (!selectedElement) return;
         const element = elements.find(el => el.id === selectedElement);
         if (element.type !== 'text') return;
@@ -2545,6 +2649,7 @@
     }
     
     function updateFontSize() {
+        if (isSelectedTargetLocked()) return;
         if (!selectedElement) return;
         const element = elements.find(el => el.id === selectedElement);
         if (element.type !== 'text') return;
@@ -2554,6 +2659,7 @@
     }
     
     function updateColor() {
+        if (isSelectedTargetLocked()) return;
         if (!selectedElement) return;
         const element = elements.find(el => el.id === selectedElement);
         if (element.type !== 'text') return;
@@ -2563,6 +2669,7 @@
     }
     
     function toggleBold() {
+        if (isSelectedTargetLocked()) return;
         if (!selectedElement) return;
         const element = elements.find(el => el.id === selectedElement);
         if (element.type !== 'text') return;
@@ -2573,6 +2680,7 @@
     }
     
     function toggleItalic() {
+        if (isSelectedTargetLocked()) return;
         if (!selectedElement) return;
         const element = elements.find(el => el.id === selectedElement);
         if (element.type !== 'text') return;
@@ -2583,6 +2691,7 @@
     }
     
     function toggleUnderline() {
+        if (isSelectedTargetLocked()) return;
         if (!selectedElement) return;
         const element = elements.find(el => el.id === selectedElement);
         if (element.type !== 'text') return;
@@ -2593,6 +2702,7 @@
     }
     
     function updateTextAlign(e) {
+        if (isSelectedTargetLocked()) return;
         if (!selectedElement) return;
         const element = elements.find(el => el.id === selectedElement);
         if (element.type !== 'text') return;
@@ -2611,6 +2721,7 @@
     
     // Clickthrough property updates
     function updateClickUrl() {
+        if (isSelectedTargetLocked()) return;
         if (!selectedElement) return;
         const element = elements.find(el => el.id === selectedElement);
         if (element.type !== 'clickthrough') return;
@@ -2620,6 +2731,7 @@
     }
     
     function updateClickIndex() {
+        if (isSelectedTargetLocked()) return;
         if (!selectedElement) return;
         const element = elements.find(el => el.id === selectedElement);
         if (element.type !== 'clickthrough') return;
@@ -2628,6 +2740,7 @@
     }
     
     function updateClickTarget() {
+        if (isSelectedTargetLocked()) return;
         if (!selectedElement) return;
         const element = elements.find(el => el.id === selectedElement);
         if (element.type !== 'clickthrough') return;
@@ -2646,6 +2759,7 @@
     
     // Shape property updates
     function updateShapeType() {
+        if (isSelectedTargetLocked()) return;
         if (!selectedElement) return;
         const element = elements.find(el => el.id === selectedElement);
         if (element.type !== 'shape') return;
@@ -2665,6 +2779,7 @@
     let isEditingShapeColor = false;
 
     function updateShapeColor() {
+        if (isSelectedTargetLocked()) return;
         if (!selectedElement) return;
         const element = elements.find(el => el.id === selectedElement);
         if (!element || element.type !== 'shape') return;
@@ -2683,6 +2798,7 @@
     }
     
     function updateShapeTransparent() {
+        if (isSelectedTargetLocked()) return;
         if (!selectedElement) return;
         const element = elements.find(el => el.id === selectedElement);
         if (element.type !== 'shape') return;
@@ -2693,6 +2809,7 @@
     }
     
     function updateShapeBorder() {
+        if (isSelectedTargetLocked()) return;
         if (!selectedElement) return;
         const element = elements.find(el => el.id === selectedElement);
         if (element.type !== 'shape') return;
@@ -2712,6 +2829,7 @@
     }
     
     function updateShapeBorderRadius() {
+        if (isSelectedTargetLocked()) return;
         if (!selectedElement) return;
         const element = elements.find(el => el.id === selectedElement);
         if (element.type !== 'shape') return;
@@ -2731,6 +2849,7 @@
     }
     
     function updateImageBorderRadius() {
+        if (isSelectedTargetLocked()) return;
         if (!selectedElement) return;
         const element = elements.find(el => el.id === selectedElement);
         if (element.type !== 'image') return;
@@ -2744,6 +2863,7 @@
     
     // Video property updates
     function updateVideoUrl() {
+        if (isSelectedTargetLocked()) return;
         if (!selectedElement) return;
         const element = elements.find(el => el.id === selectedElement);
         if (element.type !== 'video') return;
@@ -2753,6 +2873,7 @@
     }
     
     function updateVideoName() {
+        if (isSelectedTargetLocked()) return;
         if (!selectedElement) return;
         const element = elements.find(el => el.id === selectedElement);
         if (element.type !== 'video') return;
@@ -2762,6 +2883,7 @@
     }
     
     function updateVideoPlayTrigger() {
+        if (isSelectedTargetLocked()) return;
         if (!selectedElement) return;
         const element = elements.find(el => el.id === selectedElement);
         if (element.type !== 'video') return;
@@ -2771,6 +2893,7 @@
     }
     
     function updateVideoMuted() {
+        if (isSelectedTargetLocked()) return;
         if (!selectedElement) return;
         const element = elements.find(el => el.id === selectedElement);
         if (element.type !== 'video') return;
@@ -2780,6 +2903,7 @@
     }
     
     function updateVideoControls() {
+        if (isSelectedTargetLocked()) return;
         if (!selectedElement) return;
         const element = elements.find(el => el.id === selectedElement);
         if (element.type !== 'video') return;
@@ -2789,6 +2913,7 @@
     }
     
     function updateVideoDisplay(element) {
+        if (isSelectedTargetLocked()) return;
         const playTriggerText = 
             element.playTrigger === 'autoplay' ? '▶ Autoplay' :
             element.playTrigger === 'mouseover' ? '🖱 On Hover' :
@@ -2810,6 +2935,7 @@
     
     // Text shadow and glow updates
     function updateTextShadow() {
+        if (isSelectedTargetLocked()) return;
         if (!selectedElement) return;
         const element = elements.find(el => el.id === selectedElement);
         if (element.type !== 'text') return;
@@ -2824,6 +2950,7 @@
     }
     
     function updateTextGlow() {
+        if (isSelectedTargetLocked()) return;
         if (!selectedElement) return;
         const element = elements.find(el => el.id === selectedElement);
         if (element.type !== 'text') return;
@@ -2839,6 +2966,7 @@
     }
     
     function applyTextStyles(element) {
+        if (isSelectedTargetLocked()) return;
         const $el = $(`#${selectedElement}`);
         
         // Build text-shadow CSS (for always-on effects)
@@ -2907,6 +3035,7 @@
     
     // Shape shadow and glow updates
     function updateShapeShadow() {
+        if (isSelectedTargetLocked()) return;
         if (!selectedElement) return;
         const element = elements.find(el => el.id === selectedElement);
         if (element.type !== 'shape') return;
@@ -2922,6 +3051,7 @@
     }
     
     function updateShapeGlow() {
+        if (isSelectedTargetLocked()) return;
         if (!selectedElement) return;
         const element = elements.find(el => el.id === selectedElement);
         if (element.type !== 'shape') return;
@@ -2937,6 +3067,7 @@
     }
     
     function applyShapeStyles(element) {
+        if (isSelectedTargetLocked()) return;
         const $el = $(`#${selectedElement}`);
         
         // Build box-shadow CSS (for always-on effects)
@@ -3387,6 +3518,7 @@
         
         const folder = {
             id: folderId,
+            locked: false,
             name: `Folder ${folderCounter}`,
             zIndex: getNextFolderZIndex(),
             collapsed: false,
