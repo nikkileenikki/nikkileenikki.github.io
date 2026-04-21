@@ -2502,7 +2502,14 @@
         if (element.type !== 'text') return;
         saveState();
         element.text = $(this).val();
-        $(`#${selectedElement}`).text(element.text);
+
+        const $element = $(`#${selectedElement}`);
+        $element.contents().filter(function() {
+            return this.nodeType === Node.TEXT_NODE;
+        }).remove();
+
+        $element.prepend(document.createTextNode(element.text));
+
         updateLayersList();
     }
     
