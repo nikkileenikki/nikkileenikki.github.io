@@ -65,7 +65,7 @@ export function renderTrack({ element, elements, totalDuration }) {
     const { icon, label } = getElementIconAndLabel({ element, elements });
 
     const $track = $(`
-        <li class="timeline-track layer" data-element-id="${element.id}">
+        <li class="timeline-track layer ${element.locked ? 'is-locked' : ''}" data-element-id="${element.id}">
             <div class="timeline-track-label">
                 <span class="timeline-handle">⋮⋮</span>
                 <i class="fas ${icon} text-blue-400 mr-2"></i>
@@ -149,7 +149,7 @@ export function buildTimelineItems({ groups, elements }) {
 
 export function renderFolderTrack({ group, elements, totalDuration, renderTrack }) {
     const $folder = $(`
-        <li class="timeline-folder${group.collapsed ? ' collapsed' : ''}" data-folder-id="${group.id}">
+        <li class="timeline-folder${group.collapsed ? ' collapsed' : ''} ${group.locked ? 'is-locked' : ''}" data-folder-id="${group.id}">
             <div class="timeline-folder-row">
                 <div class="timeline-folder-header">
                     <span class="timeline-handle">⋮⋮</span>
@@ -375,6 +375,17 @@ export function handleTimelineBlockDragStart({
     const elementId = $block.data('element-id');
     const folderId = $block.data('folder-id');
 
+    if (folderId) {
+        const folder = groups.find(g => g.id === folderId);
+        if (!folder || folder.locked) return;
+    } else if (elementId) {
+        const element = elements.find(el => el.id === elementId);
+        if (!element) return;
+
+        const parentFolder = element.folderId ? groups.find(g => g.id === element.folderId) : null;
+        if (element.locked || (parentFolder && parentFolder.locked)) return;
+    }
+
     let hasMoved = false;
     setDraggedBlock({ animId, elementId, folderId, $block });
 
@@ -454,6 +465,17 @@ export function handleTimelineBlockResizeStart({
     const animId = $block.data('anim-id');
     const elementId = $block.data('element-id');
     const folderId = $block.data('folder-id');
+
+    if (folderId) {
+        const folder = groups.find(g => g.id === folderId);
+        if (!folder || folder.locked) return;
+    } else if (elementId) {
+        const element = elements.find(el => el.id === elementId);
+        if (!element) return;
+
+        const parentFolder = element.folderId ? groups.find(g => g.id === element.folderId) : null;
+        if (element.locked || (parentFolder && parentFolder.locked)) return;
+    }
 
     saveState();
     setIsTimelineBlockResizing(true);
