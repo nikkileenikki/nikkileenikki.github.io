@@ -1748,8 +1748,14 @@
             if (folder.y === undefined) folder.y = 0;
             
             // Calculate new folder position based on mouse and drag offset
-            let newFolderX = (e.pageX + scrollLeft - canvasOffset.left) / stageZoom - dragOffset.x;
-            let newFolderY = (e.pageY + scrollTop - canvasOffset.top) / stageZoom - dragOffset.y;
+            const pointer = getCanvasPointerPosition(
+                e.pageX,
+                e.pageY,
+                canvasOffset,
+                scrollLeft,
+                scrollTop
+            );
+            const { newFolderX, newFolderY } = computeFolderDraggedPosition(pointer);
             
             // Calculate delta from previous folder position
             const deltaX = newFolderX - folder.x;
@@ -1777,8 +1783,14 @@
         if (isDragging) {
             ensureDragSnapshotSaved(e);
             // Account for zoom, scroll, and canvas offset
-            let newX = (e.pageX + scrollLeft - canvasOffset.left) / stageZoom - dragOffset.x;
-            let newY = (e.pageY + scrollTop - canvasOffset.top) / stageZoom - dragOffset.y;
+            const pointer = getCanvasPointerPosition(
+                e.pageX,
+                e.pageY,
+                canvasOffset,
+                scrollLeft,
+                scrollTop
+            );
+            const { newX, newY } = computeDraggedElementPosition(pointer);
             
             // Calculate delta from current position
             const deltaX = newX - element.x;
@@ -1809,33 +1821,7 @@
             const mouseX = pointer.x;
             const mouseY = pointer.y;
             
-            let newWidth = element.width;
-            let newHeight = element.height;
-            let newX = element.x;
-            let newY = element.y;
-            
-            switch(resizeHandle) {
-                case 'se':
-                    newWidth = Math.max(20, mouseX - element.x);
-                    newHeight = Math.max(20, mouseY - element.y);
-                    break;
-                case 'sw':
-                    newWidth = Math.max(20, element.x + element.width - mouseX);
-                    newHeight = Math.max(20, mouseY - element.y);
-                    newX = mouseX;
-                    break;
-                case 'ne':
-                    newWidth = Math.max(20, mouseX - element.x);
-                    newHeight = Math.max(20, element.y + element.height - mouseY);
-                    newY = mouseY;
-                    break;
-                case 'nw':
-                    newWidth = Math.max(20, element.x + element.width - mouseX);
-                    newHeight = Math.max(20, element.y + element.height - mouseY);
-                    newX = mouseX;
-                    newY = mouseY;
-                    break;
-            }
+            const { newWidth, newHeight, newX, newY } = computeResizeResult(element, mouseX, mouseY);
 
             applyElementResize(element, newWidth, newHeight, newX, newY);
             
@@ -1910,6 +1896,29 @@
         });
     }
     
+    function computeDraggedElementPosition(pointer) {
+        return window.adBuilderRender.canvasMath.computeDraggedElementPosition({
+            pointer,
+            dragOffset
+        });
+    }
+
+    function computeFolderDraggedPosition(pointer) {
+        return window.adBuilderRender.canvasMath.computeFolderDraggedPosition({
+            pointer,
+            dragOffset
+        });
+    }
+
+    function computeResizeResult(element, mouseX, mouseY) {
+        return window.adBuilderRender.canvasMath.computeResizeResult({
+            element,
+            resizeHandle,
+            mouseX,
+            mouseY
+        });
+    }
+
     function handleMouseUp() {
         if (isDragging || isResizing) {
 
