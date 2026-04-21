@@ -53,3 +53,22 @@ export function getSelectedAnimationTypes() {
 
     return selectedTypes;
 }
+
+export function readAnimationFormValues() {
+    return {
+        start: parseFloat($('#animStart').val()),
+        duration: parseFloat($('#animDuration').val()),
+        ease: $('#animEase').val()
+    };
+}
+
+export function roundAnimationTiming({ start, duration }) {
+    return {
+        start: Math.round(start * 10) / 10,
+        duration: Math.round(duration * 10) / 10
+    };
+}
+
+export function validateSelectedAnimationTypes({ selectedTypes }) {
+    return selectedTypes && selectedTypes.length > 0;
+}
