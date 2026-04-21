@@ -21,6 +21,10 @@
     let isDragging = false;
     let isResizing = false;
     let resizeHandle = null;
+    let hasSavedDragSnapshot = false;
+    let dragStartPointer = null;
+    let dragStartElementPos = null;
+    let dragStartFolderPos = null;
     let elementCounter = 0;
     let folderCounter = 0;
     let timeline = gsap.timeline({ paused: true });
@@ -1603,8 +1607,6 @@
         
         // Only set up drag offset if dragging is enabled
         if (!isDragging) return;
-        
-        saveState();
 
         const canvasOffset = $canvas.offset();
         const $canvasContainer = $('#canvasContainer').parent();
@@ -1623,6 +1625,10 @@
                     x: (e.pageX + scrollLeft - canvasOffset.left) / stageZoom - folder.x,
                     y: (e.pageY + scrollTop - canvasOffset.top) / stageZoom - folder.y
                 };
+                dragStartPointer = { x: e.pageX, y: e.pageY };
+                dragStartFolderPos = { x: folder.x, y: folder.y };
+                dragStartElementPos = null;
+                hasSavedDragSnapshot = false;
             }
         } else {
             // Dragging individual element
@@ -1630,6 +1636,10 @@
                 x: (e.pageX + scrollLeft - canvasOffset.left) / stageZoom - element.x,
                 y: (e.pageY + scrollTop - canvasOffset.top) / stageZoom - element.y
             };
+            dragStartPointer = { x: e.pageX, y: e.pageY };
+            dragStartElementPos = { x: element.x, y: element.y };
+            dragStartFolderPos = null;
+            hasSavedDragSnapshot = false;
         }
     }
     
@@ -1642,7 +1652,6 @@
         
         // Select folder on click
         selectFolder(folderId);
-        saveState();
         isDragging = true;
         
         const folder = groups.find(g => g.id === folderId);
@@ -1658,6 +1667,10 @@
             x: (e.pageX + scrollLeft - canvasOffset.left) / stageZoom - (folder.x || 0),
             y: (e.pageY + scrollTop - canvasOffset.top) / stageZoom - (folder.y || 0)
         };
+        dragStartPointer = { x: e.pageX, y: e.pageY };
+        dragStartFolderPos = { x: folder.x || 0, y: folder.y || 0 };
+        dragStartElementPos = null;
+        hasSavedDragSnapshot = false;
     }
     
     function handleCanvasMouseDown(e) {
@@ -1700,6 +1713,7 @@
         const scrollTop = $canvasContainer.scrollTop() || 0;
         
         if (isDragging && selectedFolder) {
+            ensureDragSnapshotSaved(e);
             // Dragging a folder - move all child elements by delta
             const folder = groups.find(g => g.id === selectedFolder);
             if (!folder) return;
@@ -1748,6 +1762,7 @@
         const $element = $(`#${selectedElement}`);
         
         if (isDragging) {
+            ensureDragSnapshotSaved(e);
             // Account for zoom, scroll, and canvas offset
             let newX = (e.pageX + scrollLeft - canvasOffset.left) / stageZoom - dragOffset.x;
             let newY = (e.pageY + scrollTop - canvasOffset.top) / stageZoom - dragOffset.y;
@@ -1759,6 +1774,19 @@
             // Check if this is an individually selected element in a folder
             const isIndividuallySelected = selectedElement && element.folderId && !selectedFolder;
             
+            function ensureDragSnapshotSaved(moveEvent) {
+                if (!isDragging || hasSavedDragSnapshot || !dragStartPointer) return;
+
+                const movedX = moveEvent.pageX - dragStartPointer.x;
+                const movedY = moveEvent.pageY - dragStartPointer.y;
+                const movedEnough = Math.abs(movedX) > 2 || Math.abs(movedY) > 2;
+
+                if (movedEnough) {
+                    saveState();
+                    hasSavedDragSnapshot = true;
+                }
+            }
+
             if (element.folderId && !isIndividuallySelected) {
                 // Element in folder but folder is selected - move all elements
                 const folderElements = elements.filter(el => el.folderId === element.folderId);
@@ -1863,6 +1891,10 @@
         isDragging = false;
         isResizing = false;
         resizeHandle = null;
+        hasSavedDragSnapshot = false;
+        dragStartPointer = null;
+        dragStartElementPos = null;
+        dragStartFolderPos = null;
     }
 
     function renderLayersEmptyState() {
