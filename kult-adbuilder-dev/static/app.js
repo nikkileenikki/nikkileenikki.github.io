@@ -97,6 +97,21 @@
             // state.meta.name = currentBannerName || '';
         });
     }
+
+    function getNextElementZIndex() {
+        if (elements.length === 0) return 0;
+        return Math.max(...elements.map(el => el.zIndex ?? 0)) + 1;
+    }
+
+    function getNextFolderZIndex() {
+        const allZIndexes = [
+            ...elements.map(el => el.zIndex ?? 0),
+            ...groups.map(g => g.zIndex ?? 0)
+        ];
+
+        if (allZIndexes.length === 0) return 0;
+        return Math.max(...allZIndexes) + 1;
+    }
     // ============================================
     // INITIALIZATION
     // ============================================
@@ -860,7 +875,7 @@
             glowSpread: 0,
             glowColor: '#ffffff',
             glowHover: false,
-            zIndex: elements.length,
+            zIndex: getNextElementZIndex(),
             animations: [],
             interactions: initInteractionProperties()
         };
@@ -979,7 +994,7 @@
             glowSpread: 0,
             glowColor: '#ffffff',
             glowHover: false,
-            zIndex: elements.length,
+            zIndex: getNextElementZIndex(),
             animations: [],
             interactions: initInteractionProperties()
         };
@@ -1070,7 +1085,7 @@
             height: 169, // 16:9 aspect ratio
             rotation: 0,
             opacity: 1,
-            zIndex: elements.length,
+            zIndex: getNextElementZIndex(),
             animations: [],
             interactions: initInteractionProperties()
         };
@@ -1141,7 +1156,7 @@
             height: canvasHeight,
             rotation: 0,
             opacity: 1.0,
-            zIndex: elements.length, // Follow normal z-index sorting
+            zIndex: getNextElementZIndex(), // Follow normal z-index sorting
             animations: [],
             interactions: initInteractionProperties()
         };
@@ -1200,7 +1215,7 @@
             height: 150,
             rotation: 0,
             opacity: 1,
-            zIndex: elements.length,
+            zIndex: getNextElementZIndex(),
             animations: [],
             interactions: initInteractionProperties()
         };
@@ -1431,7 +1446,7 @@
                 height: fitHeight,
                 rotation: 0,
                 opacity: 1,
-                zIndex: elements.length,
+                zIndex: getNextElementZIndex(),
                 animations: [],
                 interactions: initInteractionProperties()
             };
@@ -3271,7 +3286,7 @@
         const folder = {
             id: folderId,
             name: `Folder ${folderCounter}`,
-            zIndex: elements.length + groups.length,
+            zIndex: getNextFolderZIndex(),
             collapsed: false,
             visible: true, // Folder visibility
             x: 0, // Folder position offset
