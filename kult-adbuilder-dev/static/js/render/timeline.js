@@ -77,6 +77,9 @@ export function renderTrack({ element, elements, totalDuration }) {
                     <button class="timeline-layer-btn add-layer-anim" data-id="${element.id}" title="Add animation">
                         <i class="fas fa-plus text-xs"></i>
                     </button>
+                    <button class="timeline-layer-btn duplicate-layer" data-id="${element.id}" title="Duplicate layer">
+                        <i class="fas fa-clone text-xs"></i>
+                    </button>
                     <button class="timeline-layer-btn delete-layer" data-id="${element.id}" title="Delete layer">
                         <i class="fas fa-trash text-xs"></i>
                     </button>
