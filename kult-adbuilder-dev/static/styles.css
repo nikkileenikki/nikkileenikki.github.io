@@ -371,7 +371,11 @@ input, select, button, textarea, label {
     transition: background 0.2s;
     overflow: hidden;
 }
-
+.timeline-folder-children .timeline-track-label {
+    width: 235px;
+    min-width: 235px;
+    max-width: 235px;
+}
 .timeline-track-label:hover {
     background: rgba(59, 130, 246, 0.1);
 }
@@ -598,7 +602,7 @@ input, select, button, textarea, label {
 }
 
 .timeline-folder-children {
-    margin-left: 18px;
+    margin-left: 15px;
     min-height: 40px;
     padding: 4px 0;
     border-radius: 8px;
