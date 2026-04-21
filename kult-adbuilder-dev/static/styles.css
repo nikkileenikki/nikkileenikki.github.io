@@ -706,6 +706,37 @@ input, select, button, textarea, label {
     outline: none;
 }
 
+#propertiesPanel {
+    position: relative;
+}
+
+#propertiesLockOverlay {
+    position: absolute;
+    inset: 0;
+    background: rgba(17, 24, 39, 0.62);
+    backdrop-filter: blur(1px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 20;
+    border-radius: 8px;
+}
+
+.properties-lock-overlay-content {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 14px;
+    border-radius: 8px;
+    background: rgba(31, 41, 55, 0.92);
+    border: 1px solid rgba(148, 163, 184, 0.25);
+    color: rgb(226, 232, 240);
+    font-size: 12px;
+    font-weight: 600;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
+    pointer-events: none;
+}
+
 .is-locked {
     opacity: 0.55;
 }
