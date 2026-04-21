@@ -1621,10 +1621,14 @@
                 if (folder.x === undefined) folder.x = 0;
                 if (folder.y === undefined) folder.y = 0;
                 
-                dragOffset = {
-                    x: (e.pageX + scrollLeft - canvasOffset.left) / stageZoom - folder.x,
-                    y: (e.pageY + scrollTop - canvasOffset.top) / stageZoom - folder.y
-                };
+                dragOffset = buildFolderDragOffset(
+                    e.pageX,
+                    e.pageY,
+                    canvasOffset,
+                    scrollLeft,
+                    scrollTop,
+                    folder
+                );
                 dragStartPointer = { x: e.pageX, y: e.pageY };
                 dragStartFolderPos = { x: folder.x, y: folder.y };
                 dragStartElementPos = null;
@@ -1632,10 +1636,14 @@
             }
         } else {
             // Dragging individual element
-            dragOffset = {
-                x: (e.pageX + scrollLeft - canvasOffset.left) / stageZoom - element.x,
-                y: (e.pageY + scrollTop - canvasOffset.top) / stageZoom - element.y
-            };
+            dragOffset = buildElementDragOffset(
+                e.pageX,
+                e.pageY,
+                canvasOffset,
+                scrollLeft,
+                scrollTop,
+                element
+            );
             dragStartPointer = { x: e.pageX, y: e.pageY };
             dragStartElementPos = { x: element.x, y: element.y };
             dragStartFolderPos = null;
@@ -1663,10 +1671,14 @@
         const scrollTop = $canvasContainer.scrollTop() || 0;
         
         // Store initial mouse position and folder offset
-        dragOffset = {
-            x: (e.pageX + scrollLeft - canvasOffset.left) / stageZoom - (folder.x || 0),
-            y: (e.pageY + scrollTop - canvasOffset.top) / stageZoom - (folder.y || 0)
-        };
+        dragOffset = buildFolderDragOffset(
+            e.pageX,
+            e.pageY,
+            canvasOffset,
+            scrollLeft,
+            scrollTop,
+            folder
+        );
         dragStartPointer = { x: e.pageX, y: e.pageY };
         dragStartFolderPos = { x: folder.x || 0, y: folder.y || 0 };
         dragStartElementPos = null;
@@ -1815,8 +1827,15 @@
             updatePropertiesPanel();
         } else if (isResizing) {
             // Account for zoom and scroll when resizing
-            const mouseX = (e.pageX + scrollLeft - canvasOffset.left) / stageZoom;
-            const mouseY = (e.pageY + scrollTop - canvasOffset.top) / stageZoom;
+            const pointer = getCanvasPointerPosition(
+                e.pageX,
+                e.pageY,
+                canvasOffset,
+                scrollLeft,
+                scrollTop
+            );
+            const mouseX = pointer.x;
+            const mouseY = pointer.y;
             
             let newWidth = element.width;
             let newHeight = element.height;
@@ -1862,6 +1881,41 @@
         }
     }
     
+    function getCanvasPointerPosition(pageX, pageY, canvasOffset, scrollLeft, scrollTop) {
+        return window.adBuilderRender.pointerUI.getCanvasPointerPosition({
+            pageX,
+            pageY,
+            canvasOffset,
+            scrollLeft,
+            scrollTop,
+            stageZoom
+        });
+    }
+
+    function buildElementDragOffset(pageX, pageY, canvasOffset, scrollLeft, scrollTop, element) {
+        return window.adBuilderRender.pointerUI.buildElementDragOffset({
+            pageX,
+            pageY,
+            canvasOffset,
+            scrollLeft,
+            scrollTop,
+            stageZoom,
+            element
+        });
+    }
+
+    function buildFolderDragOffset(pageX, pageY, canvasOffset, scrollLeft, scrollTop, folder) {
+        return window.adBuilderRender.pointerUI.buildFolderDragOffset({
+            pageX,
+            pageY,
+            canvasOffset,
+            scrollLeft,
+            scrollTop,
+            stageZoom,
+            folder
+        });
+    }
+
     function updateFolderBounds(folderId) {
         return window.adBuilderRender.canvasRender.updateFolderBounds({
             folderId,
