@@ -3012,30 +3012,13 @@
         _log('Animation params - start:', start, 'duration:', duration, 'ease:', ease);
        
         if (editingAnimation) {
-            // Update existing animation
             _log('Updating existing animation:', editingAnimation);
             const anim = target.animations.find(a => a.id === editingAnimation.animId);
-            if (anim && selectedTypes.length > 0) {
-                anim.type = selectedTypes[0];
-                anim.start = start;
-                anim.duration = duration;
-                anim.ease = ease;
-                anim.types = selectedTypes; // Store all types for multi-animation
-            }
+            updateExistingAnimationObject(anim, selectedTypes, start, duration, ease);
         } else {
-            // Add new animations - create one timeline item with multiple types
             _log('Creating new animation');
-            const animationId = `anim_${Date.now()}`;
-            const animation = {
-                id: animationId,
-                type: selectedTypes[0], // Primary type for compatibility
-                types: selectedTypes, // All selected types
-                start,
-                duration,
-                ease,
-                customProps: {}
-            };
-            
+            const animation = buildNewAnimationObject(selectedTypes, start, duration, ease);
+
             _log('New animation object:', animation);
             target.animations.push(animation);
             _log('Target animations after push:', target.animations);
@@ -3266,6 +3249,25 @@
     function validateSelectedAnimationTypes(selectedTypes) {
         return window.adBuilderRender.animationUI.validateSelectedAnimationTypes({
             selectedTypes
+        });
+    }
+
+    function buildNewAnimationObject(selectedTypes, start, duration, ease) {
+        return window.adBuilderRender.animationUI.buildNewAnimationObject({
+            selectedTypes,
+            start,
+            duration,
+            ease
+        });
+    }
+
+    function updateExistingAnimationObject(anim, selectedTypes, start, duration, ease) {
+        return window.adBuilderRender.animationUI.updateExistingAnimationObject({
+            anim,
+            selectedTypes,
+            start,
+            duration,
+            ease
         });
     }
     // ============================================
