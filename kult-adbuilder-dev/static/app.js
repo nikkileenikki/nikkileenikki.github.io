@@ -1760,17 +1760,7 @@
             folder.y = newFolderY;
             
             // Move all child elements by the delta
-            const folderElements = elements.filter(el => el.folderId === folder.id);
-            folderElements.forEach(element => {
-                element.x += deltaX;
-                element.y += deltaY;
-                
-                const $element = $(`#${element.id}`);
-                $element.css({
-                    left: element.x + 'px',
-                    top: element.y + 'px'
-                });
-            });
+            moveFolderByDelta(folder.id, deltaX, deltaY);
             
             // Update folder wrapper bounds
             updateFolderBounds(folder.id);
@@ -1802,26 +1792,10 @@
 
             if (element.folderId && !isIndividuallySelected) {
                 // Element in folder but folder is selected - move all elements
-                const folderElements = elements.filter(el => el.folderId === element.folderId);
-                folderElements.forEach(el => {
-                    el.x += deltaX;
-                    el.y += deltaY;
-                    
-                    const $el = $(`#${el.id}`);
-                    $el.css({
-                        left: el.x + 'px',
-                        top: el.y + 'px'
-                    });
-                });
+                moveFolderByDelta(element.folderId, deltaX, deltaY);
             } else {
                 // Element not in folder OR individually selected - move only this element
-                element.x = newX;
-                element.y = newY;
-                
-                $element.css({
-                    left: newX + 'px',
-                    top: newY + 'px'
-                });
+                moveElementTo(element, newX, newY);
             }
             
             updatePropertiesPanel();
@@ -1973,6 +1947,22 @@
         });
     }
     
+    function moveElementTo(element, newX, newY) {
+        return window.adBuilderRender.moveUI.moveElementTo({
+            element,
+            newX,
+            newY
+        });
+    }
+
+    function moveFolderByDelta(folderId, deltaX, deltaY) {
+        return window.adBuilderRender.moveUI.moveFolderByDelta({
+            folderId,
+            elements,
+            deltaX,
+            deltaY
+        });
+    }
     // ============================================
     // ARROW KEY POSITIONING
     // ============================================
