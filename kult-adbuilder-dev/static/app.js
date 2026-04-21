@@ -4007,6 +4007,39 @@
         return orderedElements;
     }
 
+    function buildExportOrderedElements() {
+        const rootItems = [
+            ...groups.map(group => ({
+                kind: 'folder',
+                zIndex: group.zIndex ?? 0,
+                data: group
+            })),
+            ...elements
+                .filter(el => !el.folderId)
+                .map(element => ({
+                    kind: 'element',
+                    zIndex: element.zIndex ?? 0,
+                    data: element
+                }))
+        ].sort((a, b) => a.zIndex - b.zIndex);
+
+        const orderedElements = [];
+
+        rootItems.forEach(item => {
+            if (item.kind === 'folder') {
+                const folderChildren = elements
+                    .filter(el => el.folderId === item.data.id)
+                    .sort((a, b) => (a.zIndex ?? 0) - (b.zIndex ?? 0));
+
+                orderedElements.push(...folderChildren);
+            } else {
+                orderedElements.push(item.data);
+            }
+        });
+
+        return orderedElements;
+    }
+
     function generateHTML(usePoliteLoad = true) {
         let elementsHtml = '';
         let animationsJs = '';
@@ -4035,6 +4068,7 @@
         let imageCounter = 0;
         
         sortedElements.forEach((element) => {
+            const exportZIndex = exportIndex;
             if (element.type === 'image') {
                 // Images in root folder (no subfolder)
                 const imgSrc = `image_${imageCounter}.${getExtensionFromDataUrl(element.src)}`;
@@ -4050,7 +4084,7 @@
             opacity: ${element.opacity};
             transform: rotate(${element.rotation}deg);
             ${borderRadius}
-            z-index: ${element.zIndex};
+            z-index: ${exportZIndex};
             user-select: none;
             cursor: pointer;
         ">`;
@@ -4111,7 +4145,7 @@
             line-height: 1.2;
             word-wrap: break-word;
             ${textShadowStyle}
-            z-index: ${element.zIndex};
+            z-index: ${exportZIndex};
             user-select: none;
             cursor: pointer;
         ">${element.text}</div>`;
@@ -4140,7 +4174,7 @@
             width: ${Math.round(element.width)}px;
             height: ${Math.round(element.height)}px;
             opacity: 0;
-            z-index: ${element.zIndex};
+            z-index: ${exportZIndex};
             cursor: pointer;
         "></div>`;
             } else if (element.type === 'invisible') {
@@ -4154,7 +4188,7 @@
             height: ${Math.round(element.height)}px;
             opacity: 0;
             transform: rotate(${element.rotation}deg);
-            z-index: ${element.zIndex};
+            z-index: ${exportZIndex};
             user-select: none;
             cursor: pointer;
         "></div>`;
@@ -4210,7 +4244,7 @@
             border-radius: ${borderRadius};
             ${borderStyle}
             ${boxShadowStyle}
-            z-index: ${element.zIndex};
+            z-index: ${exportZIndex};
             user-select: none;
             cursor: pointer;
         "></div>`;
@@ -4240,7 +4274,7 @@
             height: ${Math.round(element.height)}px;
             opacity: ${element.opacity};
             transform: rotate(${element.rotation}deg);
-            z-index: ${element.zIndex};
+            z-index: ${exportZIndex};
         "></ft-video>`;
             }
             
@@ -4323,6 +4357,7 @@
         // Generate interaction JavaScript
         let interactionsJs = '';
         sortedElements.forEach((element) => {
+            const exportZIndex = exportIndex;
             if (!element.interactions) return;
             
             const elemId = element.id;
