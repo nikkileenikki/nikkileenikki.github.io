@@ -12,6 +12,7 @@ import * as pointerUI from './canvas/pointer.js';
 import * as moveUI from './canvas/move.js';
 import * as canvasMath from './canvas/math.js';
 import * as deselectUI from './canvas/deselect.js';
+import * as modalKeysUI from './ui/modalKeys.js';
 
 const store = createStore(createBannerState());
 const history = createHistory();
@@ -29,7 +30,8 @@ window.adBuilderRender = {
   pointerUI,
   moveUI,
   canvasMath,
-  deselectUI
+  deselectUI,
+  modalKeysUI
 };
 
 _log('Ad Builder Phase 1 bootstrap loaded');
