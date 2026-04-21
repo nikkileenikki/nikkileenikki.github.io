@@ -2992,14 +2992,22 @@
 
         _log('selectedTypes:', selectedTypes);
         
-        if (selectedTypes.length === 0) {
+        if (!validateSelectedAnimationTypes(selectedTypes)) {
             alert('Please select at least one animation effect');
             return;
         }
-        
-        const start = Math.round(parseFloat($('#animStart').val()) * 10) / 10;
-        const duration = Math.round(parseFloat($('#animDuration').val()) * 10) / 10;
-        const ease = $('#animEase').val();
+
+        const formValues = readAnimationFormValues();
+        const rounded = roundAnimationTiming(formValues.start, formValues.duration);
+        const start = rounded.start;
+        const duration = rounded.duration;
+        const ease = formValues.ease;
+
+        if (isNaN(start) || isNaN(duration) || duration <= 0) {
+            alert('Please enter a valid start time and duration');
+            return;
+        }
+
         saveState();
         _log('Animation params - start:', start, 'duration:', duration, 'ease:', ease);
        
@@ -3242,6 +3250,23 @@
 
     function getSelectedAnimationTypes() {
         return window.adBuilderRender.animationUI.getSelectedAnimationTypes();
+    }
+
+    function readAnimationFormValues() {
+        return window.adBuilderRender.animationUI.readAnimationFormValues();
+    }
+
+    function roundAnimationTiming(start, duration) {
+        return window.adBuilderRender.animationUI.roundAnimationTiming({
+            start,
+            duration
+        });
+    }
+
+    function validateSelectedAnimationTypes(selectedTypes) {
+        return window.adBuilderRender.animationUI.validateSelectedAnimationTypes({
+            selectedTypes
+        });
     }
     // ============================================
     // FOLDER MANAGEMENT
