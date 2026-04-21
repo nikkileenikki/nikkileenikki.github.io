@@ -2157,13 +2157,7 @@
         element.visible = element.visible === false ? true : false;
         
         // Update DOM
-        const $el = $(`#${element.id}`);
-        if (element.visible === false) {
-            $el.css('visibility', 'hidden');
-        } else {
-            $el.css('visibility', 'visible');
-        }
-        
+        updateCanvas();
         updateLayersList();
     }
     
@@ -2179,12 +2173,8 @@
         // Update all elements in folder
         const folderElements = elements.filter(el => el.folderId === folder.id);
         folderElements.forEach(element => {
-            const $el = $(`#${element.id}`);
-            if (folder.visible === false) {
-                $el.css('visibility', 'hidden');
-            } else {
-                $el.css('visibility', 'visible');
-            }
+            updateCanvas();
+            updateTimelineTracks();
         });
         
         // Update folder wrapper visibility
@@ -3984,6 +3974,39 @@
         return 'jpg';
     }
     
+    function buildExportOrderedElements() {
+        const rootItems = [
+            ...groups.map(group => ({
+                kind: 'folder',
+                zIndex: group.zIndex ?? 0,
+                data: group
+            })),
+            ...elements
+                .filter(el => !el.folderId)
+                .map(element => ({
+                    kind: 'element',
+                    zIndex: element.zIndex ?? 0,
+                    data: element
+                }))
+        ].sort((a, b) => a.zIndex - b.zIndex); // back to front for HTML render order
+
+        const orderedElements = [];
+
+        rootItems.forEach(item => {
+            if (item.kind === 'folder') {
+                const folderChildren = elements
+                    .filter(el => el.folderId === item.data.id)
+                    .sort((a, b) => (a.zIndex ?? 0) - (b.zIndex ?? 0));
+
+                orderedElements.push(...folderChildren);
+            } else {
+                orderedElements.push(item.data);
+            }
+        });
+
+        return orderedElements;
+    }
+
     function generateHTML(usePoliteLoad = true) {
         let elementsHtml = '';
         let animationsJs = '';
@@ -4001,7 +4024,7 @@
         // Lower z-index = behind visually, so render first in HTML
         // Higher z-index = on top visually, so render last in HTML
         // This ensures HTML order is reversed from canvas visual order
-        const sortedElements = [...elements].sort((a, b) => a.zIndex - b.zIndex);
+        const sortedElements = buildExportOrderedElements();
         
         _log('Export - Elements after sort:', sortedElements.map(el => ({
             id: el.id,
@@ -4565,6 +4588,13 @@
             window.mainTimeline = gsap.timeline({ repeat: ${animLoop} });
             const tl = window.mainTimeline;
             ${animationsJs}
+
+            const builderTotalDuration = ${totalDuration};
+            const actualDuration = tl.duration();
+
+            if (actualDuration < builderTotalDuration) {
+                tl.to({}, { duration: builderTotalDuration - actualDuration }, actualDuration);
+            }
         }
         ${usePoliteLoad ? `
         // Use polite load to ensure page is fully loaded before initializing
