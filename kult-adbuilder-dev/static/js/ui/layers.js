@@ -54,6 +54,9 @@ export function renderLayerItem({ element, index, elements }) {
                 <button class="add-layer-anim text-blue-400 hover:text-blue-300 px-2 py-1" data-id="${element.id}" title="Add Animation">
                     <i class="fas fa-plus-circle text-xs"></i>
                 </button>
+                <button class="duplicate-layer timeline-layer-btn" data-id="${element.id}" title="Duplicate layer">
+                    <i class="fas fa-clone text-xs"></i>
+                </button>
                 <button class="delete-layer text-red-400 hover:text-red-300 px-2 py-1" data-id="${element.id}">
                     <i class="fas fa-trash text-xs"></i>
                 </button>
