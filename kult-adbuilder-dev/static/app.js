@@ -2007,6 +2007,21 @@
         updateFolderPropertiesPanel();
     }
     
+    function clearSelectionUI() {
+        return window.adBuilderRender.selectionUI.clearSelectionUI();
+    }
+
+    function applyElementSelectionUI(id) {
+        return window.adBuilderRender.selectionUI.applyElementSelectionUI({
+            id
+        });
+    }
+
+    function applyFolderSelectionUI(folderId) {
+        return window.adBuilderRender.selectionUI.applyFolderSelectionUI({
+            folderId
+        });
+    }
     // ============================================
     // LAYER MANAGEMENT
     // ============================================
