@@ -5072,6 +5072,7 @@
             // Update display
             updateCanvas();
             updateLayersList();
+            updateTimelineTracks();
             rebuildTimeline();
             updatePropertiesPanel();
             
