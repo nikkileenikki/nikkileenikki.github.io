@@ -72,3 +72,27 @@ export function roundAnimationTiming({ start, duration }) {
 export function validateSelectedAnimationTypes({ selectedTypes }) {
     return selectedTypes && selectedTypes.length > 0;
 }
+
+export function buildNewAnimationObject({ selectedTypes, start, duration, ease }) {
+    return {
+        id: `anim_${Date.now()}`,
+        type: selectedTypes[0],
+        types: selectedTypes,
+        start,
+        duration,
+        ease,
+        customProps: {}
+    };
+}
+
+export function updateExistingAnimationObject({ anim, selectedTypes, start, duration, ease }) {
+    if (!anim || !selectedTypes || selectedTypes.length === 0) return anim;
+
+    anim.type = selectedTypes[0];
+    anim.types = selectedTypes;
+    anim.start = start;
+    anim.duration = duration;
+    anim.ease = ease;
+
+    return anim;
+}
