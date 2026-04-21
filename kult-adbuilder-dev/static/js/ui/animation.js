@@ -96,3 +96,52 @@ export function updateExistingAnimationObject({ anim, selectedTypes, start, dura
 
     return anim;
 }
+
+export function resolveAnimationTarget({ selectedElement, selectedFolder, elements, groups }) {
+    const isFolder = selectedFolder !== null;
+
+    const target = isFolder
+        ? groups.find(g => g.id === selectedFolder)
+        : elements.find(el => el.id === selectedElement);
+
+    return {
+        isFolder,
+        target
+    };
+}
+
+export function resolveEditingAnimationTarget({ editingAnimation, elements, groups }) {
+    if (!editingAnimation) {
+        return {
+            isFolderAnim: false,
+            target: null
+        };
+    }
+
+    const isFolderAnim = editingAnimation.folderId !== undefined;
+
+    const target = isFolderAnim
+        ? groups.find(g => g.id === editingAnimation.folderId)
+        : elements.find(el => el.id === editingAnimation.elementId);
+
+    return {
+        isFolderAnim,
+        target
+    };
+}
+
+export function resolveClickedAnimationTarget({ folderId, elementId, elements, groups }) {
+    if (folderId) {
+        const target = groups.find(g => g.id === folderId);
+        return {
+            isFolder: true,
+            target
+        };
+    }
+
+    const target = elements.find(el => el.id === elementId);
+    return {
+        isFolder: false,
+        target
+    };
+}
