@@ -80,6 +80,9 @@ export function renderTrack({ element, elements, totalDuration }) {
                     <button class="timeline-layer-btn duplicate-layer" data-id="${element.id}" title="Duplicate layer">
                         <i class="fas fa-clone text-xs"></i>
                     </button>
+                    <button class="timeline-layer-btn toggle-layer-lock" data-id="${element.id}" title="Toggle lock">
+                        <i class="fas ${element.locked ? 'fa-lock' : 'fa-lock-open'} text-xs"></i>
+                    </button>
                     <button class="timeline-layer-btn delete-layer" data-id="${element.id}" title="Delete layer">
                         <i class="fas fa-trash text-xs"></i>
                     </button>
@@ -160,6 +163,9 @@ export function renderFolderTrack({ group, elements, totalDuration, renderTrack 
                         <button class="timeline-layer-btn add-layer-anim" data-id="${group.id}" title="Add animation to folder">
                             <i class="fas fa-plus text-xs"></i>
                         </button>
+                        <button class="timeline-layer-btn toggle-folder-lock" data-id="${group.id}" title="Toggle folder lock">
+                            <i class="fas ${group.locked ? 'fa-lock' : 'fa-lock-open'} text-xs"></i>
+                        </button>
                         <button class="timeline-layer-btn delete-folder" data-id="${group.id}" title="Delete folder">
                             <i class="fas fa-trash text-xs"></i>
                         </button>
@@ -218,6 +224,7 @@ export function buildRootSortableConfig({
         placeholder: 'ui-sortable-placeholder',
         tolerance: 'pointer',
         forcePlaceholderSize: true,
+        cancel: '.is-locked, .is-locked *',
         start: function() {
             if (!getHasSavedSortableSnapshot()) {
                 saveState();
@@ -246,6 +253,7 @@ export function buildFolderChildrenSortableConfig({
         placeholder: 'ui-sortable-placeholder',
         tolerance: 'pointer',
         forcePlaceholderSize: true,
+        cancel: '.is-locked, .is-locked *',
         start: function() {
             if (!getHasSavedSortableSnapshot()) {
                 saveState();
