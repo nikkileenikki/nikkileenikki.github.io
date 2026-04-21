@@ -74,3 +74,16 @@ export function bindLayerDragEvents({ $layer, handleDragStart, handleDragOverLay
 
     return $layer;
 }
+
+export function appendRenderedLayers({
+    $layersList,
+    sortedElements,
+    renderLayerItem,
+    bindLayerDragEvents
+}) {
+    sortedElements.forEach((element, index) => {
+        const $layer = renderLayerItem(element, index);
+        bindLayerDragEvents($layer);
+        $layersList.append($layer);
+    });
+}
