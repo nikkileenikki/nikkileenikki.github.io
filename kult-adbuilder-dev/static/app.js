@@ -224,46 +224,11 @@
         // Invisible Layer
         $('#addInvisibleBtn').on('click', addInvisibleLayer);
         
-        // Enter key support for clickthrough
-        bindEnterToSubmit($('#clickthroughUrl, #clickthroughTarget'), saveClickthrough);
-        bindEscapeToClose($('#clickthroughModal'), closeClickthroughModal);
-        
-        // Shape
-        $('#addShapeBtn').on('click', openShapeModal);
-        $('#closeShapeModal').on('click', closeShapeModal);
-        $('#saveShapeBtn').on('click', saveShape);
-        $('#shapeOpacity').on('input', function() {
-            const val = $(this).val();
-            $('#shapeOpacityValue').text(Math.round(val * 100) + '%');
-        });
-
-        // Escape key for shape modal
-        bindEnterAndEscape($('#shapeModal'), saveShape, closeShapeModal);
-        
-        // Video
-        $('#addVideoBtn').on('click', openVideoModal);
-        $('#closeVideoModal').on('click', closeVideoModal);
-        $('#saveVideoBtn').on('click', saveVideo);
-        
         // Folder creation
         $('#createGroupBtn').on('click', createFolder);
         $(document).on('click', '.timeline-folder-toggle', toggleFolder);
         $(document).on('click', '.delete-folder', deleteFolder);
         $(document).on('click', '.toggle-folder-visibility', toggleFolderVisibility);
-        
-        // Enter key support for video
-        bindEnterToSubmit($('#videoUrl, #videoName'), saveVideo);
-        bindEscapeToClose($('#videoModal'), closeVideoModal);
-        
-        // Video play trigger change handler (modal)
-        $('#videoPlayTrigger').on('change', function() {
-            const playTrigger = $(this).val();
-            if (playTrigger === 'autoplay') {
-                $('#videoMuted').prop('checked', true).prop('disabled', true);
-            } else {
-                $('#videoMuted').prop('disabled', false);
-            }
-        });
         
         // Canvas size
         $('#canvasSize').on('change', handleCanvasSizeChange);
@@ -440,18 +405,6 @@
         $('#hoverAction').on('change', function() {
             updateHoverActionSettings($(this).val());
         });
-        
-        // Animation
-        $('#closeModal').on('click', closeAnimationModal);
-        $('#saveAnimBtn').on('click', saveAnimation);
-        $('#deleteAnimBtn').on('click', deleteEditingAnimation);
-        $timelineTracks.on('click', '.timeline-block', editAnimation);
-        $timelineTracks.on('click', '.delete-anim', function(e) {
-            e.stopPropagation();
-            handleDeleteAnimation(e);
-        });
-        // Escape key for animation modal
-        bindEnterAndEscape($('#animModal'), saveAnimation, closeAnimationModal);
         
         // Timeline layer controls
         // Use a timer to distinguish single click (select) from double-click (rename)
