@@ -2929,29 +2929,17 @@
         const folderId = $(e.currentTarget).data('folder-id');
         
         // Check if this is a folder animation or element animation
-        let target, anim;
-        
-        if (folderId) {
-            // Folder animation
-            target = groups.find(g => g.id === folderId);
-            if (!target) return;
-            
-            anim = target.animations.find(a => a.id === animId);
-            if (!anim) return;
-            
-            // Populate modal with animation data
-            editingAnimation = { folderId, animId };
+        const { isFolder, target } = resolveClickedAnimationTarget(folderId, elementId);
+        if (!target) return;
+
+        const anim = target.animations.find(a => a.id === animId);
+        if (!anim) return;
+
+        editingAnimation = isFolder ? { folderId, animId } : { elementId, animId };
+
+        if (isFolder) {
             selectFolder(folderId);
         } else {
-            // Element animation
-            target = elements.find(el => el.id === elementId);
-            if (!target) return;
-            
-            anim = target.animations.find(a => a.id === animId);
-            if (!anim) return;
-            
-            // Populate modal with animation data
-            editingAnimation = { elementId, animId };
             selectElement(elementId);
         }
         
@@ -2967,11 +2955,8 @@
         _log('selectedFolder:', selectedFolder);
         
         // Check if we're editing a folder or element
-        const isFolder = selectedFolder !== null;
-        const target = isFolder ? 
-            groups.find(g => g.id === selectedFolder) : 
-            elements.find(el => el.id === selectedElement);
-        
+        const { isFolder, target } = resolveAnimationTarget();
+
         _log('isFolder:', isFolder);
         _log('target:', target);
         
@@ -3036,10 +3021,7 @@
         if (!editingAnimation) return;
         
         // Check if it's a folder or element animation
-        const isFolderAnim = editingAnimation.folderId !== undefined;
-        const target = isFolderAnim ? 
-            groups.find(g => g.id === editingAnimation.folderId) :
-            elements.find(el => el.id === editingAnimation.elementId);
+        const { isFolderAnim, target } = resolveEditingAnimationTarget();
         
         if (target) {
             target.animations = target.animations.filter(a => a.id !== editingAnimation.animId);
@@ -3094,6 +3076,32 @@
         animLoop = Math.max(0, value - 1);
     }
     
+    function resolveAnimationTarget() {
+        return window.adBuilderRender.animationUI.resolveAnimationTarget({
+            selectedElement,
+            selectedFolder,
+            elements,
+            groups
+        });
+    }
+
+    function resolveEditingAnimationTarget() {
+        return window.adBuilderRender.animationUI.resolveEditingAnimationTarget({
+            editingAnimation,
+            elements,
+            groups
+        });
+    }
+
+    function resolveClickedAnimationTarget(folderId, elementId) {
+        return window.adBuilderRender.animationUI.resolveClickedAnimationTarget({
+            folderId,
+            elementId,
+            elements,
+            groups
+        });
+    }
+
     function zoomIn() {
         // Zoom in = decrease duration to see more detail
         saveState();
