@@ -1987,40 +1987,23 @@
     function selectElement(id) {
         selectedElement = id;
         syncSelectedElementToStore();
-        selectedFolder = null; // Clear folder selection
-        
-        $('.canvas-element').removeClass('selected');
-        $('.canvas-folder').removeClass('selected'); // Remove from folders
-        $(`#${id}`).addClass('selected');
-        
-        $('.layer-item').removeClass('selected');
-        $(`.layer-item[data-id="${id}"]`).addClass('selected');
-        
-        $('.timeline-track').removeClass('selected');
-        $(`.timeline-track[data-element-id="${id}"]`).addClass('selected');
-        
-        $('.timeline-folder').removeClass('selected');
-        
+        selectedFolder = null;
+
+        clearSelectionUI();
+        applyElementSelectionUI(id);
+
         updatePropertiesPanel();
     }
     
     // Select folder
     function selectFolder(folderId) {
         selectedFolder = folderId;
-        selectedElement = null; // Clear element selection
+        selectedElement = null;
         syncSelectedElementToStore();
-        
-        $('.canvas-element').removeClass('selected');
-        $('.canvas-folder').removeClass('selected'); // Remove from all folders
-        $('.layer-item').removeClass('selected');
-        $('.timeline-track').removeClass('selected');
-        
-        $('.timeline-folder').removeClass('selected');
-        $(`.timeline-folder[data-folder-id="${folderId}"]`).addClass('selected');
-        
-        // Add selected class to canvas folder for dragging
-        $(`#${folderId}.canvas-folder`).addClass('selected');
-        
+
+        clearSelectionUI();
+        applyFolderSelectionUI(folderId);
+
         updateFolderPropertiesPanel();
     }
     
