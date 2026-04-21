@@ -707,12 +707,12 @@ input, select, button, textarea, label {
 }
 
 .is-locked {
-    opacity: 0.75;
+    opacity: 0.55;
 }
 
 .is-locked .timeline-handle,
 .is-locked .fa-grip-vertical {
-    opacity: 0.35;
+    opacity: 0.2;
     cursor: not-allowed !important;
 }
 
@@ -730,4 +730,5 @@ input, select, button, textarea, label {
         transparent
     );
     background-size: 12px 12px;
+    filter: grayscale(0.35);
 }
