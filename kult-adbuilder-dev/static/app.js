@@ -477,6 +477,124 @@
             }
         });
     }
+
+    function bindCommonPropertyEvents() {
+        $('#propWidth').on('change', updateElementWidth);
+        $('#propHeight').on('change', updateElementHeight);
+        $('#propX').on('change', updateElementX);
+        $('#propY').on('change', updateElementY);
+        $('#propRotation').on('change', updateElementRotation);
+        $('#propOpacity').on('input', updateElementOpacity);
+    }
+
+    function bindTextPropertyEvents() {
+        $('#propText').on('input', updateTextContent);
+        $('#propFontFamily').on('change', updateFontFamily);
+        $('#propFontSize').on('change', updateFontSize);
+        $('#propColor').on('change', updateColor);
+        $('#propBold').on('click', toggleBold);
+        $('#propItalic').on('click', toggleItalic);
+        $('#propUnderline').on('click', toggleUnderline);
+        $('.text-align-btn').on('click', updateTextAlign);
+
+        $('#propTextShadowX, #propTextShadowY, #propTextShadowBlur, #propTextShadowColor, #propTextShadowHover').on('change input', updateTextShadow);
+        $('#propTextGlowX, #propTextGlowY, #propTextGlowBlur, #propTextGlowSpread, #propTextGlowColor, #propTextGlowHover').on('change input', updateTextGlow);
+    }
+
+    function bindClickthroughPropertyEvents() {
+        $('#propClickUrl').on('change', updateClickUrl);
+        $('#propClickIndex').on('change', updateClickIndex);
+        $('#propClickTarget').on('change', updateClickTarget);
+    }
+
+    function bindShapePropertyEvents() {
+        $('#propShapeType').on('change', updateShapeType);
+        $('#propShapeColor').on('input change', updateShapeColor);
+        $('#propShapeColor').on('change blur', function() {
+            isEditingShapeColor = false;
+        });
+        $('#propShapeTransparent').on('change', updateShapeTransparent);
+        $('#propShapeBorderWidth').on('change', updateShapeBorder);
+        $('#propShapeBorderColor').on('change', updateShapeBorder);
+        $('#propShapeBorderRadius').on('change', updateShapeBorderRadius);
+        $('#propImageBorderRadius').on('change', updateImageBorderRadius);
+
+        let shapeColorBeforeOpen = null;
+
+        $('#propShapeColor')
+            .on('focus', function() {
+                if (!selectedElement) return;
+                const element = elements.find(el => el.id === selectedElement);
+                if (!element || element.type !== 'shape') return;
+                shapeColorBeforeOpen = element.fillColor;
+            })
+            .on('blur', function() {
+                updateShapeColor.call(this);
+            })
+            .on('keydown', function(e) {
+                if (e.key === 'Escape') {
+                    e.preventDefault();
+
+                    if (!selectedElement) return;
+                    const element = elements.find(el => el.id === selectedElement);
+                    if (!element || element.type !== 'shape') return;
+
+                    if (shapeColorBeforeOpen !== null) {
+                        $(this).val(shapeColorBeforeOpen);
+                        element.fillColor = shapeColorBeforeOpen;
+
+                        const bgColor = element.transparent ? 'transparent' : element.fillColor;
+                        $(`#${selectedElement}`).css('background-color', bgColor);
+                    }
+
+                    this.blur();
+                }
+            });
+
+        $('#propShapeShadowX, #propShapeShadowY, #propShapeShadowBlur, #propShapeShadowSpread, #propShapeShadowColor, #propShapeShadowHover').on('change input', updateShapeShadow);
+        $('#propShapeGlowX, #propShapeGlowY, #propShapeGlowBlur, #propShapeGlowSpread, #propShapeGlowColor, #propShapeGlowHover').on('change input', updateShapeGlow);
+    }
+
+    function bindVideoPropertyEvents() {
+        $('#propVideoUrl').on('change', updateVideoUrl);
+        $('#propVideoName').on('change', updateVideoName);
+        $('#propVideoPlayTrigger').on('change', updateVideoPlayTrigger);
+        $('#propVideoMuted').on('change', updateVideoMuted);
+        $('#propVideoControls').on('change', updateVideoControls);
+
+        $('#propVideoPlayTrigger').on('change', function() {
+            const playTrigger = $(this).val();
+            if (playTrigger === 'autoplay') {
+                $('#propVideoMuted').prop('checked', true).prop('disabled', true);
+            } else {
+                $('#propVideoMuted').prop('disabled', false);
+            }
+        });
+    }
+
+    function bindInteractionPropertyEvents() {
+        $('#enableClickInteraction').on('change', function() {
+            $('#clickInteractionSettings').toggleClass('hidden', !$(this).is(':checked'));
+            saveInteractionSettings();
+        });
+
+        $('#enableHoverInteraction').on('change', function() {
+            $('#hoverInteractionSettings').toggleClass('hidden', !$(this).is(':checked'));
+            saveInteractionSettings();
+        });
+
+        $('#clickTargetElement, #clickAction, #clickShadowX, #clickShadowY, #clickShadowBlur, #clickShadowColor, #clickGlowX, #clickGlowY, #clickGlowBlur, #clickGlowColor, #clickScaleAmount').on('change input', saveInteractionSettings);
+        $('#hoverTargetElement, #hoverAction, #hoverShadowX, #hoverShadowY, #hoverShadowBlur, #hoverShadowColor, #hoverGlowX, #hoverGlowY, #hoverGlowBlur, #hoverGlowColor, #hoverScaleAmount').on('change input', saveInteractionSettings);
+
+        $('#clickAction').on('change', function() {
+            updateClickActionSettings($(this).val());
+        });
+
+        $('#hoverAction').on('change', function() {
+            updateHoverActionSettings($(this).val());
+        });
+    }
+
     function initEventListeners() {
         // File upload
         $dropzone.on('click', () => $fileInput.click());
@@ -498,19 +616,12 @@
         bindTimelineControlEvents();
         bindGlobalUIEvents();
 
-        // Common properties
-        $('#propWidth').on('change', updateElementWidth);
-        $('#propHeight').on('change', updateElementHeight);
-        $('#propX').on('change', updateElementX);
-        $('#propY').on('change', updateElementY);
-        $('#propRotation').on('change', updateElementRotation);
-        $('#propOpacity').on('input', updateElementOpacity);
-        
-        // Text properties
-        $('#propText').on('input', updateTextContent);
-        $('#propFontFamily').on('change', updateFontFamily);
-        $('#propFontSize').on('change', updateFontSize);
-        $('#propColor').on('change', updateColor);
+        bindCommonPropertyEvents();
+        bindTextPropertyEvents();
+        bindClickthroughPropertyEvents();
+        bindShapePropertyEvents();
+        bindVideoPropertyEvents();
+        bindInteractionPropertyEvents();
         
         // Color swatches
         $(document).on('click', '.color-swatch', function() {
@@ -536,102 +647,7 @@
             $('.shape-color-swatch').removeClass('selected');
             $('#shapeFillColor').removeClass('hidden').click();
         });
-        $('#propBold').on('click', toggleBold);
-        $('#propItalic').on('click', toggleItalic);
-        $('#propUnderline').on('click', toggleUnderline);
-        $('.text-align-btn').on('click', updateTextAlign);
-        
-        // Clickthrough properties
-        $('#propClickUrl').on('change', updateClickUrl);
-        $('#propClickIndex').on('change', updateClickIndex);
-        $('#propClickTarget').on('change', updateClickTarget);
-        
-        // Shape properties
-        $('#propShapeType').on('change', updateShapeType);
-        $('#propShapeColor').on('input change', updateShapeColor);
-        $('#propShapeColor').on('change blur', function() {
-            isEditingShapeColor = false;
-        });
-        $('#propShapeTransparent').on('change', updateShapeTransparent);
-        $('#propShapeBorderWidth').on('change', updateShapeBorder);
-        $('#propShapeBorderColor').on('change', updateShapeBorder);
-        $('#propShapeBorderRadius').on('change', updateShapeBorderRadius);
-        $('#propImageBorderRadius').on('change', updateImageBorderRadius);
-        let shapeColorBeforeOpen = null;
 
-        $('#propShapeColor')
-            .on('focus', function() {
-                if (!selectedElement) return;
-                const element = elements.find(el => el.id === selectedElement);
-                if (!element || element.type !== 'shape') return;
-                shapeColorBeforeOpen = element.fillColor;
-            })
-            .on('blur', function() {
-                // When clicking away, apply whatever color is currently selected
-                updateShapeColor.call(this);
-            })
-            .on('keydown', function(e) {
-                if (e.key === 'Escape') {
-                    e.preventDefault();
-
-                    if (!selectedElement) return;
-                    const element = elements.find(el => el.id === selectedElement);
-                    if (!element || element.type !== 'shape') return;
-
-                    if (shapeColorBeforeOpen !== null) {
-                        $(this).val(shapeColorBeforeOpen);
-                        element.fillColor = shapeColorBeforeOpen;
-
-                        const bgColor = element.transparent ? 'transparent' : element.fillColor;
-                        $(`#${selectedElement}`).css('background-color', bgColor);
-                    }
-
-                    this.blur();
-                }
-            });
-        
-        // Video properties
-        $('#propVideoUrl').on('change', updateVideoUrl);
-        $('#propVideoName').on('change', updateVideoName);
-        $('#propVideoPlayTrigger').on('change', updateVideoPlayTrigger);
-        $('#propVideoMuted').on('change', updateVideoMuted);
-        $('#propVideoControls').on('change', updateVideoControls);
-        
-        // Video play trigger change handler (properties panel)
-        $('#propVideoPlayTrigger').on('change', function() {
-            const playTrigger = $(this).val();
-            if (playTrigger === 'autoplay') {
-                $('#propVideoMuted').prop('checked', true).prop('disabled', true);
-            } else {
-                $('#propVideoMuted').prop('disabled', false);
-            }
-        });
-        
-        // Text glow and shadow
-        $('#propTextShadowX, #propTextShadowY, #propTextShadowBlur, #propTextShadowColor, #propTextShadowHover').on('change input', updateTextShadow);
-        $('#propTextGlowX, #propTextGlowY, #propTextGlowBlur, #propTextGlowSpread, #propTextGlowColor, #propTextGlowHover').on('change input', updateTextGlow);
-        
-        // Shape glow and shadow
-        $('#propShapeShadowX, #propShapeShadowY, #propShapeShadowBlur, #propShapeShadowSpread, #propShapeShadowColor, #propShapeShadowHover').on('change input', updateShapeShadow);
-        $('#propShapeGlowX, #propShapeGlowY, #propShapeGlowBlur, #propShapeGlowSpread, #propShapeGlowColor, #propShapeGlowHover').on('change input', updateShapeGlow);
-        
-        // Interactions
-        $('#enableClickInteraction').on('change', function() {
-            $('#clickInteractionSettings').toggleClass('hidden', !$(this).is(':checked'));
-            saveInteractionSettings();
-        });
-        $('#enableHoverInteraction').on('change', function() {
-            $('#hoverInteractionSettings').toggleClass('hidden', !$(this).is(':checked'));
-            saveInteractionSettings();
-        });
-        $('#clickTargetElement, #clickAction, #clickShadowX, #clickShadowY, #clickShadowBlur, #clickShadowColor, #clickGlowX, #clickGlowY, #clickGlowBlur, #clickGlowColor, #clickScaleAmount').on('change input', saveInteractionSettings);
-        $('#hoverTargetElement, #hoverAction, #hoverShadowX, #hoverShadowY, #hoverShadowBlur, #hoverShadowColor, #hoverGlowX, #hoverGlowY, #hoverGlowBlur, #hoverGlowColor, #hoverScaleAmount').on('change input', saveInteractionSettings);
-        $('#clickAction').on('change', function() {
-            updateClickActionSettings($(this).val());
-        });
-        $('#hoverAction').on('change', function() {
-            updateHoverActionSettings($(this).val());
-        });
     }
     
     // ============================================
