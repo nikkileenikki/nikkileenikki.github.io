@@ -2234,6 +2234,11 @@
         return false;
     }
 
+    function updatePropertiesLockOverlay() {
+        const isLocked = isSelectedTargetLocked();
+        $('#propertiesLockOverlay').toggleClass('hidden', !isLocked);
+    }
+
     function handleAddLayerAnimation(e) {
         e.stopPropagation();
         const id = $(e.currentTarget).data('id');
@@ -2331,6 +2336,7 @@
     function updatePropertiesPanel() {
         if (!selectedElement) {
             $propertiesPanel.addClass('hidden');
+            $('#propertiesLockOverlay').addClass('hidden');
             return;
         }
         
@@ -2386,18 +2392,21 @@
         
         // Update interaction UI
         updateInteractionUI(element);
+        updatePropertiesLockOverlay();
     }
     
     // Update properties panel for folders
     function updateFolderPropertiesPanel() {
         if (!selectedFolder) {
             $propertiesPanel.addClass('hidden');
+            $('#propertiesLockOverlay').addClass('hidden');
             return;
         }
         
         const folder = groups.find(g => g.id === selectedFolder);
         if (!folder) {
             $propertiesPanel.addClass('hidden');
+            $('#propertiesLockOverlay').addClass('hidden');
             return;
         }
         
@@ -2417,6 +2426,8 @@
         $('#opacityValue').text(Math.round(folderOpacity * 100) + '%');
 
         _log('Folder properties panel updated:', folder);
+
+        updatePropertiesLockOverlay();
     }
 
     function fillCommonProperties(element) {
