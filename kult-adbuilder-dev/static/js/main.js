@@ -11,6 +11,7 @@ import * as selectionUI from './canvas/selection.js';
 import * as pointerUI from './canvas/pointer.js';
 import * as moveUI from './canvas/move.js';
 import * as canvasMath from './canvas/math.js';
+import * as deselectUI from './canvas/deselect.js';
 
 const store = createStore(createBannerState());
 const history = createHistory();
@@ -27,7 +28,8 @@ window.adBuilderRender = {
   selectionUI,
   pointerUI,
   moveUI,
-  canvasMath
+  canvasMath,
+  deselectUI
 };
 
 _log('Ad Builder Phase 1 bootstrap loaded');
