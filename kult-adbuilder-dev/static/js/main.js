@@ -9,6 +9,7 @@ import * as layersUI from './ui/layers.js';
 import * as animationUI from './ui/animation.js';
 import * as selectionUI from './canvas/selection.js';
 import * as pointerUI from './canvas/pointer.js';
+import * as moveUI from './canvas/move.js';
 
 const store = createStore(createBannerState());
 const history = createHistory();
@@ -23,7 +24,8 @@ window.adBuilderRender = {
   layersUI,
   animationUI,
   selectionUI,
-  pointerUI
+  pointerUI,
+  moveUI
 };
 
 _log('Ad Builder Phase 1 bootstrap loaded');
