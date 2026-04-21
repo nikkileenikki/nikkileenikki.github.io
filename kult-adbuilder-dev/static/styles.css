@@ -715,11 +715,14 @@ input, select, button, textarea, label {
     inset: 0;
     background: rgba(17, 24, 39, 0.62);
     backdrop-filter: blur(1px);
+    z-index: 20;
+    border-radius: 8px;
+}
+
+#propertiesLockOverlay:not(.hidden) {
     display: flex;
     align-items: center;
     justify-content: center;
-    z-index: 20;
-    border-radius: 8px;
 }
 
 .properties-lock-overlay-content {
