@@ -48,13 +48,13 @@
                 </h1>
                 
                 <!-- Banner Name -->
-                <div class="mb-4 bg-gray-900 rounded-lg p-3">
+                <!-- <div class="mb-4 bg-gray-900 rounded-lg p-3">
                     <label class="text-sm text-gray-400 block mb-1">Banner Name</label>
                     <input type="text" id="bannerName" placeholder="my-banner" 
                         class="w-full bg-gray-700 text-white rounded px-3 py-2 text-sm border border-gray-600 focus:border-blue-500 focus:outline-none"
                         value="ad-banner">
                     <p class="text-xs text-gray-500 mt-1">No spaces (used for ZIP filename)</p>
-                </div>
+                </div> -->
                 
                 <!-- Add Elements -->
                 <div class="mb-2">
@@ -532,7 +532,14 @@
             <!-- Toolbar -->
             <div class="bg-gray-800 border-b border-gray-700 p-4 flex items-center justify-between">
                 <div class="flex items-center space-x-4">
-                    <label class="text-sm text-gray-400">Canvas Size:</label>
+                    <div class="flex items-center space-x-2">
+                        <label class="text-sm text-gray-400 whitespace-nowrap">Banner Name:</label>
+                        <input type="text" id="bannerName" placeholder="my-banner"
+                            class="bg-gray-700 text-white rounded px-3 py-1 text-sm border border-gray-600 focus:border-blue-500 focus:outline-none w-40"
+                            value="ad-banner">
+                    </div>
+
+                    <label class="text-sm text-gray-400 whitespace-nowrap">Canvas Size:</label>
                     <select id="canvasSize" class="bg-gray-700 rounded px-3 py-1 text-sm">
                         <option value="300x250">300x250 (Medium Rectangle)</option>
                         <option value="300x600">300x600 (Half Page)</option>
