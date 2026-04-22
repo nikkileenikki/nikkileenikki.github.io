@@ -1676,7 +1676,7 @@
             selectedFolder = null;
             clickCount = 0; // Reset click count
             lastClickedElement = null;
-            
+            hideSnapGuides();
             $('.canvas-element').removeClass('selected');
             $('.canvas-folder').removeClass('selected');
             $('.layer-item').removeClass('selected');
@@ -1798,17 +1798,9 @@
             }
         }
         
-        if (isDragging && selectedFolder) {
+        if (isDragging) {
             ensureDragSnapshotSaved(e);
-            // Dragging a folder - move all child elements by delta
-            const folder = groups.find(g => g.id === selectedFolder);
-            if (!folder) return;
-            
-            // Initialize folder position if not set
-            if (folder.x === undefined) folder.x = 0;
-            if (folder.y === undefined) folder.y = 0;
-            
-            // Calculate new folder position based on mouse and drag offset
+
             const pointer = getCanvasPointerPosition(
                 e.pageX,
                 e.pageY,
@@ -1816,24 +1808,32 @@
                 scrollLeft,
                 scrollTop
             );
-            const { newFolderX, newFolderY } = computeFolderDraggedPosition(pointer);
-            
-            // Calculate delta from previous folder position
-            const deltaX = newFolderX - folder.x;
-            const deltaY = newFolderY - folder.y;
-            
-            // Update folder position
-            folder.x = newFolderX;
-            folder.y = newFolderY;
-            
-            // Move all child elements by the delta
-            moveFolderByDelta(folder.id, deltaX, deltaY);
-            
-            // Update folder wrapper bounds
-            updateFolderBounds(folder.id);
-            
+
+            const { newX, newY } = computeDraggedElementPosition(pointer);
+
+            const isIndividuallySelected = selectedElement && element.folderId && !selectedFolder;
+
+            let finalX = newX;
+            let finalY = newY;
+
+            if (!element.folderId || isIndividuallySelected) {
+                const snapped = getSnappedElementPosition(element, newX, newY);
+                finalX = snapped.x;
+                finalY = snapped.y;
+            } else {
+                hideSnapGuides();
+            }
+
+            const deltaX = finalX - element.x;
+            const deltaY = finalY - element.y;
+
+            if (element.folderId && !isIndividuallySelected) {
+                moveFolderByDelta(element.folderId, deltaX, deltaY);
+            } else {
+                moveElementTo(element, finalX, finalY);
+            }
+
             updatePropertiesPanel();
-            return;
         }
         
         if (!selectedElement) return;
@@ -2001,6 +2001,7 @@
 
             updateAllFolderBounds(); // Update folder bounds after moving elements
         }
+        hideSnapGuides();
         isDragging = false;
         isResizing = false;
         resizeHandle = null;
@@ -2178,6 +2179,7 @@
         selectedFolder = null;
         clickCount = 0;
         lastClickedElement = null;
+        hideSnapGuides();
     }
 
     function clearSelectionUI() {
