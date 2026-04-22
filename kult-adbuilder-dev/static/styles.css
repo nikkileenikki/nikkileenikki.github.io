@@ -41,20 +41,26 @@
     justify-content: stretch !important; /* Stretch to fill */
 }
 
+
 /* Canvas container - scrollable with constrained size, always center content */
 #canvasContainer {
     position: relative;
-    padding: 24px !important;
     background: rgba(30, 41, 59, 0.7);
     overflow: auto !important;
-    display: flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-    max-width: 100% !important;
-    max-height: 100% !important;
     width: 100% !important;
     height: 100% !important;
     box-sizing: border-box;
+}
+
+/* inner scrolling area */
+#canvasViewportInner {
+    min-width: 100%;
+    min-height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-sizing: border-box;
+    padding: 40px;
 }
 
 .text-xs { font-size: 10px !important; }  /* Was 12px */
