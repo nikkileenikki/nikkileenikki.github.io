@@ -610,16 +610,9 @@
     }
 
     function bindAlignToolEvents() {
-        $('#alignLeftBtn').on('click', function() {
-            alignSelectedElement('left');
-        });
-
-        $('#alignCenterBtn').on('click', function() {
-            alignSelectedElement('center');
-        });
-
-        $('#alignRightBtn').on('click', function() {
-            alignSelectedElement('right');
+        $('#alignCanvasPad').on('click', '.align-pad-hit', function() {
+            const mode = $(this).data('align');
+            alignSelectedElement(mode);
         });
     }
 
@@ -2460,15 +2453,62 @@
 
         saveState();
 
-        if (mode === 'left') {
-            element.x = 0;
-        } else if (mode === 'center') {
-            element.x = Math.round((canvasWidth - element.width) / 2);
-        } else if (mode === 'right') {
-            element.x = Math.round(canvasWidth - element.width);
+        const centerX = Math.round((canvasWidth - element.width) / 2);
+        const centerY = Math.round((canvasHeight - element.height) / 2);
+        const rightX = Math.round(canvasWidth - element.width);
+        const bottomY = Math.round(canvasHeight - element.height);
+
+        switch (mode) {
+            case 'left':
+                element.x = 0;
+                break;
+            case 'center':
+                element.x = centerX;
+                element.y = centerY;
+                break;
+            case 'right':
+                element.x = rightX;
+                break;
+            case 'top':
+                element.y = 0;
+                break;
+            case 'bottom':
+                element.y = bottomY;
+                break;
+            case 'top-left':
+                element.x = 0;
+                element.y = 0;
+                break;
+            case 'top-right':
+                element.x = rightX;
+                element.y = 0;
+                break;
+            case 'bottom-left':
+                element.x = 0;
+                element.y = bottomY;
+                break;
+            case 'bottom-right':
+                element.x = rightX;
+                element.y = bottomY;
+                break;
         }
 
-        $(`#${selectedElement}`).css('left', element.x + 'px');
+        // For single-axis middle positions
+        if (mode === 'top') {
+            element.x = centerX;
+        } else if (mode === 'bottom') {
+            element.x = centerX;
+        } else if (mode === 'left') {
+            element.y = centerY;
+        } else if (mode === 'right') {
+            element.y = centerY;
+        }
+
+        $(`#${selectedElement}`).css({
+            left: element.x + 'px',
+            top: element.y + 'px'
+        });
+
         updatePropertiesPanel();
     }
 
