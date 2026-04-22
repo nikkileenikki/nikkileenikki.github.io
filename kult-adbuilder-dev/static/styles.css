@@ -854,3 +854,23 @@ input, select, button, textarea, label {
     min-width: 0;
     overflow: hidden;
 }
+
+.snap-guide {
+    position: absolute;
+    pointer-events: none;
+    z-index: 9999;
+    background: rgba(59, 130, 246, 0.9);
+    box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.15);
+}
+
+.snap-guide-x {
+    top: 0;
+    bottom: 0;
+    width: 1px;
+}
+
+.snap-guide-y {
+    left: 0;
+    right: 0;
+    height: 1px;
+}
