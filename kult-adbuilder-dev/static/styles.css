@@ -44,19 +44,19 @@
 /* Canvas container - scrollable with constrained size, always center content */
 #canvasContainer {
     position: relative;
-    padding: 100px !important; /* Padding for overflow area */
-    background: rgba(30, 41, 59, 0.7); /* Dark background for overflow area */
-    overflow: auto !important; /* Scrollable when content exceeds container */
-    flex-shrink: 0 !important; /* Don't shrink */
+    padding: 24px !important;
+    background: rgba(30, 41, 59, 0.7);
+    overflow: auto !important;
     display: flex !important;
     align-items: center !important;
     justify-content: center !important;
-    /* Constrain size so it doesn't push timeline down */
     max-width: 100% !important;
     max-height: 100% !important;
     width: 100% !important;
     height: 100% !important;
+    box-sizing: border-box;
 }
+
 .text-xs { font-size: 10px !important; }  /* Was 12px */
 .text-sm { font-size: 12px !important; }  /* Was 14px */
 .text-base { font-size: 14px !important; } /* Was 16px */
@@ -836,4 +836,15 @@ input, select, button, textarea, label {
     width: 1px;
     height: 100%;
     box-shadow: 50px 0 0 rgba(255, 255, 255, 0.08);
+}
+
+#commonPropertiesGrid input[type="range"] {
+    width: 100%;
+    min-width: 0;
+    display: block;
+}
+
+#commonPropertiesGrid .opacity-inline-wrap {
+    min-width: 0;
+    overflow: hidden;
 }
