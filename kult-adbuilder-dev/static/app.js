@@ -5084,24 +5084,16 @@
     // ZOOM CONTROLS
     // ============================================
     function updateStageZoom() {
-        // Get current canvas dimensions
-        const currentWidth = canvasWidth;
-        const currentHeight = canvasHeight;
-        
-        // Update the wrapper's transform scale and dimensions
-        // Set wrapper size to scaled dimensions so it doesn't take up full space in layout
-        $canvasWrapper.css({
-            'transform': `scale(${stageZoom})`,
-            'transform-origin': 'center center',
-            'width': `${currentWidth}px`,
-            'height': `${currentHeight}px`,
-            // Use margin to compensate for transform scale space
-            'margin': `${currentHeight * (1 - stageZoom) / 2}px ${currentWidth * (1 - stageZoom) / 2}px`
-        });
-        
-        // Update zoom level display
-        $('#stageZoomInput').val(Math.round(stageZoom * 100));
-    }
+    $canvasWrapper.css({
+        transform: `scale(${stageZoom})`,
+        transformOrigin: 'center center',
+        width: `${canvasWidth}px`,
+        height: `${canvasHeight}px`,
+        margin: '0'
+    });
+
+    $('#stageZoomInput').val(parseFloat((stageZoom * 100).toFixed(2)));
+}
     
     function stageZoomIn() {
         const currentPercent = stageZoom * 100;
