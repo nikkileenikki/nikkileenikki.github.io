@@ -2459,8 +2459,21 @@
         const bottomY = Math.round(canvasHeight - element.height);
 
         switch (mode) {
+            case 'top-left':
+                element.x = 0;
+                element.y = 0;
+                break;
+            case 'top':
+                element.x = centerX;
+                element.y = 0;
+                break;
+            case 'top-right':
+                element.x = rightX;
+                element.y = 0;
+                break;
             case 'left':
                 element.x = 0;
+                element.y = centerY;
                 break;
             case 'center':
                 element.x = centerX;
@@ -2468,40 +2481,20 @@
                 break;
             case 'right':
                 element.x = rightX;
-                break;
-            case 'top':
-                element.y = 0;
-                break;
-            case 'bottom':
-                element.y = bottomY;
-                break;
-            case 'top-left':
-                element.x = 0;
-                element.y = 0;
-                break;
-            case 'top-right':
-                element.x = rightX;
-                element.y = 0;
+                element.y = centerY;
                 break;
             case 'bottom-left':
                 element.x = 0;
+                element.y = bottomY;
+                break;
+            case 'bottom':
+                element.x = centerX;
                 element.y = bottomY;
                 break;
             case 'bottom-right':
                 element.x = rightX;
                 element.y = bottomY;
                 break;
-        }
-
-        // For single-axis middle positions
-        if (mode === 'top') {
-            element.x = centerX;
-        } else if (mode === 'bottom') {
-            element.x = centerX;
-        } else if (mode === 'left') {
-            element.y = centerY;
-        } else if (mode === 'right') {
-            element.y = centerY;
         }
 
         $(`#${selectedElement}`).css({
