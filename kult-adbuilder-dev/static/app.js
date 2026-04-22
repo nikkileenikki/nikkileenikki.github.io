@@ -477,7 +477,8 @@
         $('#stageZoomIn').on('click', stageZoomIn);
         $('#stageZoomOut').on('click', stageZoomOut);
         $('#stageZoomReset').on('click', stageZoomReset);
-        $('#stageZoomInput').on('input', handleStageZoomInput);
+        $('#stageZoomInput').on('change', handleStageZoomInput);
+        $('#stageZoomInput').on('blur', handleStageZoomInput);
 
         $(document).on('keydown', function(e) {
             const $focused = $(':focus');
@@ -5103,21 +5104,17 @@
     }
     
     function stageZoomIn() {
-        if (stageZoom < 2.0) {
-            // Round to nearest 0.25 to ensure exact 25% steps
-            stageZoom = Math.round((stageZoom + 0.25) * 4) / 4;
-            stageZoom = Math.min(2.0, stageZoom);
-            updateStageZoom();
-        }
+        const currentPercent = stageZoom * 100;
+        const nextPercent = getNextZoomStep(currentPercent, 'up');
+        stageZoom = nextPercent / 100;
+        updateStageZoom();
     }
     
     function stageZoomOut() {
-        if (stageZoom > 0.25) {
-            // Round to nearest 0.25 to ensure exact 25% steps
-            stageZoom = Math.round((stageZoom - 0.25) * 4) / 4;
-            stageZoom = Math.max(0.25, stageZoom);
-            updateStageZoom();
-        }
+        const currentPercent = stageZoom * 100;
+        const nextPercent = getNextZoomStep(currentPercent, 'down');
+        stageZoom = nextPercent / 100;
+        updateStageZoom();
     }
     
     function stageZoomReset() {
@@ -5145,18 +5142,34 @@
     }
     
     function handleStageZoomInput() {
-        let value = parseInt($('#stageZoomInput').val(), 10);
+        let value = parseFloat($('#stageZoomInput').val());
 
-        if (isNaN(value)) {
-            value = Math.round(stageZoom * 100);
-        }
+        if (isNaN(value)) return;
 
         value = Math.max(25, Math.min(200, value));
 
         stageZoom = value / 100;
-        stageZoom = Math.round(stageZoom * 4) / 4;
-
         updateStageZoom();
+    }
+
+    function getNextZoomStep(currentPercent, direction) {
+        const steps = [25, 50, 75, 100, 125, 150, 175, 200];
+
+        if (direction === 'up') {
+            for (const step of steps) {
+                if (step > currentPercent) return step;
+            }
+            return 200;
+        }
+
+        if (direction === 'down') {
+            for (let i = steps.length - 1; i >= 0; i--) {
+                if (steps[i] < currentPercent) return steps[i];
+            }
+            return 25;
+        }
+
+        return currentPercent;
     }
     // ============================================
     // SAVE/LOAD PROJECT FUNCTIONS
