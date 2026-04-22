@@ -609,6 +609,20 @@
         });
     }
 
+    function bindAlignToolEvents() {
+        $('#alignLeftBtn').on('click', function() {
+            alignSelectedElement('left');
+        });
+
+        $('#alignCenterBtn').on('click', function() {
+            alignSelectedElement('center');
+        });
+
+        $('#alignRightBtn').on('click', function() {
+            alignSelectedElement('right');
+        });
+    }
+
     function initEventListeners() {
         // File upload
         $dropzone.on('click', () => $fileInput.click());
@@ -636,6 +650,7 @@
         bindShapePropertyEvents();
         bindVideoPropertyEvents();
         bindInteractionPropertyEvents();
+        bindAlignToolEvents();
         
         // Color swatches
         $(document).on('click', '.color-swatch', function() {
@@ -2337,6 +2352,7 @@
         if (!selectedElement) {
             $propertiesPanel.addClass('hidden');
             $('#propertiesLockOverlay').addClass('hidden');
+            $('#alignToolsSection').addClass('hidden');
             return;
         }
         
@@ -2393,13 +2409,17 @@
         // Update interaction UI
         updateInteractionUI(element);
         updatePropertiesLockOverlay();
+        updateAlignToolsVisibility();
     }
     
+
+    // Helper
     // Update properties panel for folders
     function updateFolderPropertiesPanel() {
         if (!selectedFolder) {
             $propertiesPanel.addClass('hidden');
             $('#propertiesLockOverlay').addClass('hidden');
+            $('#alignToolsSection').addClass('hidden');
             return;
         }
         
@@ -2407,6 +2427,7 @@
         if (!folder) {
             $propertiesPanel.addClass('hidden');
             $('#propertiesLockOverlay').addClass('hidden');
+            $('#alignToolsSection').addClass('hidden');
             return;
         }
         
@@ -2428,6 +2449,27 @@
         _log('Folder properties panel updated:', folder);
 
         updatePropertiesLockOverlay();
+    }
+
+    function alignSelectedElement(mode) {
+        if (!selectedElement) return;
+        if (isSelectedTargetLocked()) return;
+
+        const element = elements.find(el => el.id === selectedElement);
+        if (!element) return;
+
+        saveState();
+
+        if (mode === 'left') {
+            element.x = 0;
+        } else if (mode === 'center') {
+            element.x = Math.round((canvasWidth - element.width) / 2);
+        } else if (mode === 'right') {
+            element.x = Math.round(canvasWidth - element.width);
+        }
+
+        $(`#${selectedElement}`).css('left', element.x + 'px');
+        updatePropertiesPanel();
     }
 
     function fillCommonProperties(element) {
@@ -2562,6 +2604,11 @@
             onSubmit,
             onClose
         });
+    }
+
+    function updateAlignToolsVisibility() {
+        const show = !!selectedElement && !selectedFolder;
+        $('#alignToolsSection').toggleClass('hidden', !show);
     }
 
     // Common property updates
