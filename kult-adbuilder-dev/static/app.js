@@ -1779,7 +1779,7 @@
 
     function handleMouseMove(e) {
         if (!selectedElement && !selectedFolder) return;
-        
+
         const canvasOffset = $canvas.offset();
         const $canvasContainer = $('#canvasContainer').parent();
         const scrollLeft = $canvasContainer.scrollLeft() || 0;
@@ -1797,7 +1797,18 @@
                 hasSavedDragSnapshot = true;
             }
         }
-        
+
+        if (!selectedElement) {
+            hideSnapGuides();
+            return;
+        }
+
+        const element = elements.find(el => el.id === selectedElement);
+        if (!element) {
+            hideSnapGuides();
+            return;
+        }
+
         if (isDragging) {
             ensureDragSnapshotSaved(e);
 
@@ -1811,7 +1822,7 @@
 
             const { newX, newY } = computeDraggedElementPosition(pointer);
 
-            const isIndividuallySelected = selectedElement && element.folderId && !selectedFolder;
+            const isIndividuallySelected = !!(selectedElement && element.folderId && !selectedFolder);
 
             let finalX = newX;
             let finalY = newY;
@@ -1834,44 +1845,9 @@
             }
 
             updatePropertiesPanel();
-        }
-        
-        if (!selectedElement) return;
-        
-        const element = elements.find(el => el.id === selectedElement);
-        if (!element) return;
-        
-        if (isDragging) {
-            ensureDragSnapshotSaved(e);
-            // Account for zoom, scroll, and canvas offset
-            const pointer = getCanvasPointerPosition(
-                e.pageX,
-                e.pageY,
-                canvasOffset,
-                scrollLeft,
-                scrollTop
-            );
-            const { newX, newY } = computeDraggedElementPosition(pointer);
-            
-            // Calculate delta from current position
-            const deltaX = newX - element.x;
-            const deltaY = newY - element.y;
-            
-            // Check if this is an individually selected element in a folder
-            const isIndividuallySelected = selectedElement && element.folderId && !selectedFolder;
-            
-
-            if (element.folderId && !isIndividuallySelected) {
-                // Element in folder but folder is selected - move all elements
-                moveFolderByDelta(element.folderId, deltaX, deltaY);
-            } else {
-                // Element not in folder OR individually selected - move only this element
-                moveElementTo(element, newX, newY);
-            }
-            
-            updatePropertiesPanel();
         } else if (isResizing) {
-            // Account for zoom and scroll when resizing
+            hideSnapGuides();
+
             const pointer = getCanvasPointerPosition(
                 e.pageX,
                 e.pageY,
@@ -1881,12 +1857,14 @@
             );
             const mouseX = pointer.x;
             const mouseY = pointer.y;
-            
+
             const { newWidth, newHeight, newX, newY } = computeResizeResult(element, mouseX, mouseY);
 
             applyElementResize(element, newWidth, newHeight, newX, newY);
-            
+
             updatePropertiesPanel();
+        } else {
+            hideSnapGuides();
         }
     }
     
