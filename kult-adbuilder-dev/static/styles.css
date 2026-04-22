@@ -818,7 +818,6 @@ input, select, button, textarea, label {
     background: rgba(96, 165, 250, 0.18);
 }
 
-/* Grid positions */
 .align-pad-tl { left: 0; top: 0; }
 .align-pad-top { left: 33.333%; top: 0; }
 .align-pad-tr { right: 0; top: 0; }
@@ -831,7 +830,6 @@ input, select, button, textarea, label {
 .align-pad-bottom { left: 33.333%; bottom: 0; }
 .align-pad-br { right: 0; bottom: 0; }
 
-/* Optional subtle grid guide */
 .align-canvas-pad::before,
 .align-canvas-pad::after {
     content: '';
