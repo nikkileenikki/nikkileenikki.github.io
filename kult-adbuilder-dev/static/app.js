@@ -477,6 +477,7 @@
         $('#stageZoomIn').on('click', stageZoomIn);
         $('#stageZoomOut').on('click', stageZoomOut);
         $('#stageZoomReset').on('click', stageZoomReset);
+        $('#stageZoomInput').on('input', handleStageZoomInput);
 
         $(document).on('keydown', function(e) {
             const $focused = $(':focus');
@@ -5098,7 +5099,7 @@
         });
         
         // Update zoom level display
-        $('#stageZoomLevel').text(Math.round(stageZoom * 100) + '%');
+        $('#stageZoomInput').val(Math.round(stageZoom * 100));
     }
     
     function stageZoomIn() {
@@ -5143,6 +5144,20 @@
         updateStageZoom();
     }
     
+    function handleStageZoomInput() {
+        let value = parseInt($('#stageZoomInput').val(), 10);
+
+        if (isNaN(value)) {
+            value = Math.round(stageZoom * 100);
+        }
+
+        value = Math.max(25, Math.min(200, value));
+
+        stageZoom = value / 100;
+        stageZoom = Math.round(stageZoom * 4) / 4;
+
+        updateStageZoom();
+    }
     // ============================================
     // SAVE/LOAD PROJECT FUNCTIONS
     // ============================================
