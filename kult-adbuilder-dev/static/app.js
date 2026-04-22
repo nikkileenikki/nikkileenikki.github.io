@@ -1708,6 +1708,75 @@
         selectElement(id);
     }
     
+    const SNAP_THRESHOLD = 8;
+
+    function hideSnapGuides() {
+        $('#snapGuideX').addClass('hidden');
+        $('#snapGuideY').addClass('hidden');
+    }
+
+    function showSnapGuideX(x) {
+        $('#snapGuideX')
+            .removeClass('hidden')
+            .css('left', x + 'px');
+    }
+
+    function showSnapGuideY(y) {
+        $('#snapGuideY')
+            .removeClass('hidden')
+            .css('top', y + 'px');
+    }
+
+    function getSnappedElementPosition(element, proposedX, proposedY) {
+        let x = proposedX;
+        let y = proposedY;
+
+        let snappedX = false;
+        let snappedY = false;
+
+        const left = proposedX;
+        const right = proposedX + element.width;
+        const centerX = proposedX + (element.width / 2);
+
+        const top = proposedY;
+        const bottom = proposedY + element.height;
+        const centerY = proposedY + (element.height / 2);
+
+        const canvasCenterX = canvasWidth / 2;
+        const canvasCenterY = canvasHeight / 2;
+
+        const xCandidates = [
+            { dist: Math.abs(left - 0), value: 0, guide: 0 },
+            { dist: Math.abs(right - canvasWidth), value: canvasWidth - element.width, guide: canvasWidth },
+            { dist: Math.abs(centerX - canvasCenterX), value: Math.round(canvasCenterX - element.width / 2), guide: canvasCenterX }
+        ];
+
+        const yCandidates = [
+            { dist: Math.abs(top - 0), value: 0, guide: 0 },
+            { dist: Math.abs(bottom - canvasHeight), value: canvasHeight - element.height, guide: canvasHeight },
+            { dist: Math.abs(centerY - canvasCenterY), value: Math.round(canvasCenterY - element.height / 2), guide: canvasCenterY }
+        ];
+
+        const bestX = xCandidates.reduce((best, item) => item.dist < best.dist ? item : best);
+        const bestY = yCandidates.reduce((best, item) => item.dist < best.dist ? item : best);
+
+        hideSnapGuides();
+
+        if (bestX.dist <= SNAP_THRESHOLD) {
+            x = bestX.value;
+            snappedX = true;
+            showSnapGuideX(bestX.guide);
+        }
+
+        if (bestY.dist <= SNAP_THRESHOLD) {
+            y = bestY.value;
+            snappedY = true;
+            showSnapGuideY(bestY.guide);
+        }
+
+        return { x, y, snappedX, snappedY };
+}
+
     function handleMouseMove(e) {
         if (!selectedElement && !selectedFolder) return;
         
