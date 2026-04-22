@@ -789,7 +789,7 @@ input, select, button, textarea, label {
     background: transparent;
     border: none;
     color: rgb(191, 219, 254);
-    font-size: 22px;
+    font-size: 22px!important;
     line-height: 1;
     cursor: pointer;
     transition: background 0.15s ease, color 0.15s ease, transform 0.15s ease;
