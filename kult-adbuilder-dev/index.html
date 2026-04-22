@@ -45,17 +45,7 @@
                 <h1 class="text-xl font-bold mb-3 flex items-center">
                     <i class="fas fa-ad mr-2 text-blue-400"></i>
                     Ad Builder
-                </h1>
-                
-                <!-- Banner Name -->
-                <!-- <div class="mb-4 bg-gray-900 rounded-lg p-3">
-                    <label class="text-sm text-gray-400 block mb-1">Banner Name</label>
-                    <input type="text" id="bannerName" placeholder="my-banner" 
-                        class="w-full bg-gray-700 text-white rounded px-3 py-2 text-sm border border-gray-600 focus:border-blue-500 focus:outline-none"
-                        value="ad-banner">
-                    <p class="text-xs text-gray-500 mt-1">No spaces (used for ZIP filename)</p>
-                </div> -->
-                
+                </h1>                
                 <!-- Add Elements -->
                 <div class="mb-2">
                     <h2 class="text-lg font-semibold mb-3">Add Elements</h2>
@@ -118,6 +108,13 @@
                                 <label class="text-sm text-gray-400">Rotation</label>
                                 <input type="number" id="propRotation" class="w-full bg-gray-800 rounded px-3 py-2 text-sm" placeholder="degrees">
                             </div>
+                            <div>
+                                <label class="text-sm text-gray-400">Opacity</label>
+                                <div class="flex items-center gap-2">
+                                    <input type="range" id="propOpacity" class="flex-1" min="0" max="1" step="0.1" value="1">
+                                    <span id="opacityValue" class="text-xs text-gray-500 w-12 text-right">100%</span>
+                                </div>
+                            </div>
                         </div>
                         
                         <div id="alignToolsSection" class="hidden pb-3 border-b border-gray-700">
@@ -129,7 +126,7 @@
                                 <button class="align-pad-hit align-pad-tr" data-align="top-right" title="Align top right">↗</button>
 
                                 <button class="align-pad-hit align-pad-left" data-align="left" title="Align left">←</button>
-                                <button class="align-pad-hit align-pad-center" data-align="center" title="Align center">•</button>
+                                <button class="align-pad-hit align-pad-center" data-align="center" title="Align center">⊙</button>
                                 <button class="align-pad-hit align-pad-right" data-align="right" title="Align right">→</button>
 
                                 <button class="align-pad-hit align-pad-bl" data-align="bottom-left" title="Align bottom left">↙</button>
@@ -137,15 +134,6 @@
                                 <button class="align-pad-hit align-pad-br" data-align="bottom-right" title="Align bottom right">↘</button>
                             </div>
                         </div>
-                        <!-- Opacity - Always visible for both elements and folders -->
-                        <div id="opacitySection" class="pb-3">
-                            <label class="text-sm text-gray-400">Opacity</label>
-                            <div>
-                                <input type="range" id="propOpacity" class="w-full" min="0" max="1" step="0.1" value="1">
-                                <span id="opacityValue" class="text-xs text-gray-500">100%</span>
-                            </div>
-                        </div>
-                        
                         <!-- Text Properties -->
                         <div id="textProps" class="hidden space-y-2 pb-3 border-b border-gray-700">
                             <div>
@@ -554,7 +542,8 @@
                         <button id="stageZoomOut" class="bg-gray-700 hover:bg-gray-600 text-white px-3 py-1 rounded text-sm transition-colors">
                             <i class="fas fa-search-minus"></i>
                         </button>
-                        <span id="stageZoomLevel" class="text-sm text-gray-300 w-12 text-center">100%</span>
+                        <input type="number" id="stageZoomInput" class="bg-gray-700 text-white rounded px-2 py-1 text-sm w-20 text-center border border-gray-600 focus:border-blue-500 focus:outline-none" min="25" max="200" step="25" value="100">
+                        <span class="text-sm text-gray-400">%</span>
                         <button id="stageZoomIn" class="bg-gray-700 hover:bg-gray-600 text-white px-3 py-1 rounded text-sm transition-colors">
                             <i class="fas fa-search-plus"></i>
                         </button>
