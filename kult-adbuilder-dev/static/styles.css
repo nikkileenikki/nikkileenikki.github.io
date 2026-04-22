@@ -766,3 +766,52 @@ input, select, button, textarea, label {
     background-size: 12px 12px;
     filter: grayscale(0.35);
 }
+
+.align-tool-btn {
+    background: rgb(55, 65, 81);
+    border: none;
+    border-radius: 6px;
+    height: 34px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.align-tool-btn:hover {
+    background: rgb(75, 85, 99);
+}
+
+.align-icon {
+    position: relative;
+    width: 18px;
+    height: 18px;
+    display: inline-block;
+    border: 1px solid rgba(255,255,255,0.45);
+    border-radius: 2px;
+    box-sizing: border-box;
+}
+
+.align-icon::after {
+    content: '';
+    position: absolute;
+    top: 3px;
+    bottom: 3px;
+    width: 4px;
+    background: rgb(96, 165, 250);
+    border-radius: 1px;
+}
+
+.align-left-icon::after {
+    left: 2px;
+}
+
+.align-center-x-icon::after {
+    left: 50%;
+    transform: translateX(-50%);
+}
+
+.align-right-icon::after {
+    right: 2px;
+}
