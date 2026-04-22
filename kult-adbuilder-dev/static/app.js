@@ -5084,16 +5084,27 @@
     // ZOOM CONTROLS
     // ============================================
     function updateStageZoom() {
-    $canvasWrapper.css({
-        transform: `scale(${stageZoom})`,
-        transformOrigin: 'center center',
-        width: `${canvasWidth}px`,
-        height: `${canvasHeight}px`,
-        margin: '0'
-    });
+        $canvasWrapper.css({
+            transform: `scale(${stageZoom})`,
+            transformOrigin: 'center center',
+            width: `${canvasWidth}px`,
+            height: `${canvasHeight}px`,
+            margin: '0'
+        });
 
-    $('#stageZoomInput').val(parseFloat((stageZoom * 100).toFixed(2)));
-}
+        const $container = $('#canvasContainer');
+        const scaledWidth = canvasWidth * stageZoom;
+        const scaledHeight = canvasHeight * stageZoom;
+
+        const containerWidth = $container.width();
+        const containerHeight = $container.height();
+
+        const needsHorizontalScroll = scaledWidth > containerWidth;
+        const needsVerticalScroll = scaledHeight > containerHeight;
+
+        $('#canvasViewportInner').css('padding', (needsHorizontalScroll || needsVerticalScroll) ? '40px' : '24px');
+        $('#stageZoomInput').val(parseFloat((stageZoom * 100).toFixed(2)));
+    }
     
     function stageZoomIn() {
         const currentPercent = stageZoom * 100;
