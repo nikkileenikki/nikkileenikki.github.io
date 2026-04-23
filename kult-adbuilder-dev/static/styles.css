@@ -806,6 +806,16 @@ input, select, button, textarea, label {
     font-size: 18px;
     line-height: 1;
     pointer-events: none;
+    display: inline-block;
+    transform-origin: center center;
+}
+
+.align-icon-rotate-45 {
+    transform: rotate(45deg);
+}
+
+.align-icon-rotate--45 {
+    transform: rotate(-45deg);
 }
 
 .align-pad-hit:hover {
