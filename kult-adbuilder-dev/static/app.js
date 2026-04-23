@@ -4051,7 +4051,7 @@
                 break;
             case 'scaleOut':
                 props.startAt = { scale: 1 };
-                props.scale = 2;
+                props.scale = 0;
                 break;
             case 'scaleFrom':
                 const scaleFrom = customProps.scaleFrom !== undefined ? customProps.scaleFrom : 0;
@@ -4992,7 +4992,7 @@
                 break;
             case 'scaleOut':
                 props.startAt = { scale: 1 };
-                props.scale = 2;
+                props.scale = 0;
                 break;
             case 'scaleFrom':
                 const scaleFrom = customProps.scaleFrom !== undefined ? customProps.scaleFrom : 0;
