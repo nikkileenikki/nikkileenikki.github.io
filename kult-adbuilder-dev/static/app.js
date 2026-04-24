@@ -4342,11 +4342,24 @@
         return orderedElements;
     }
 
+    function compactInlineStyles(html) {
+        return html.replace(/style="\s*([\s\S]*?)"/g, function(_, css) {
+            const compact = css
+                .replace(/\s+/g, ' ')
+                .replace(/\s*;\s*/g, '; ')
+                .replace(/\s*:\s*/g, ': ')
+                .trim();
+            return `style="${compact}"`;
+        });
+    }
+
     function generateHTML(usePoliteLoad = true) {
         let elementsHtml = '';
         let animationsJs = '';
         let clickthroughJs = '';
         
+        const hasVideo = elements.some(el => el.type === 'video');
+
         // Debug: Log element z-indexes before sorting
         _log('Export - Elements before sort:', elements.map(el => ({
             id: el.id,
@@ -4768,7 +4781,7 @@
             }
         });
         
-        return `<!DOCTYPE html>
+        const html = `<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -4819,7 +4832,7 @@
 <body>
     <!-- Flashtalking API as first child in body -->
     <script src="https://cdn.flashtalking.com/frameworks/js/api/2/10/html5API.js"></script>
-    <script src="https://cdn.flashtalking.com/feeds/frameworks/js/utils/Tracker.js"></script>
+${hasVideo ? '<script src="https://cdn.flashtalking.com/feeds/frameworks/js/utils/Tracker.js"></script>' : ''}
     ${usePoliteLoad ? `
     <!-- Loader (shown while loading) -->
     <div class="loader"></div>
@@ -4940,6 +4953,7 @@
     </script>
 </body>
 </html>`;
+return compactInlineStyles(html);
     }
     
     function getAnimationPropsForExport(type, element, customProps = {}) {
