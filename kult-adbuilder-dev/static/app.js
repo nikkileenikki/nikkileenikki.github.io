@@ -4899,27 +4899,25 @@ ${hasVideo ? '<script src="https://cdn.flashtalking.com/feeds/frameworks/js/util
                 });
             });
             
+            ${hasVideo ? `
             // Video play trigger handling
             const videos = document.querySelectorAll('ft-video[data-play-trigger]');
             videos.forEach(function(video) {
                 const playTrigger = video.getAttribute('data-play-trigger');
-                
+
                 if (playTrigger === 'mouseover') {
                     video.addEventListener('mouseenter', function() {
                         this.play();
                     });
                 } else if (playTrigger === 'click') {
                     video.addEventListener('click', function(e) {
-                        // Don't toggle play/pause if clicking on video controls
-                        // Check if click is on the video controls area (bottom ~40px)
                         const videoRect = this.getBoundingClientRect();
                         const clickY = e.clientY - videoRect.top;
                         const hasControls = this.hasAttribute('controls');
-                        const controlsHeight = 40; // Approximate height of controls bar
+                        const controlsHeight = 40;
                         const clickedOnControls = hasControls && clickY > (videoRect.height - controlsHeight);
-                        
+
                         if (!clickedOnControls) {
-                            // Only toggle play/pause if not clicking on controls
                             if (this.paused) {
                                 this.play();
                             } else {
@@ -4930,6 +4928,7 @@ ${hasVideo ? '<script src="https://cdn.flashtalking.com/feeds/frameworks/js/util
                 }
                 // autoplay is handled by the autoplay attribute
             });
+            ` : ''}
             ${clickthroughJs}
             ${interactionsJs}
             
