@@ -4897,8 +4897,7 @@ ${hasVideo ? '<script src="https://cdn.flashtalking.com/feeds/frameworks/js/util
                     const clickIndex = parseInt(this.getAttribute('data-click-index')) || 1;
                     myFT.clickTag(clickIndex, url);
                 });
-            });
-            
+            });  
             ${hasVideo ? `
             // Video play trigger handling
             const videos = document.querySelectorAll('ft-video[data-play-trigger]');
@@ -4927,11 +4926,9 @@ ${hasVideo ? '<script src="https://cdn.flashtalking.com/feeds/frameworks/js/util
                     });
                 }
                 // autoplay is handled by the autoplay attribute
-            });
-            ` : ''}
+            });` : ''}
             ${clickthroughJs}
             ${interactionsJs}
-            
             // GSAP Timeline Animation
             window.mainTimeline = gsap.timeline({ repeat: ${animLoop} });
             const tl = window.mainTimeline;
