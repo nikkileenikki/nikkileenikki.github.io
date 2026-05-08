@@ -15,6 +15,7 @@ import * as deselectUI from './canvas/deselect.js';
 import * as modalKeysUI from './ui/modalKeys.js';
 import './templates/registry.js';
 import './templates/engine.js';
+import './templates/templateMode.js';
 
 const store = createStore(createBannerState());
 const history = createHistory();
