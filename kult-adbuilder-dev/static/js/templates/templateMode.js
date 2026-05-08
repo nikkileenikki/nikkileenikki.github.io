@@ -28,9 +28,13 @@ function injectTemplateToolbar() {
   const toolbarRow = canvasSize.closest('.flex');
   if (!toolbarRow || !toolbarRow.parentElement) return;
 
+  const toolbarParent = toolbarRow.parentElement;
+  toolbarParent.classList.add('flex', 'flex-wrap');
+  toolbarRow.classList.add('w-full', 'basis-full');
+
   const topRow = document.createElement('div');
   topRow.id = 'templateModeToolbar';
-  topRow.className = 'flex items-center gap-3 mb-2 overflow-x-auto whitespace-nowrap';
+  topRow.className = 'w-full basis-full flex items-center gap-3 mb-2 overflow-x-auto whitespace-nowrap';
   topRow.innerHTML = `
     <label class="text-sm text-gray-400 whitespace-nowrap">Mode:</label>
     <select id="editorModeSelect" class="bg-gray-700 rounded px-3 py-1 text-sm text-white shrink-0">
@@ -43,7 +47,7 @@ function injectTemplateToolbar() {
     </div>
   `;
 
-  toolbarRow.parentElement.insertBefore(topRow, toolbarRow);
+  toolbarParent.insertBefore(topRow, toolbarRow);
 }
 
 function injectTemplatePanel() {
