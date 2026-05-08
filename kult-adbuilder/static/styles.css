@@ -41,22 +41,28 @@
     justify-content: stretch !important; /* Stretch to fill */
 }
 
+
 /* Canvas container - scrollable with constrained size, always center content */
 #canvasContainer {
     position: relative;
-    padding: 100px !important; /* Padding for overflow area */
-    background: rgba(30, 41, 59, 0.7); /* Dark background for overflow area */
-    overflow: auto !important; /* Scrollable when content exceeds container */
-    flex-shrink: 0 !important; /* Don't shrink */
-    display: flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-    /* Constrain size so it doesn't push timeline down */
-    max-width: 100% !important;
-    max-height: 100% !important;
+    background: rgba(30, 41, 59, 0.7);
+    overflow: auto !important;
     width: 100% !important;
     height: 100% !important;
+    box-sizing: border-box;
 }
+
+/* inner scrolling area */
+#canvasViewportInner {
+    min-width: 100%;
+    min-height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-sizing: border-box;
+    padding: 40px;
+}
+
 .text-xs { font-size: 10px !important; }  /* Was 12px */
 .text-sm { font-size: 12px !important; }  /* Was 14px */
 .text-base { font-size: 14px !important; } /* Was 16px */
@@ -153,6 +159,47 @@ input, select, button, textarea, label {
 #timelineContainer::-webkit-scrollbar,
 #timelineContainer *::-webkit-scrollbar {
     display: none;
+}
+.timeline-handle {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 30px;
+    min-width: 30px;
+    height: 30px;
+    margin-right: 0px;
+    border-radius: 6px;
+    cursor: grab;
+    user-select: none;
+    flex-shrink: 0;
+}
+
+.timeline-handle:hover {
+    background: rgba(255, 255, 255, 0.08);
+}
+
+.timeline-handle:active {
+    cursor: grabbing;
+    background: rgba(255, 255, 255, 0.14);
+}
+
+#timelinePlayhead {
+    cursor: grab;
+    z-index: 30;
+}
+
+#timelinePlayhead:active {
+    cursor: grabbing;
+}
+
+/* invisible wider hit area without changing the visual look much */
+#timelinePlayhead::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: -6px;
+    right: -6px;
 }
 
 .layer-item {
@@ -313,19 +360,28 @@ input, select, button, textarea, label {
 }
 
 .timeline-track-label {
-    width: 200px;
-    padding: 5px 8px;
+    width: 250px;
+    min-width: 250px;
+    max-width: 250px;
+    box-sizing: border-box;
+    padding: 4px 8px 4px 0px;
     background: rgb(31, 41, 55);
     border-right: 1px solid rgb(55, 65, 81);
     display: flex;
     align-items: center;
     justify-content: space-between;
+    gap: 5px;
     font-size: 12px;
-    user-select: none; /* Disable text selection */
+    user-select: none;
     cursor: pointer;
     transition: background 0.2s;
+    overflow: hidden;
 }
-
+.timeline-folder-children .timeline-track-label {
+    width: 235px;
+    min-width: 235px;
+    max-width: 235px;
+}
 .timeline-track-label:hover {
     background: rgba(59, 130, 246, 0.1);
 }
@@ -521,22 +577,25 @@ input, select, button, textarea, label {
 }
 
 .timeline-folder-header {
+    width: 250px;
+    min-width: 250px;
+    max-width: 250px;
+    box-sizing: border-box;
     display: flex;
     align-items: center;
-    gap: 8px;
-    background: #4a4a52;
+    gap: 5px;
+    padding: 4px 8px 4px 0px;
+    background: rgb(31, 41, 55);
+    border-right: 1px solid rgb(55, 65, 81);
+    border-radius: 0;
     color: #fff;
-    padding: 7px 8px;
-    border-radius: 8px;
-    font-size: 13px;
+    font-size: 12px;
     cursor: pointer;
-    max-width: 300px; /* Limit width so it doesn't cover whole timeline */
-    position: relative;
-    z-index: 10;
+    overflow: hidden;
 }
 
 .timeline-folder-header:hover {
-    background: #5a5a62;
+    background: rgba(59, 130, 246, 0.1);
 }
 
 .timeline-folder-toggle {
@@ -545,11 +604,11 @@ input, select, button, textarea, label {
     cursor: pointer;
     user-select: none;
     opacity: 0.9;
-    font-size: 14px;
+    font-size: 20px;
 }
 
 .timeline-folder-children {
-    margin-left: 18px;
+    margin-left: 15px;
     min-height: 40px;
     padding: 4px 0;
     border-radius: 8px;
@@ -588,9 +647,9 @@ input, select, button, textarea, label {
 }
 
 /* Folder selection and animation styles */
-.timeline-folder.selected {
-    background-color: #5a5a62;
-    box-shadow: 0 0 0 2px #3b82f6;
+.timeline-folder.selected .timeline-folder-header {
+    background: rgba(59, 130, 246, 0.2);
+    border-right-color: rgb(59, 130, 246);
 }
 
 /* Folder animations should always be visible, even when folder is collapsed */
@@ -606,15 +665,17 @@ input, select, button, textarea, label {
 .timeline-folder-row {
     display: flex;
     align-items: stretch;
+    min-height: 38px;
+    border-bottom: 1px solid rgb(55, 65, 81);
 }
 
 .folder-track-content {
     position: relative;
-    height: 40px;
+    height: 38px;
     flex: 1;
-    background-color: rgba(0, 0, 0, 0.2);
-    border-radius: 3px;
-    margin-left: 8px;
+    background: rgb(17, 24, 39);
+    border-radius: 0;
+    margin-left: 0;
 }
 
 .folder-anim-block {
@@ -649,4 +710,181 @@ input, select, button, textarea, label {
     padding: 1px 4px;
     font-size: 12px;
     outline: none;
+}
+
+#propertiesPanel {
+    position: relative;
+}
+
+#propertiesLockOverlay {
+    position: absolute;
+    inset: 0;
+    background: rgba(17, 24, 39, 0.62);
+    backdrop-filter: blur(1px);
+    z-index: 20;
+    border-radius: 8px;
+}
+
+#propertiesLockOverlay:not(.hidden) {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.properties-lock-overlay-content {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 14px;
+    border-radius: 8px;
+    background: rgba(31, 41, 55, 0.92);
+    border: 1px solid rgba(148, 163, 184, 0.25);
+    color: rgb(226, 232, 240);
+    font-size: 12px;
+    font-weight: 600;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
+    pointer-events: none;
+}
+
+.is-locked {
+    opacity: 0.55;
+}
+
+.is-locked .timeline-handle,
+.is-locked .fa-grip-vertical {
+    opacity: 0.2;
+    cursor: not-allowed !important;
+}
+
+.layer-item.is-locked,
+.timeline-track.is-locked .timeline-track-label,
+.timeline-folder.is-locked .timeline-folder-header {
+    background-image: linear-gradient(
+        135deg,
+        rgba(255,255,255,0.03) 25%,
+        transparent 25%,
+        transparent 50%,
+        rgba(255,255,255,0.03) 50%,
+        rgba(255,255,255,0.03) 75%,
+        transparent 75%,
+        transparent
+    );
+    background-size: 12px 12px;
+    filter: grayscale(0.35);
+}
+
+#alignToolsSection label {
+    letter-spacing: 0.02em;
+}
+
+.align-canvas-pad {
+    position: relative;
+    width: 150px;
+    height: 150px;
+    margin: 0 auto;
+    background: rgb(31, 41, 55);
+    border: 1px solid rgb(75, 85, 99);
+    border-radius: 10px;
+    overflow: hidden;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    grid-template-rows: repeat(3, 1fr);
+}
+
+.align-pad-hit {
+    background: transparent;
+    border: none;
+    color: rgb(191, 219, 254);
+    cursor: pointer;
+    transition: background 0.15s ease, color 0.15s ease, transform 0.15s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.align-pad-hit i {
+    font-size: 18px;
+    line-height: 1;
+    pointer-events: none;
+    display: inline-block;
+    transform-origin: center center;
+}
+
+.align-icon-rotate-45 {
+    transform: rotate(45deg);
+}
+
+.align-icon-rotate--45 {
+    transform: rotate(-45deg);
+}
+
+.align-pad-hit:hover {
+    background: rgba(96, 165, 250, 0.12);
+    color: white;
+    transform: scale(1.03);
+}
+
+.align-pad-hit:focus {
+    outline: none;
+    background: rgba(96, 165, 250, 0.18);
+    color: white;
+}
+
+.align-pad-hit:active {
+    background: rgba(96, 165, 250, 0.24);
+}
+
+.align-canvas-pad::before,
+.align-canvas-pad::after {
+    content: '';
+    position: absolute;
+    background: rgba(255, 255, 255, 0.08);
+    pointer-events: none;
+}
+
+.align-canvas-pad::before {
+    top: 33.333%;
+    left: 0;
+    width: 100%;
+    height: 1px;
+    box-shadow: 0 50px 0 rgba(255, 255, 255, 0.08);
+}
+
+.align-canvas-pad::after {
+    left: 33.333%;
+    top: 0;
+    width: 1px;
+    height: 100%;
+    box-shadow: 50px 0 0 rgba(255, 255, 255, 0.08);
+}
+
+#commonPropertiesGrid input[type="range"] {
+    width: 100%;
+    min-width: 0;
+    display: block;
+}
+
+#commonPropertiesGrid .opacity-inline-wrap {
+    min-width: 0;
+    overflow: hidden;
+}
+
+.snap-guide {
+    position: absolute;
+    pointer-events: none;
+    z-index: 9999;
+    background: rgba(59, 130, 246, 0.9);
+    box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.15);
+}
+
+.snap-guide-x {
+    top: 0;
+    bottom: 0;
+    width: 1px;
+}
+
+.snap-guide-y {
+    left: 0;
+    right: 0;
+    height: 1px;
 }
