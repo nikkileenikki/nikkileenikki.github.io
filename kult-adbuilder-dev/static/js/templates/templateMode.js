@@ -25,18 +25,18 @@ function injectTemplateToolbar() {
   if (!bannerName || !canvasSize) return;
 
   const toolbarRow = canvasSize.closest('.flex');
-  if (!toolbarRow) return;
+  if (!toolbarRow || !toolbarRow.parentElement) return;
 
-  const wrap = document.createElement('div');
-  wrap.id = 'templateModeToolbar';
-  wrap.className = 'flex items-center space-x-2 border-l border-gray-600 pl-4';
-  wrap.innerHTML = `
+  const topRow = document.createElement('div');
+  topRow.id = 'templateModeToolbar';
+  topRow.className = 'flex items-center gap-3 mb-2 flex-wrap';
+  topRow.innerHTML = `
     <label class="text-sm text-gray-400 whitespace-nowrap">Mode:</label>
     <select id="editorModeSelect" class="bg-gray-700 rounded px-3 py-1 text-sm text-white">
       <option value="freeform">Free-form</option>
       <option value="template">Template</option>
     </select>
-    <div id="templatePickerWrap" class="hidden flex items-center space-x-2">
+    <div id="templatePickerWrap" class="hidden flex items-center gap-2 flex-wrap">
       <label class="text-sm text-gray-400 whitespace-nowrap">Template:</label>
       <select id="templateSelect" class="bg-gray-700 rounded px-3 py-1 text-sm text-white w-48"></select>
       <label class="text-sm text-gray-400 whitespace-nowrap">Size:</label>
@@ -45,7 +45,7 @@ function injectTemplateToolbar() {
     </div>
   `;
 
-  toolbarRow.appendChild(wrap);
+  toolbarRow.parentElement.insertBefore(topRow, toolbarRow);
 }
 
 function injectTemplatePanel() {
