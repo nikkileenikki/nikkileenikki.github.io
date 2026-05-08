@@ -29,12 +29,13 @@ function injectTemplateToolbar() {
   if (!toolbarRow || !toolbarRow.parentElement) return;
 
   const toolbarParent = toolbarRow.parentElement;
-  toolbarParent.classList.add('flex', 'flex-wrap');
-  toolbarRow.classList.add('w-full', 'basis-full');
+  const leftStack = document.createElement('div');
+  leftStack.id = 'templateToolbarStack';
+  leftStack.className = 'flex flex-col flex-1 min-w-0';
 
   const topRow = document.createElement('div');
   topRow.id = 'templateModeToolbar';
-  topRow.className = 'w-full basis-full flex items-center gap-3 mb-2 overflow-x-auto whitespace-nowrap';
+  topRow.className = 'flex items-center gap-3 mb-2 overflow-x-auto whitespace-nowrap';
   topRow.innerHTML = `
     <label class="text-sm text-gray-400 whitespace-nowrap">Mode:</label>
     <select id="editorModeSelect" class="bg-gray-700 rounded px-3 py-1 text-sm text-white shrink-0">
@@ -47,7 +48,11 @@ function injectTemplateToolbar() {
     </div>
   `;
 
-  toolbarParent.insertBefore(topRow, toolbarRow);
+  toolbarParent.insertBefore(leftStack, toolbarRow);
+  leftStack.appendChild(topRow);
+  leftStack.appendChild(toolbarRow);
+
+  toolbarRow.classList.add('min-w-0');
 }
 
 function injectTemplatePanel() {
