@@ -29,6 +29,8 @@ function injectTemplateToolbar() {
   if (!toolbarRow || !toolbarRow.parentElement) return;
 
   const toolbarParent = toolbarRow.parentElement;
+  toolbarParent.classList.add('items-start');
+
   const leftStack = document.createElement('div');
   leftStack.id = 'templateToolbarStack';
   leftStack.className = 'flex flex-col flex-1 min-w-0';
