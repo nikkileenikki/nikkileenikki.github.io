@@ -29,19 +29,19 @@ function injectTemplateToolbar() {
 
   const topRow = document.createElement('div');
   topRow.id = 'templateModeToolbar';
-  topRow.className = 'flex items-center gap-3 mb-2 flex-wrap';
+  topRow.className = 'flex items-center gap-3 mb-2 overflow-x-auto whitespace-nowrap';
   topRow.innerHTML = `
     <label class="text-sm text-gray-400 whitespace-nowrap">Mode:</label>
-    <select id="editorModeSelect" class="bg-gray-700 rounded px-3 py-1 text-sm text-white">
+    <select id="editorModeSelect" class="bg-gray-700 rounded px-3 py-1 text-sm text-white shrink-0">
       <option value="freeform">Free-form</option>
       <option value="template">Template</option>
     </select>
-    <div id="templatePickerWrap" class="hidden flex items-center gap-2 flex-wrap">
+    <div id="templatePickerWrap" class="hidden items-center gap-2 shrink-0">
       <label class="text-sm text-gray-400 whitespace-nowrap">Template:</label>
-      <select id="templateSelect" class="bg-gray-700 rounded px-3 py-1 text-sm text-white w-48"></select>
+      <select id="templateSelect" class="bg-gray-700 rounded px-3 py-1 text-sm text-white w-48 shrink-0"></select>
       <label class="text-sm text-gray-400 whitespace-nowrap">Size:</label>
-      <select id="templateSizeSelect" class="bg-gray-700 rounded px-3 py-1 text-sm text-white w-28"></select>
-      <button id="createTemplateBtn" class="bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-1 rounded text-sm transition-colors">Create Template</button>
+      <select id="templateSizeSelect" class="bg-gray-700 rounded px-3 py-1 text-sm text-white w-28 shrink-0"></select>
+      <button id="createTemplateBtn" class="bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-1 rounded text-sm transition-colors shrink-0">Create Template</button>
     </div>
   `;
 
@@ -212,6 +212,7 @@ function updateTemplateModeUI() {
   const picker = document.getElementById('templatePickerWrap');
   if (picker) {
     picker.classList.toggle('hidden', state.editorMode !== 'template');
+    picker.classList.toggle('flex', state.editorMode === 'template');
   }
 
   renderTemplateFields();
