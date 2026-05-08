@@ -18,6 +18,26 @@ function getTemplateModeState() {
   return window.adBuilderTemplateModeState;
 }
 
+function pinToolbarActionsToTop(toolbarParent) {
+  const candidateIds = ['clearBtn', 'importExportDropdownWrapper', 'importExportBtn'];
+
+  candidateIds.forEach(id => {
+    const el = document.getElementById(id);
+    if (!el) return;
+
+    let node = el;
+    while (node && node.parentElement && node.parentElement !== toolbarParent) {
+      node = node.parentElement;
+    }
+
+    if (node && node !== toolbarParent) {
+      node.classList.add('self-start');
+      node.style.alignSelf = 'flex-start';
+      node.style.marginTop = '0';
+    }
+  });
+}
+
 function injectTemplateToolbar() {
   if (document.getElementById('templateModeToolbar')) return;
 
@@ -55,6 +75,7 @@ function injectTemplateToolbar() {
   leftStack.appendChild(toolbarRow);
 
   toolbarRow.classList.add('min-w-0');
+  pinToolbarActionsToTop(toolbarParent);
 }
 
 function injectTemplatePanel() {
