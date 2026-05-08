@@ -11,7 +11,8 @@ function getTemplateModeState() {
     window.adBuilderTemplateModeState = {
       editorMode: 'freeform',
       activeTemplate: null,
-      activeDefinition: null
+      activeDefinition: null,
+      originalCanvasSizeOptions: null
     };
   }
   return window.adBuilderTemplateModeState;
@@ -39,9 +40,6 @@ function injectTemplateToolbar() {
     <div id="templatePickerWrap" class="hidden items-center gap-2 shrink-0">
       <label class="text-sm text-gray-400 whitespace-nowrap">Template:</label>
       <select id="templateSelect" class="bg-gray-700 rounded px-3 py-1 text-sm text-white w-48 shrink-0"></select>
-      <label class="text-sm text-gray-400 whitespace-nowrap">Size:</label>
-      <select id="templateSizeSelect" class="bg-gray-700 rounded px-3 py-1 text-sm text-white w-28 shrink-0"></select>
-      <button id="createTemplateBtn" class="bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-1 rounded text-sm transition-colors shrink-0">Create Template</button>
     </div>
   `;
 
@@ -71,8 +69,7 @@ function injectTemplatePanel() {
 function populateTemplatePicker() {
   const registry = getTemplateRegistry();
   const select = document.getElementById('templateSelect');
-  const sizeSelect = document.getElementById('templateSizeSelect');
-  if (!select || !sizeSelect) return;
+  if (!select) return;
 
   select.innerHTML = '';
   registry.forEach(template => {
@@ -81,24 +78,32 @@ function populateTemplatePicker() {
     option.textContent = template.name;
     select.appendChild(option);
   });
-
-  populateTemplateSizes();
 }
 
-function populateTemplateSizes() {
+function getAllowedSizesForTemplate(templateId) {
   const registry = getTemplateRegistry();
-  const select = document.getElementById('templateSelect');
-  const sizeSelect = document.getElementById('templateSizeSelect');
-  if (!select || !sizeSelect) return;
+  const template = registry.find(item => item.id === templateId);
+  return template?.schema?.sizes || template?.sizes || ['300x250'];
+}
 
-  const template = registry.find(item => item.id === select.value);
-  sizeSelect.innerHTML = '';
-  (template?.schema?.sizes || template?.sizes || ['300x250']).forEach(size => {
-    const option = document.createElement('option');
-    option.value = size;
-    option.textContent = size;
-    sizeSelect.appendChild(option);
-  });
+function applyTemplateCanvasSizeOptions(templateId) {
+  const state = getTemplateModeState();
+  const canvasSize = document.getElementById('canvasSize');
+  if (!canvasSize) return;
+
+  if (!state.originalCanvasSizeOptions) {
+    state.originalCanvasSizeOptions = canvasSize.innerHTML;
+  }
+
+  const sizes = getAllowedSizesForTemplate(templateId);
+  canvasSize.innerHTML = sizes.map(size => `<option value="${size}">${size}</option>`).join('');
+}
+
+function restoreFreeformCanvasSizeOptions() {
+  const state = getTemplateModeState();
+  const canvasSize = document.getElementById('canvasSize');
+  if (!canvasSize || !state.originalCanvasSizeOptions) return;
+  canvasSize.innerHTML = state.originalCanvasSizeOptions;
 }
 
 async function hydrateRegistrySchemas() {
@@ -125,13 +130,11 @@ function setTemplateCanvasSize(size) {
 
   if (!canvasSize || !customWidth || !customHeight) return;
 
-  canvasSize.value = 'custom';
+  canvasSize.value = size;
   customWidth.value = width;
   customHeight.value = height;
 
   $(canvasSize).trigger('change');
-  $(customWidth).trigger('change');
-  $(customHeight).trigger('change');
 }
 
 function buildDefaultContent(schema) {
@@ -215,6 +218,12 @@ function updateTemplateModeUI() {
     picker.classList.toggle('flex', state.editorMode === 'template');
   }
 
+  if (state.editorMode !== 'template') {
+    restoreFreeformCanvasSizeOptions();
+    state.activeTemplate = null;
+    state.activeDefinition = null;
+  }
+
   renderTemplateFields();
 }
 
@@ -222,10 +231,15 @@ async function createActiveTemplate() {
   const state = getTemplateModeState();
   const engine = getTemplateEngine();
   const templateId = document.getElementById('templateSelect')?.value;
-  const size = document.getElementById('templateSizeSelect')?.value;
+  const canvasSize = document.getElementById('canvasSize');
   const registry = getTemplateRegistry();
   const templateMeta = registry.find(item => item.id === templateId);
-  if (!templateMeta || !engine) return;
+  if (!templateMeta || !engine || !canvasSize) return;
+
+  applyTemplateCanvasSizeOptions(templateId);
+
+  const allowedSizes = getAllowedSizesForTemplate(templateId);
+  const size = allowedSizes.includes(canvasSize.value) ? canvasSize.value : allowedSizes[0];
 
   const definition = await engine.loadTemplateDefinition(templateMeta);
   state.activeDefinition = definition;
@@ -302,22 +316,28 @@ function bindTemplateModeEvents() {
       const state = getTemplateModeState();
       state.editorMode = e.target.value;
       updateTemplateModeUI();
+      if (state.editorMode === 'template') {
+        createActiveTemplate();
+      }
       return;
     }
 
     if (e.target && e.target.id === 'templateSelect') {
-      populateTemplateSizes();
+      createActiveTemplate();
+      return;
+    }
+
+    if (e.target && e.target.id === 'canvasSize') {
+      const state = getTemplateModeState();
+      if (state.editorMode === 'template' && state.activeTemplate) {
+        state.activeTemplate.size = e.target.value;
+        renderTemplateFields();
+      }
       return;
     }
 
     if (e.target && e.target.classList.contains('template-field-input')) {
       syncTemplateField(e.target.dataset.templateKey, e.target.dataset.templateType, e.target.value);
-    }
-  });
-
-  document.addEventListener('click', async function(e) {
-    if (e.target && e.target.id === 'createTemplateBtn') {
-      await createActiveTemplate();
     }
   });
 
