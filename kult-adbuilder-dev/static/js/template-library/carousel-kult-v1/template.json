@@ -1,0 +1,40 @@
+{
+  "id": "carousel-kult-v1",
+  "name": "Carousel - KULT",
+  "category": "carousel",
+  "sizes": ["300x250"],
+  "defaults": {
+    "autoplay": true,
+    "autoplay_delay": 1.5,
+    "transition_duration": 0.5,
+    "enable_swipe": true,
+    "shuffle": false
+  },
+  "variables": [
+    { "key": "cta_default", "type": "image", "required": true },
+    { "key": "cta_hover", "type": "image", "required": true },
+    { "key": "arrow_asset", "type": "image", "required": true },
+    {
+      "key": "slides",
+      "type": "repeater",
+      "required": true,
+      "min": 1,
+      "max": 4,
+      "fields": [
+        { "key": "image", "type": "image", "required": true },
+        { "key": "heading", "type": "text", "required": true },
+        { "key": "body", "type": "text", "required": true },
+        { "key": "click_url", "type": "url", "required": true },
+        { "key": "click_index", "type": "number", "required": true }
+      ]
+    }
+  ],
+  "layouts": {
+    "300x250": {
+      "width": 300,
+      "height": 250,
+      "slide_width": 300,
+      "slide_height": 250
+    }
+  }
+}
