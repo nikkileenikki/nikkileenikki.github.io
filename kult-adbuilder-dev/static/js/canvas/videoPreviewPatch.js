@@ -137,6 +137,41 @@ function setSelectedVideoStateFromInputs() {
   });
 }
 
+function getVideoControlsCheckboxes() {
+  const boxes = new Set();
+  document.querySelectorAll('#propVideoControls, input[type="checkbox"][id*="control" i], input[type="checkbox"][name*="control" i]').forEach(input => {
+    const labelText = String(input.closest('label')?.textContent || input.parentElement?.textContent || '').toLowerCase();
+    const idName = `${input.id || ''} ${input.name || ''}`.toLowerCase();
+    if (idName.includes('control') || labelText.includes('control')) boxes.add(input);
+  });
+  return Array.from(boxes);
+}
+
+function setCheckboxChecked(input, checked) {
+  if (!input) return;
+  if (input.checked === checked) return;
+  input.checked = checked;
+  input.setAttribute('aria-checked', checked ? 'true' : 'false');
+}
+
+function defaultVideoControlCheckboxes() {
+  const selectedData = getSelectedVideoElementData();
+  getVideoControlsCheckboxes().forEach(input => {
+    if (input.id === 'propVideoControls' && selectedData) {
+      if (selectedData.controls == null && selectedData.videoControls == null && selectedData.showControls == null) {
+        writeControlsFlag(selectedData, true);
+      }
+      setCheckboxChecked(input, readControlsFlag(selectedData));
+      return;
+    }
+
+    // Add Video popup/default controls should start checked.
+    if (!input.dataset.userChangedVideoControls) {
+      setCheckboxChecked(input, true);
+    }
+  });
+}
+
 function syncVideoCheckboxDefaults() {
   const selected = getSelectedVideoElement();
   const selectedData = selected ? findVideoElementData(selected.id) : null;
@@ -147,12 +182,16 @@ function syncVideoCheckboxDefaults() {
     if (selectedData.controls == null && selectedData.videoControls == null && selectedData.showControls == null) {
       writeControlsFlag(selectedData, true);
     }
-    controlsInput.checked = readControlsFlag(selectedData);
+    setCheckboxChecked(controlsInput, readControlsFlag(selectedData));
+  } else if (controlsInput) {
+    setCheckboxChecked(controlsInput, true);
   }
 
   if (selectedData && mutedInput) {
     mutedInput.checked = readMutedFlag(selectedData);
   }
+
+  defaultVideoControlCheckboxes();
 }
 
 function buildVideoPreview(videoData) {
@@ -272,6 +311,10 @@ function installVideoPreviewObserver() {
   });
 
   document.addEventListener('change', event => {
+    if (event.target && getVideoControlsCheckboxes().includes(event.target)) {
+      event.target.dataset.userChangedVideoControls = '1';
+    }
+
     if (event.target && (event.target.id === 'propVideoControls' || event.target.id === 'propVideoMuted')) {
       deferSelectedVideoPreviewRefresh();
     }
@@ -286,9 +329,11 @@ function installVideoPreviewObserver() {
   document.addEventListener('click', () => {
     window.setTimeout(() => patchCanvasVideoPreviews(), 0);
     window.setTimeout(() => syncVideoCheckboxDefaults(), 50);
+    window.setTimeout(() => defaultVideoControlCheckboxes(), 100);
   }, true);
 
   window.setInterval(() => patchCanvasVideoPreviews(), 1000);
+  window.setInterval(() => defaultVideoControlCheckboxes(), 500);
 }
 
 if (document.readyState === 'loading') {
