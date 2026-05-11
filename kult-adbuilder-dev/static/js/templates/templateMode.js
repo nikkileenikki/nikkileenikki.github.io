@@ -130,7 +130,7 @@ function clearTemplatePreview() {
 }
 
 function emptyImageDataUri() {
-  return 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw==';
+  return 'data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%221%22%20height%3D%221%22%3E%3C%2Fsvg%3E';
 }
 
 function sanitizeTemplateAssetFilename(name) {
@@ -174,6 +174,14 @@ function getTemplateAssetPreviewSrc(key) {
   return asset?.dataUrl || '';
 }
 
+function resolveTemplateImagePreviewSrc(key, currentValue) {
+  const uploadedSrc = getTemplateAssetPreviewSrc(key);
+  if (uploadedSrc) return uploadedSrc;
+  if (typeof currentValue === 'string' && currentValue.startsWith('data:') && !currentValue.includes('image/svg+xml')) return currentValue;
+  if (typeof currentValue === 'string' && currentValue.startsWith('blob:')) return currentValue;
+  return emptyImageDataUri();
+}
+
 function dataUrlToUint8Array(dataUrl) {
   const parts = String(dataUrl || '').split(',');
   const base64 = parts[1] || '';
@@ -211,7 +219,7 @@ function buildPreviewTemplateInstance(instance, definition) {
         preview.content[variable.key] = Array.from({ length: min }, (_, index) => {
           const item = {};
           (variable.fields || []).forEach(field => {
-            if (field.type === 'image') item[field.key] = emptyImageDataUri();
+            if (field.type === 'image') item[field.key] = resolveTemplateImagePreviewSrc(`${variable.key}.${index}.${field.key}`, '');
             else if (field.type === 'text') item[field.key] = field.key === 'heading' ? `Headline ${index + 1}` : `Body copy ${index + 1}`;
             else if (field.type === 'url') item[field.key] = 'https://example.com';
             else if (field.type === 'number') item[field.key] = index + 1;
@@ -221,10 +229,10 @@ function buildPreviewTemplateInstance(instance, definition) {
           return item;
         });
       } else {
-        preview.content[variable.key] = preview.content[variable.key].map(item => {
+        preview.content[variable.key] = preview.content[variable.key].map((item, index) => {
           const next = { ...(item || {}) };
           (variable.fields || []).forEach(field => {
-            if (field.type === 'image' && !next[field.key]) next[field.key] = emptyImageDataUri();
+            if (field.type === 'image') next[field.key] = resolveTemplateImagePreviewSrc(`${variable.key}.${index}.${field.key}`, next[field.key]);
           });
           return next;
         });
@@ -233,7 +241,7 @@ function buildPreviewTemplateInstance(instance, definition) {
     }
 
     if (variable.type === 'image') {
-      preview.content[variable.key] = getTemplateAssetPreviewSrc(variable.key) || emptyImageDataUri();
+      preview.content[variable.key] = resolveTemplateImagePreviewSrc(variable.key, preview.content[variable.key]);
       return;
     }
 
@@ -257,6 +265,7 @@ function buildTemplatePreviewDocument(bundle) {
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <style>
 html, body { margin:0; padding:0; width:100%; height:100%; overflow:hidden; background:transparent; }
+img[src^="data:image/svg+xml"] { opacity: 0 !important; visibility: hidden !important; }
 ${bundle.css}
 </style>
 </head>
