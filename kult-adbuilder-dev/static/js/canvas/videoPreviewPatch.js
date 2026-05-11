@@ -30,6 +30,13 @@ function getCandidateStateArrays() {
   ].filter(Array.isArray);
 }
 
+function forEachVideoStateMatch(elementId, callback) {
+  getCandidateStateArrays().forEach(elements => {
+    const match = elements.find(item => item?.id === elementId && item.type === 'video');
+    if (match) callback(match);
+  });
+}
+
 function findVideoElementData(elementId) {
   for (const elements of getCandidateStateArrays()) {
     const match = elements.find(item => item?.id === elementId && item.type === 'video');
@@ -38,8 +45,12 @@ function findVideoElementData(elementId) {
   return null;
 }
 
+function getSelectedVideoElement() {
+  return document.querySelector('.canvas-element.video-element.selected, .video-element.selected, [data-type="video"].selected, [data-element-type="video"].selected');
+}
+
 function getSelectedVideoElementData() {
-  const selected = document.querySelector('.canvas-element.video-element.selected, .video-element.selected, [data-type="video"].selected, [data-element-type="video"].selected');
+  const selected = getSelectedVideoElement();
   return selected ? findVideoElementData(selected.id) : null;
 }
 
@@ -67,6 +78,34 @@ function readVideoUrlFromDom(element) {
   return '';
 }
 
+function readControlsFlag(data) {
+  if (!data) return true;
+  if (data.controls != null) return data.controls !== false;
+  if (data.videoControls != null) return data.videoControls !== false;
+  if (data.showControls != null) return data.showControls !== false;
+  return true;
+}
+
+function readMutedFlag(data) {
+  if (!data) return true;
+  if (data.muted != null) return data.muted !== false;
+  if (data.videoMuted != null) return data.videoMuted !== false;
+  return true;
+}
+
+function writeControlsFlag(data, value) {
+  if (!data) return;
+  data.controls = value;
+  data.videoControls = value;
+  data.showControls = value;
+}
+
+function writeMutedFlag(data, value) {
+  if (!data) return;
+  data.muted = value;
+  data.videoMuted = value;
+}
+
 function normalizeVideoData(element, fromState) {
   const url = fromState?.videoUrl || readVideoUrlFromDom(element);
   if (!url) return null;
@@ -75,9 +114,9 @@ function normalizeVideoData(element, fromState) {
     id: element.id,
     videoUrl: url,
     videoName: fromState?.videoName || element.querySelector('.video-name')?.textContent || 'video1',
-    muted: fromState?.muted !== false,
-    controls: fromState?.controls !== false,
-    playTrigger: fromState?.playTrigger || 'click'
+    muted: readMutedFlag(fromState),
+    controls: readControlsFlag(fromState),
+    playTrigger: fromState?.playTrigger || fromState?.videoPlayTrigger || 'click'
   };
 }
 
@@ -86,34 +125,33 @@ function getVideoDataForElement(element) {
 }
 
 function setSelectedVideoStateFromInputs() {
-  const selectedData = getSelectedVideoElementData();
-  if (!selectedData) return;
+  const selected = getSelectedVideoElement();
+  if (!selected) return;
 
   const mutedInput = document.getElementById('propVideoMuted');
   const controlsInput = document.getElementById('propVideoControls');
 
-  if (mutedInput) selectedData.muted = Boolean(mutedInput.checked);
-  if (controlsInput) selectedData.controls = Boolean(controlsInput.checked);
+  forEachVideoStateMatch(selected.id, data => {
+    if (mutedInput) writeMutedFlag(data, Boolean(mutedInput.checked));
+    if (controlsInput) writeControlsFlag(data, Boolean(controlsInput.checked));
+  });
 }
 
 function syncVideoCheckboxDefaults() {
-  const selectedData = getSelectedVideoElementData();
+  const selected = getSelectedVideoElement();
+  const selectedData = selected ? findVideoElementData(selected.id) : null;
   const controlsInput = document.getElementById('propVideoControls');
   const mutedInput = document.getElementById('propVideoMuted');
 
-  if (selectedData && controlsInput && selectedData.controls == null) {
-    selectedData.controls = true;
-  }
-
   if (selectedData && controlsInput) {
-    controlsInput.checked = selectedData.controls !== false;
-  } else if (controlsInput && !controlsInput.dataset.videoDefaultApplied) {
-    controlsInput.checked = true;
-    controlsInput.dataset.videoDefaultApplied = '1';
+    if (selectedData.controls == null && selectedData.videoControls == null && selectedData.showControls == null) {
+      writeControlsFlag(selectedData, true);
+    }
+    controlsInput.checked = readControlsFlag(selectedData);
   }
 
   if (selectedData && mutedInput) {
-    mutedInput.checked = selectedData.muted !== false;
+    mutedInput.checked = readMutedFlag(selectedData);
   }
 }
 
@@ -122,13 +160,33 @@ function buildVideoPreview(videoData) {
   const previewUrl = normalizeFtVideoPreviewUrl(rawUrl);
   if (!previewUrl) return '';
 
-  const muted = videoData.muted !== false ? 'muted' : '';
-  const controls = videoData.controls !== false ? 'controls' : '';
+  const muted = videoData.muted ? 'muted' : '';
+  const controls = videoData.controls ? 'controls' : '';
   const autoplay = videoData.playTrigger === 'autoplay' ? 'autoplay playsinline loop' : 'playsinline';
 
   return `
-    <video class="freeform-video-preview" src="${escapeAttr(previewUrl)}" ${controls} ${muted} ${autoplay} preload="metadata" draggable="false" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;background:#000;display:block;pointer-events:none;z-index:1;"></video>
+    <video class="freeform-video-preview" src="${escapeAttr(previewUrl)}" ${controls} ${muted} ${autoplay} preload="metadata" draggable="false" style="position:absolute;left:0;top:0;width:100%;height:100%;object-fit:cover;background:#000;display:block;pointer-events:none;z-index:1;"></video>
   `;
+}
+
+function collectResizeHandles(element) {
+  const existing = Array.from(element.querySelectorAll(':scope > .resize-handle'));
+  if (existing.length) return existing;
+
+  return ['nw', 'ne', 'sw', 'se'].map(position => {
+    const handle = document.createElement('div');
+    handle.className = `resize-handle ${position}`;
+    return handle;
+  });
+}
+
+function restoreResizeHandles(element, handles) {
+  handles.forEach(handle => {
+    handle.style.position = '';
+    handle.style.zIndex = '20';
+    handle.style.flex = 'none';
+    element.appendChild(handle);
+  });
 }
 
 function patchVideoElement(element, force = false) {
@@ -142,8 +200,8 @@ function patchVideoElement(element, force = false) {
 
   const signature = JSON.stringify({
     src: previewUrl,
-    muted: videoData.muted !== false,
-    controls: videoData.controls !== false,
+    muted: Boolean(videoData.muted),
+    controls: Boolean(videoData.controls),
     playTrigger: videoData.playTrigger || 'click'
   });
 
@@ -159,16 +217,18 @@ function patchVideoElement(element, force = false) {
   element.style.backgroundColor = '#000';
   element.style.overflow = 'hidden';
   element.style.position = element.style.position || 'absolute';
+  element.style.display = 'block';
+  element.style.alignItems = '';
+  element.style.justifyContent = '';
 
-  const handles = Array.from(element.querySelectorAll('.resize-handle'));
+  const handles = collectResizeHandles(element);
   element.innerHTML = previewMarkup;
-  handles.forEach(handle => {
-    handle.style.zIndex = '2';
-    element.appendChild(handle);
-  });
+  restoreResizeHandles(element, handles);
 
   const video = element.querySelector('video.freeform-video-preview');
   if (video) {
+    video.controls = Boolean(videoData.controls);
+    video.muted = Boolean(videoData.muted);
     video.addEventListener('error', () => {
       element.dataset.videoPreviewPatched = '0';
       console.warn('[AdBuilder] Could not load video preview:', previewUrl);
@@ -183,9 +243,16 @@ function patchCanvasVideoPreviews(force = false) {
 
 function forceSelectedVideoPreviewRefresh() {
   setSelectedVideoStateFromInputs();
-  const selected = document.querySelector('.canvas-element.video-element.selected, .video-element.selected, [data-type="video"].selected, [data-element-type="video"].selected');
+  const selected = getSelectedVideoElement();
   if (selected) patchVideoElement(selected, true);
-  patchCanvasVideoPreviews(true);
+}
+
+function deferSelectedVideoPreviewRefresh() {
+  window.setTimeout(() => {
+    setSelectedVideoStateFromInputs();
+    forceSelectedVideoPreviewRefresh();
+    syncVideoCheckboxDefaults();
+  }, 0);
 }
 
 function installVideoPreviewObserver() {
@@ -206,13 +273,13 @@ function installVideoPreviewObserver() {
 
   document.addEventListener('change', event => {
     if (event.target && (event.target.id === 'propVideoControls' || event.target.id === 'propVideoMuted')) {
-      forceSelectedVideoPreviewRefresh();
+      deferSelectedVideoPreviewRefresh();
     }
   }, true);
 
   document.addEventListener('input', event => {
     if (event.target && (event.target.id === 'propVideoControls' || event.target.id === 'propVideoMuted')) {
-      forceSelectedVideoPreviewRefresh();
+      deferSelectedVideoPreviewRefresh();
     }
   }, true);
 
@@ -221,7 +288,7 @@ function installVideoPreviewObserver() {
     window.setTimeout(() => syncVideoCheckboxDefaults(), 50);
   }, true);
 
-  window.setInterval(patchCanvasVideoPreviews, 1000);
+  window.setInterval(() => patchCanvasVideoPreviews(), 1000);
 }
 
 if (document.readyState === 'loading') {
