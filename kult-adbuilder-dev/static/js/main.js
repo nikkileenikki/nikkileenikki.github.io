@@ -42,4 +42,15 @@ window.adBuilderTemplates = {
   engine: window.adBuilderTemplateEngine || null
 };
 
+if (window.JSZip && !window.JSZip.__adBuilderSuppressTemplateReadme) {
+  const originalZipFile = window.JSZip.prototype.file;
+  window.JSZip.prototype.file = function(name, data, options) {
+    if (arguments.length > 1 && String(name || '') === 'README-template-assets.txt') {
+      return this;
+    }
+    return originalZipFile.apply(this, arguments);
+  };
+  window.JSZip.__adBuilderSuppressTemplateReadme = true;
+}
+
 _log('Ad Builder Phase 1 bootstrap loaded');
