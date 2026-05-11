@@ -369,6 +369,24 @@ function getRenderableTemplateFields(schema) {
   return [...variables, ...inferred];
 }
 
+function renderTemplateImageField(variable, currentValue) {
+  const label = variable.label || variable.key;
+  const hasImage = typeof currentValue === 'string' && currentValue.trim() !== '';
+  const previewMarkup = hasImage
+    ? `<img src="${String(currentValue).replace(/"/g, '&quot;')}" alt="${label}" class="mt-2 w-full h-28 object-contain bg-gray-950 rounded border border-gray-700">`
+    : '<div class="mt-2 h-28 rounded border border-dashed border-gray-700 bg-gray-950 flex items-center justify-center text-xs text-gray-500">No image uploaded</div>';
+
+  return `
+    <label class="text-sm text-gray-300 block">${label}</label>
+    <div class="template-image-dropzone border border-dashed border-gray-600 rounded-lg px-3 py-4 text-center bg-gray-800/70 hover:bg-gray-800 transition-colors cursor-pointer" data-template-key="${variable.key}" data-template-type="image" tabindex="0" role="button">
+      <div class="text-sm text-gray-200">Drop image here</div>
+      <div class="text-xs text-gray-500 mt-1">or click to upload</div>
+      <input data-template-key="${variable.key}" data-template-type="image" type="file" accept="image/*" class="template-image-input hidden">
+      ${previewMarkup}
+    </div>
+  `;
+}
+
 function renderTemplateVariableField(variable, currentValue) {
   const label = variable.label || variable.key;
 
@@ -379,6 +397,10 @@ function renderTemplateVariableField(variable, currentValue) {
       <p class="text-xs text-gray-500">Enter JSON array for repeater content.</p>
       <textarea data-template-key="${variable.key}" data-template-type="repeater" class="template-field-input w-full bg-gray-800 rounded px-3 py-2 text-sm min-h-[160px]">${textareaValue}</textarea>
     `;
+  }
+
+  if (variable.type === 'image') {
+    return renderTemplateImageField(variable, currentValue);
   }
 
   if (variable.type === 'boolean') {
@@ -453,7 +475,18 @@ function syncTemplateField(key, type, rawValue, checkedValue) {
     state.activeTemplate.settings[key] = nextValue;
   }
 
+  renderTemplateFields();
   renderTemplatePreview();
+}
+
+function handleTemplateImageFile(key, file) {
+  if (!file || !file.type || !file.type.startsWith('image/')) return;
+
+  const reader = new FileReader();
+  reader.onload = function() {
+    syncTemplateField(key, 'image', String(reader.result || ''), false);
+  };
+  reader.readAsDataURL(file);
 }
 
 function updateTemplateModeUI() {
@@ -537,7 +570,7 @@ async function exportActiveTemplate() {
 
   const assetCandidates = [];
   Object.values(state.activeTemplate.content).forEach(value => {
-    if (typeof value === 'string' && value.trim()) assetCandidates.push(value.trim());
+    if (typeof value === 'string' && value.trim() && !value.startsWith('data:')) assetCandidates.push(value.trim());
     if (Array.isArray(value)) {
       value.forEach(item => {
         Object.values(item || {}).forEach(inner => {
@@ -552,7 +585,7 @@ async function exportActiveTemplate() {
   const instructions = assetCandidates.length
     ? `\n\nTemplate assets referenced but not bundled automatically:\n${assetCandidates.join('\n')}`
     : '';
-  zip.file('README-template-assets.txt', `Add your template asset files next to index.html before trafficking.${instructions}`);
+  zip.file('README-template-assets.txt', `Uploaded image fields are embedded as data URLs for preview right now. External template asset files still need bundling before final trafficking.${instructions}`);
 
   const blob = await zip.generateAsync({ type: 'blob' });
   const bannerName = document.getElementById('bannerName')?.value || state.activeTemplate.templateId;
@@ -585,6 +618,13 @@ function bindTemplateModeEvents() {
       return;
     }
 
+    if (e.target && e.target.classList.contains('template-image-input')) {
+      const file = e.target.files && e.target.files[0];
+      handleTemplateImageFile(e.target.dataset.templateKey, file);
+      e.target.value = '';
+      return;
+    }
+
     if (e.target && e.target.classList.contains('template-field-input')) {
       syncTemplateField(
         e.target.dataset.templateKey,
@@ -593,6 +633,35 @@ function bindTemplateModeEvents() {
         e.target.checked
       );
     }
+  });
+
+  document.addEventListener('click', function(e) {
+    const dropzone = e.target && e.target.closest ? e.target.closest('.template-image-dropzone') : null;
+    if (!dropzone) return;
+    const input = dropzone.querySelector('.template-image-input');
+    if (input) input.click();
+  });
+
+  document.addEventListener('dragover', function(e) {
+    const dropzone = e.target && e.target.closest ? e.target.closest('.template-image-dropzone') : null;
+    if (!dropzone) return;
+    e.preventDefault();
+    dropzone.classList.add('border-indigo-400');
+  });
+
+  document.addEventListener('dragleave', function(e) {
+    const dropzone = e.target && e.target.closest ? e.target.closest('.template-image-dropzone') : null;
+    if (!dropzone) return;
+    dropzone.classList.remove('border-indigo-400');
+  });
+
+  document.addEventListener('drop', function(e) {
+    const dropzone = e.target && e.target.closest ? e.target.closest('.template-image-dropzone') : null;
+    if (!dropzone) return;
+    e.preventDefault();
+    dropzone.classList.remove('border-indigo-400');
+    const file = e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0];
+    handleTemplateImageFile(dropzone.dataset.templateKey, file);
   });
 
   const exportBtn = document.getElementById('exportBtn');
