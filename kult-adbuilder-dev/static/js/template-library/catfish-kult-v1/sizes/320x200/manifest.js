@@ -12,7 +12,7 @@ FT.manifest({
         "indentDown": 0
     },
     "videos": [
-    { "name": "video1", "ref": "232227/umobile-ultra5g-revamp-10s" }
+    { "name": "video1", "ref": "{{video_url}}" }
     ],
     "trackingEvents": [
       {"name": "close", "type": "standard"}
