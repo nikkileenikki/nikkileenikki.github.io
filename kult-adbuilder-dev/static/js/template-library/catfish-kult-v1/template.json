@@ -5,7 +5,7 @@
   "defaults": {
   },
   "variables": [
-    { "key": "video_url", "type": "text", "required": true, "label": "video" },
+    { "key": "video_url", "type": "video", "required": true, "label": "Video URL" },
     { "key": "background_image", "type": "image", "required": true, "label": "background image" }
   ],
   "sizes": {
