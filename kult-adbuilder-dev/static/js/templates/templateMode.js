@@ -205,6 +205,30 @@ function buildPreviewTemplateInstance(instance, definition) {
   return preview;
 }
 
+function buildTemplatePreviewDocument(bundle) {
+  return `<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<style>
+html, body {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background: transparent;
+}
+${bundle.css}
+</style>
+</head>
+<body>
+${bundle.html}
+</body>
+</html>`;
+}
+
 async function renderTemplatePreview() {
   const state = getTemplateModeState();
   const engine = getTemplateEngine();
@@ -219,8 +243,22 @@ async function renderTemplatePreview() {
   try {
     const previewInstance = buildPreviewTemplateInstance(state.activeTemplate, state.activeDefinition);
     const bundle = await engine.renderTemplateBundle(previewInstance);
+    const previewDoc = buildTemplatePreviewDocument(bundle);
+
     layer.style.display = 'block';
-    layer.innerHTML = `<style>${bundle.css}</style>${bundle.html}`;
+    layer.innerHTML = '';
+
+    const iframe = document.createElement('iframe');
+    iframe.setAttribute('title', 'Template Preview');
+    iframe.setAttribute('scrolling', 'no');
+    iframe.style.width = '100%';
+    iframe.style.height = '100%';
+    iframe.style.border = '0';
+    iframe.style.background = 'transparent';
+    iframe.style.pointerEvents = 'none';
+    iframe.srcdoc = previewDoc;
+
+    layer.appendChild(iframe);
   } catch (err) {
     console.error('Failed to render template preview', err);
     layer.style.display = 'block';
