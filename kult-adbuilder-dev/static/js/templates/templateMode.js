@@ -91,10 +91,7 @@ function injectTemplatePanel() {
   panel.innerHTML = `
     <h2 class="text-lg font-semibold mb-3">Template Content</h2>
     <div class="space-y-3 bg-gray-900 rounded-lg p-3">
-      <div class="flex items-center justify-between gap-2">
-        <div id="templateMetaText" class="text-sm text-gray-400 min-w-0"></div>
-        <button id="templateExportBtn" type="button" class="hidden shrink-0 px-3 py-1 rounded bg-green-600 hover:bg-green-700 text-sm text-white">Export ZIP</button>
-      </div>
+      <div id="templateMetaText" class="text-sm text-gray-400 min-w-0"></div>
       <div id="templateFieldsWrap" class="space-y-3"></div>
     </div>
   `;
@@ -444,17 +441,14 @@ function renderTemplateFields() {
   const panel = document.getElementById('templateContentPanel');
   const meta = document.getElementById('templateMetaText');
   const wrap = document.getElementById('templateFieldsWrap');
-  const exportBtn = document.getElementById('templateExportBtn');
   if (!panel || !meta || !wrap) return;
 
   if (state.editorMode !== 'template' || !state.activeDefinition || !state.activeTemplate) {
     panel.classList.add('hidden');
-    if (exportBtn) exportBtn.classList.add('hidden');
     return;
   }
 
   panel.classList.remove('hidden');
-  if (exportBtn) exportBtn.classList.remove('hidden');
   meta.textContent = `${state.activeDefinition.schema.name} • ${state.activeTemplate.size}`;
 
   wrap.innerHTML = '';
@@ -600,9 +594,23 @@ async function exportActiveTemplate() {
   saveAs(blob, `${bannerName}.zip`);
 }
 
+function isTemplateExportControl(target) {
+  const el = target && target.closest ? target.closest('#importExportBtn, #exportBtn, #exportZipBtn, #downloadZipBtn, [data-action="export"], [data-export="zip"]') : null;
+  return !!el;
+}
+
 function bindTemplateModeEvents() {
   if (window.__adBuilderTemplateModeEventsBound) return;
   window.__adBuilderTemplateModeEventsBound = true;
+
+  document.addEventListener('click', function(e) {
+    const state = getTemplateModeState();
+    if (state.editorMode === 'template' && state.activeTemplate && isTemplateExportControl(e.target)) {
+      e.preventDefault();
+      e.stopImmediatePropagation();
+      void exportActiveTemplate();
+    }
+  }, true);
 
   document.addEventListener('change', function(e) {
     if (e.target && e.target.id === 'editorModeSelect') {
@@ -633,11 +641,6 @@ function bindTemplateModeEvents() {
   });
 
   document.addEventListener('click', function(e) {
-    const state = getTemplateModeState();
-    const templateExport = e.target && e.target.closest ? e.target.closest('#templateExportBtn') : null;
-    if (templateExport) { e.preventDefault(); exportActiveTemplate(); return; }
-    const exportLike = e.target && e.target.closest ? e.target.closest('#exportBtn, #exportZipBtn, #downloadZipBtn, [data-action="export"], [data-export="zip"]') : null;
-    if (exportLike && state.editorMode === 'template') { e.preventDefault(); e.stopPropagation(); exportActiveTemplate(); return; }
     const deleteBtn = e.target && e.target.closest ? e.target.closest('.template-image-delete') : null;
     if (deleteBtn) { e.preventDefault(); e.stopPropagation(); deleteTemplateImageAsset(deleteBtn.dataset.templateKey); return; }
     const dropzone = e.target && e.target.closest ? e.target.closest('.template-image-dropzone') : null;
