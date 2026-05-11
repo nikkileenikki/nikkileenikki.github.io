@@ -12,7 +12,8 @@ function getTemplateModeState() {
       editorMode: 'freeform',
       activeTemplate: null,
       activeDefinition: null,
-      originalCanvasSizeOptions: null
+      originalCanvasSizeOptions: null,
+      templateAssets: {}
     };
   }
   return window.adBuilderTemplateModeState;
@@ -134,6 +135,63 @@ function createPlaceholderSvgDataUri(label, width = 300, height = 250, fill = '#
   return `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`;
 }
 
+function sanitizeTemplateAssetFilename(name) {
+  const parts = String(name || 'asset').split('.');
+  const ext = parts.length > 1 ? '.' + parts.pop().toLowerCase() : '';
+  const base = parts.join('.') || 'asset';
+  return `${base.replace(/[^a-zA-Z0-9-_]+/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '') || 'asset'}${ext}`;
+}
+
+function ensureUniqueTemplateAssetFilename(key, originalName) {
+  const state = getTemplateModeState();
+  const desired = sanitizeTemplateAssetFilename(originalName || `${key}.png`);
+  const used = new Set(
+    Object.entries(state.templateAssets || {})
+      .filter(([assetKey]) => assetKey !== key)
+      .map(([, asset]) => asset.filename)
+      .filter(Boolean)
+  );
+
+  if (!used.has(desired)) return desired;
+
+  const dot = desired.lastIndexOf('.');
+  const base = dot >= 0 ? desired.slice(0, dot) : desired;
+  const ext = dot >= 0 ? desired.slice(dot) : '';
+  let counter = 2;
+  let candidate = `${base}-${counter}${ext}`;
+  while (used.has(candidate)) {
+    counter += 1;
+    candidate = `${base}-${counter}${ext}`;
+  }
+  return candidate;
+}
+
+function getTemplateAsset(key) {
+  const state = getTemplateModeState();
+  return state.templateAssets?.[key] || null;
+}
+
+function getTemplateAssetPreviewSrc(key) {
+  const asset = getTemplateAsset(key);
+  return asset?.dataUrl || '';
+}
+
+function dataUrlToUint8Array(dataUrl) {
+  const parts = String(dataUrl || '').split(',');
+  const base64 = parts[1] || '';
+  const binary = atob(base64);
+  const bytes = new Uint8Array(binary.length);
+  for (let i = 0; i < binary.length; i += 1) {
+    bytes[i] = binary.charCodeAt(i);
+  }
+  return bytes;
+}
+
+function buildTemplateManifest(assetEntries) {
+  const lines = assetEntries.map(asset => `  { src: ${JSON.stringify(asset.filename)}, id: ${JSON.stringify(asset.filename)} }`);
+  return `var manifest = [\n${lines.join(',\n')}\n];\n`;
+}
+
 function getTemplateSizeKeys(schema) {
   const engine = getTemplateEngine();
   return engine?.getTemplateSizeKeys ? engine.getTemplateSizeKeys(schema) : [];
@@ -182,6 +240,14 @@ function buildPreviewTemplateInstance(instance, definition) {
         });
       }
       return;
+    }
+
+    if (variable.type === 'image') {
+      const previewSrc = getTemplateAssetPreviewSrc(variable.key);
+      if (previewSrc) {
+        preview.content[variable.key] = previewSrc;
+        return;
+      }
     }
 
     if (preview.content[variable.key] === '' || preview.content[variable.key] == null) {
@@ -369,12 +435,25 @@ function getRenderableTemplateFields(schema) {
   return [...variables, ...inferred];
 }
 
-function renderTemplateImageField(variable, currentValue) {
+function renderTemplateImageField(variable) {
   const label = variable.label || variable.key;
-  const hasImage = typeof currentValue === 'string' && currentValue.trim() !== '';
-  const previewMarkup = hasImage
-    ? `<img src="${String(currentValue).replace(/"/g, '&quot;')}" alt="${label}" class="mt-2 w-full h-28 object-contain bg-gray-950 rounded border border-gray-700">`
-    : '<div class="mt-2 h-28 rounded border border-dashed border-gray-700 bg-gray-950 flex items-center justify-center text-xs text-gray-500">No image uploaded</div>';
+  const asset = getTemplateAsset(variable.key);
+  const hasImage = !!asset?.dataUrl;
+
+  if (hasImage) {
+    return `
+      <label class="text-sm text-gray-300 block">${label}</label>
+      <div class="template-image-dropzone flex items-center gap-3 border border-gray-700 rounded-lg px-3 py-2 bg-gray-800/70 cursor-pointer" data-template-key="${variable.key}" data-template-type="image" tabindex="0" role="button">
+        <input data-template-key="${variable.key}" data-template-type="image" type="file" accept="image/*" class="template-image-input hidden">
+        <img src="${String(asset.dataUrl).replace(/"/g, '&quot;')}" alt="${label}" class="w-12 h-12 object-contain bg-gray-950 rounded border border-gray-700 shrink-0">
+        <div class="min-w-0 flex-1 text-left">
+          <div class="text-sm text-gray-200 truncate">${asset.filename}</div>
+          <div class="text-xs text-gray-500">Click or drop to replace</div>
+        </div>
+        <button type="button" class="template-image-delete shrink-0 px-2 py-1 text-xs rounded bg-red-600 hover:bg-red-700 text-white" data-template-key="${variable.key}">Delete</button>
+      </div>
+    `;
+  }
 
   return `
     <label class="text-sm text-gray-300 block">${label}</label>
@@ -382,7 +461,7 @@ function renderTemplateImageField(variable, currentValue) {
       <div class="text-sm text-gray-200">Drop image here</div>
       <div class="text-xs text-gray-500 mt-1">or click to upload</div>
       <input data-template-key="${variable.key}" data-template-type="image" type="file" accept="image/*" class="template-image-input hidden">
-      ${previewMarkup}
+      <div class="mt-2 h-20 rounded border border-dashed border-gray-700 bg-gray-950 flex items-center justify-center text-xs text-gray-500">No image uploaded</div>
     </div>
   `;
 }
@@ -400,7 +479,7 @@ function renderTemplateVariableField(variable, currentValue) {
   }
 
   if (variable.type === 'image') {
-    return renderTemplateImageField(variable, currentValue);
+    return renderTemplateImageField(variable);
   }
 
   if (variable.type === 'boolean') {
@@ -479,12 +558,32 @@ function syncTemplateField(key, type, rawValue, checkedValue) {
   renderTemplatePreview();
 }
 
+function setTemplateImageAsset(key, file, dataUrl) {
+  const state = getTemplateModeState();
+  const filename = ensureUniqueTemplateAssetFilename(key, file?.name || `${key}.png`);
+  state.templateAssets[key] = {
+    filename,
+    originalName: file?.name || filename,
+    mimeType: file?.type || 'image/png',
+    dataUrl: String(dataUrl || '')
+  };
+  syncTemplateField(key, 'image', filename, false);
+}
+
+function deleteTemplateImageAsset(key) {
+  const state = getTemplateModeState();
+  if (state.templateAssets[key]) {
+    delete state.templateAssets[key];
+  }
+  syncTemplateField(key, 'image', '', false);
+}
+
 function handleTemplateImageFile(key, file) {
   if (!file || !file.type || !file.type.startsWith('image/')) return;
 
   const reader = new FileReader();
   reader.onload = function() {
-    syncTemplateField(key, 'image', String(reader.result || ''), false);
+    setTemplateImageAsset(key, file, reader.result);
   };
   reader.readAsDataURL(file);
 }
@@ -501,6 +600,7 @@ function updateTemplateModeUI() {
     restoreFreeformCanvasSizeOptions();
     state.activeTemplate = null;
     state.activeDefinition = null;
+    state.templateAssets = {};
     clearTemplatePreview();
   }
 
@@ -531,6 +631,7 @@ async function createActiveTemplate() {
     content: buildDefaultContent(definition.schema),
     settings: { ...(definition.schema.defaults || {}) }
   };
+  state.templateAssets = {};
 
   setTemplateCanvasSize(size);
   renderTemplateFields();
@@ -546,6 +647,7 @@ function buildTemplateExportHtml(bundle, size) {
 <meta name="ad.size" content="width=${width},height=${height}">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>${bundle.template.schema.name}</title>
+<script src="manifest.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/gsap.min.js"></script>
 <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
 <style>${bundle.css}</style>
@@ -568,9 +670,20 @@ async function exportActiveTemplate() {
   const zip = new JSZip();
   zip.file('index.html', html);
 
+  const bundledAssets = [];
+  Object.entries(state.templateAssets || {}).forEach(([, asset]) => {
+    if (!asset?.filename || !asset?.dataUrl) return;
+    zip.file(asset.filename, dataUrlToUint8Array(asset.dataUrl), { binary: true });
+    bundledAssets.push({ filename: asset.filename, mimeType: asset.mimeType || '' });
+  });
+
+  zip.file('manifest.js', buildTemplateManifest(bundledAssets));
+
   const assetCandidates = [];
   Object.values(state.activeTemplate.content).forEach(value => {
-    if (typeof value === 'string' && value.trim() && !value.startsWith('data:')) assetCandidates.push(value.trim());
+    if (typeof value === 'string' && value.trim() && !value.startsWith('data:') && !bundledAssets.find(asset => asset.filename === value.trim())) {
+      assetCandidates.push(value.trim());
+    }
     if (Array.isArray(value)) {
       value.forEach(item => {
         Object.values(item || {}).forEach(inner => {
@@ -583,9 +696,9 @@ async function exportActiveTemplate() {
   });
 
   const instructions = assetCandidates.length
-    ? `\n\nTemplate assets referenced but not bundled automatically:\n${assetCandidates.join('\n')}`
+    ? `\n\nExternal template assets still referenced but not bundled automatically:\n${assetCandidates.join('\n')}`
     : '';
-  zip.file('README-template-assets.txt', `Uploaded image fields are embedded as data URLs for preview right now. External template asset files still need bundling before final trafficking.${instructions}`);
+  zip.file('README-template-assets.txt', `Template image uploads are bundled as files and listed in manifest.js.${instructions}`);
 
   const blob = await zip.generateAsync({ type: 'blob' });
   const bannerName = document.getElementById('bannerName')?.value || state.activeTemplate.templateId;
@@ -636,6 +749,14 @@ function bindTemplateModeEvents() {
   });
 
   document.addEventListener('click', function(e) {
+    const deleteBtn = e.target && e.target.closest ? e.target.closest('.template-image-delete') : null;
+    if (deleteBtn) {
+      e.preventDefault();
+      e.stopPropagation();
+      deleteTemplateImageAsset(deleteBtn.dataset.templateKey);
+      return;
+    }
+
     const dropzone = e.target && e.target.closest ? e.target.closest('.template-image-dropzone') : null;
     if (!dropzone) return;
     const input = dropzone.querySelector('.template-image-input');
