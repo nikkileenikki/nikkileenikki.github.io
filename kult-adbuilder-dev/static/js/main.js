@@ -17,6 +17,7 @@ import './templates/registry.js';
 import './templates/engine.js';
 import './templates/templateMode.js';
 import './templates/manifestPatch.js';
+import './templates/schemaHydrationPatch.js';
 import './canvas/videoPreviewPatch.js';
 
 const store = createStore(createBannerState());
