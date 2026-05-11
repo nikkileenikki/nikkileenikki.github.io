@@ -157,6 +157,8 @@ function setCheckboxChecked(input, checked) {
 function defaultVideoControlCheckboxes() {
   const selectedData = getSelectedVideoElementData();
   getVideoControlsCheckboxes().forEach(input => {
+    if (input.dataset.userChangedVideoControls === '1') return;
+
     if (input.id === 'propVideoControls' && selectedData) {
       if (selectedData.controls == null && selectedData.videoControls == null && selectedData.showControls == null) {
         writeControlsFlag(selectedData, true);
@@ -165,10 +167,7 @@ function defaultVideoControlCheckboxes() {
       return;
     }
 
-    // Add Video popup/default controls should start checked.
-    if (!input.dataset.userChangedVideoControls) {
-      setCheckboxChecked(input, true);
-    }
+    setCheckboxChecked(input, true);
   });
 }
 
@@ -178,12 +177,12 @@ function syncVideoCheckboxDefaults() {
   const controlsInput = document.getElementById('propVideoControls');
   const mutedInput = document.getElementById('propVideoMuted');
 
-  if (selectedData && controlsInput) {
+  if (selectedData && controlsInput && controlsInput.dataset.userChangedVideoControls !== '1') {
     if (selectedData.controls == null && selectedData.videoControls == null && selectedData.showControls == null) {
       writeControlsFlag(selectedData, true);
     }
     setCheckboxChecked(controlsInput, readControlsFlag(selectedData));
-  } else if (controlsInput) {
+  } else if (controlsInput && controlsInput.dataset.userChangedVideoControls !== '1') {
     setCheckboxChecked(controlsInput, true);
   }
 
