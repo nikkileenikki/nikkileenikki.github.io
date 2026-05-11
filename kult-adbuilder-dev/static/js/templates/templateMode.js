@@ -129,6 +129,16 @@ function clearTemplatePreview() {
   }
 }
 
+function createMissingImagesSvgDataUri(lines, width = 300, height = 250) {
+  const safeLines = (Array.isArray(lines) ? lines : []).map(line => String(line || '').replace(/[&<>]/g, ''));
+  const bulletLines = safeLines.map((line, index) => {
+    const y = 34 + index * 18;
+    return `<text x="14" y="${y}" font-family="Arial, sans-serif" font-size="12" fill="#E5E7EB">• ${line}</text>`;
+  }).join('');
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}"><rect width="100%" height="100%" fill="#111827" fill-opacity="0.08"/><rect x="4" y="4" width="${width - 8}" height="${height - 8}" rx="8" fill="none" stroke="#9CA3AF" stroke-dasharray="6 4"/><text x="14" y="16" font-family="Arial, sans-serif" font-size="11" font-weight="700" fill="#D1D5DB">Missing images</text>${bulletLines}</svg>`;
+  return `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`;
+}
+
 function createPlaceholderSvgDataUri(label, width = 300, height = 250, fill = '#374151', textColor = '#E5E7EB') {
   const safeLabel = String(label || '').replace(/[&<>]/g, '');
   const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}"><rect width="100%" height="100%" fill="${fill}"/><rect x="1" y="1" width="${width - 2}" height="${height - 2}" fill="none" stroke="#6B7280" stroke-dasharray="6 4"/><text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" font-family="Arial, sans-serif" font-size="18" fill="${textColor}">${safeLabel}</text></svg>`;
