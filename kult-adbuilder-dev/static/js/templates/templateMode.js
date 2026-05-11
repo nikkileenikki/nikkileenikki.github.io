@@ -595,7 +595,7 @@ async function exportActiveTemplate() {
 }
 
 function isTemplateExportControl(target) {
-  const el = target && target.closest ? target.closest('#importExportBtn, #exportBtn, #exportZipBtn, #downloadZipBtn, [data-action="export"], [data-export="zip"]') : null;
+  const el = target && target.closest ? target.closest('#exportBtn, #exportZipBtn, #downloadZipBtn, [data-action="export"], [data-export="zip"]') : null;
   return !!el;
 }
 
