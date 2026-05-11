@@ -1,7 +1,7 @@
 {
   "id": "catfish-v1",
   "name": "Catfish Banner",
-  "category": "standard",
+  "category": "catfish",
   "defaults": {
   },
   "variables": [
