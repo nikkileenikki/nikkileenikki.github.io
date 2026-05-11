@@ -51,6 +51,15 @@ div, img, svg {
 	top: 0;
 	left: 0;
 }
+.cta{
+	top: 175px;
+    left: 15px;
+    font-family: sans-serif;
+    font-weight: bold;
+    padding: 8px 10px;
+    background-color: #e41111;
+    color: #fff;
+}
 .click {
     position: absolute;
     width: 100%;
