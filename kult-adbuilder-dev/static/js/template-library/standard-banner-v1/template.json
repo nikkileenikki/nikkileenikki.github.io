@@ -13,7 +13,7 @@
     { "key": "background_image", "type": "image", "required": true, "label": "background image" },
     { "key": "logo_image", "type": "image", "required": true, "label": "logo image" },
     { "key": "product_image", "type": "image", "required": true, "label": "product image" },
-    { "key": "ctacta_texttext", "type": "text", "required": true, "label": "cta text" }
+    { "key": "cta_text", "type": "text", "required": true, "label": "cta text" }
   ],
   "sizes": {
     "300x250": {
