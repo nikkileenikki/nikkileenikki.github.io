@@ -207,15 +207,39 @@ function buildVideoPreview(videoData) {
   `;
 }
 
-function collectResizeHandles(element) {
-  const existing = Array.from(element.querySelectorAll(':scope > .resize-handle'));
-  if (existing.length) return existing;
+function createCleanResizeHandle(position) {
+  const handle = document.createElement('div');
+  handle.className = `resize-handle ${position}`;
+  return handle;
+}
 
-  return ['nw', 'ne', 'sw', 'se'].map(position => {
-    const handle = document.createElement('div');
-    handle.className = `resize-handle ${position}`;
-    return handle;
+function getHandlePosition(handle) {
+  if (handle.classList.contains('nw')) return 'nw';
+  if (handle.classList.contains('ne')) return 'ne';
+  if (handle.classList.contains('sw')) return 'sw';
+  if (handle.classList.contains('se')) return 'se';
+  return '';
+}
+
+function sanitizeResizeHandle(handle, position) {
+  const clean = createCleanResizeHandle(position);
+  clean.dataset.videoPreviewCleanHandle = '1';
+  return clean;
+}
+
+function collectResizeHandles(element) {
+  const byPosition = new Map();
+  Array.from(element.querySelectorAll(':scope > .resize-handle')).forEach(handle => {
+    const position = getHandlePosition(handle);
+    if (!position) return;
+    byPosition.set(position, sanitizeResizeHandle(handle, position));
   });
+
+  ['nw', 'ne', 'sw', 'se'].forEach(position => {
+    if (!byPosition.has(position)) byPosition.set(position, createCleanResizeHandle(position));
+  });
+
+  return ['nw', 'ne', 'sw', 'se'].map(position => byPosition.get(position));
 }
 
 function restoreResizeHandles(element, handles) {
@@ -225,6 +249,9 @@ function restoreResizeHandles(element, handles) {
     const isSw = handle.classList.contains('sw');
     const isSe = handle.classList.contains('se');
 
+    handle.innerHTML = '';
+    handle.textContent = '';
+    handle.removeAttribute('style');
     handle.style.position = 'absolute';
     handle.style.width = '10px';
     handle.style.height = '10px';
@@ -303,6 +330,7 @@ function patchVideoElement(element, force = false) {
 
   if (!force && element.dataset.videoPreviewSignature === signature && element.querySelector('video.freeform-video-preview')) {
     applyControlsToVideoElement(element);
+    restoreResizeHandles(element, collectResizeHandles(element));
     return;
   }
 
