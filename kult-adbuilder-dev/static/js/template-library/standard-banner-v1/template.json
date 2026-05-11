@@ -3,11 +3,6 @@
   "name": "Standard Banner",
   "category": "standard",
   "defaults": {
-    "autoplay": true,
-    "autoplay_delay": 1.5,
-    "transition_duration": 0.5,
-    "enable_swipe": true,
-    "shuffle": false
   },
   "variables": [
     { "key": "background_image", "type": "image", "required": true, "label": "background image" },
