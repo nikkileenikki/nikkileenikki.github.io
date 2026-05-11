@@ -91,7 +91,10 @@ function injectTemplatePanel() {
   panel.innerHTML = `
     <h2 class="text-lg font-semibold mb-3">Template Content</h2>
     <div class="space-y-3 bg-gray-900 rounded-lg p-3">
-      <div id="templateMetaText" class="text-sm text-gray-400"></div>
+      <div class="flex items-center justify-between gap-2">
+        <div id="templateMetaText" class="text-sm text-gray-400 min-w-0"></div>
+        <button id="templateExportBtn" type="button" class="hidden shrink-0 px-3 py-1 rounded bg-green-600 hover:bg-green-700 text-sm text-white">Export ZIP</button>
+      </div>
       <div id="templateFieldsWrap" class="space-y-3"></div>
     </div>
   `;
@@ -129,20 +132,8 @@ function clearTemplatePreview() {
   }
 }
 
-function createMissingImagesSvgDataUri(lines, width = 300, height = 250) {
-  const safeLines = (Array.isArray(lines) ? lines : []).map(line => String(line || '').replace(/[&<>]/g, ''));
-  const bulletLines = safeLines.map((line, index) => {
-    const y = 34 + index * 18;
-    return `<text x="14" y="${y}" font-family="Arial, sans-serif" font-size="12" fill="#E5E7EB">• ${line}</text>`;
-  }).join('');
-  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}"><rect width="100%" height="100%" fill="#111827" fill-opacity="0.08"/><rect x="4" y="4" width="${width - 8}" height="${height - 8}" rx="8" fill="none" stroke="#9CA3AF" stroke-dasharray="6 4"/><text x="14" y="16" font-family="Arial, sans-serif" font-size="11" font-weight="700" fill="#D1D5DB">Missing images</text>${bulletLines}</svg>`;
-  return `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`;
-}
-
-function createPlaceholderSvgDataUri(label, width = 300, height = 250, fill = '#374151', textColor = '#E5E7EB') {
-  const safeLabel = String(label || '').replace(/[&<>]/g, '');
-  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}"><rect width="100%" height="100%" fill="${fill}"/><rect x="1" y="1" width="${width - 2}" height="${height - 2}" fill="none" stroke="#6B7280" stroke-dasharray="6 4"/><text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" font-family="Arial, sans-serif" font-size="18" fill="${textColor}">${safeLabel}</text></svg>`;
-  return `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`;
+function emptyImageDataUri() {
+  return 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw==';
 }
 
 function sanitizeTemplateAssetFilename(name) {
@@ -197,11 +188,6 @@ function dataUrlToUint8Array(dataUrl) {
   return bytes;
 }
 
-function buildTemplateManifest(assetEntries) {
-  const lines = assetEntries.map(asset => `  { src: ${JSON.stringify(asset.filename)}, id: ${JSON.stringify(asset.filename)} }`);
-  return `var manifest = [\n${lines.join(',\n')}\n];\n`;
-}
-
 function getTemplateSizeKeys(schema) {
   const engine = getTemplateEngine();
   return engine?.getTemplateSizeKeys ? engine.getTemplateSizeKeys(schema) : [];
@@ -220,11 +206,6 @@ function getTemplateLayout(schema, size) {
 function buildPreviewTemplateInstance(instance, definition) {
   const preview = JSON.parse(JSON.stringify(instance));
   const schema = definition.schema || {};
-  const sizeConfig = getTemplateSizeConfig(schema, instance.size) || {};
-  const layout = getTemplateLayout(schema, instance.size) || {};
-  const baseWidth = layout.slide_width || layout.width || sizeConfig.width || 300;
-  const baseHeight = layout.slide_height || layout.height || sizeConfig.height || 250;
-  const missingImageKeys = [];
 
   (schema.variables || []).forEach(variable => {
     if (variable.type === 'repeater') {
@@ -233,54 +214,41 @@ function buildPreviewTemplateInstance(instance, definition) {
         preview.content[variable.key] = Array.from({ length: min }, (_, index) => {
           const item = {};
           (variable.fields || []).forEach(field => {
-            if (field.type === 'image') {
-              item[field.key] = createPlaceholderSvgDataUri(`Slide ${index + 1}`, baseWidth, baseHeight);
-            } else if (field.type === 'text') {
-              item[field.key] = field.key === 'heading' ? `Headline ${index + 1}` : `Body copy ${index + 1}`;
-            } else if (field.type === 'url') {
-              item[field.key] = 'https://example.com';
-            } else if (field.type === 'number') {
-              item[field.key] = index + 1;
-            } else if (field.type === 'boolean') {
-              item[field.key] = false;
-            } else {
-              item[field.key] = '';
-            }
+            if (field.type === 'image') item[field.key] = emptyImageDataUri();
+            else if (field.type === 'text') item[field.key] = field.key === 'heading' ? `Headline ${index + 1}` : `Body copy ${index + 1}`;
+            else if (field.type === 'url') item[field.key] = 'https://example.com';
+            else if (field.type === 'number') item[field.key] = index + 1;
+            else if (field.type === 'boolean') item[field.key] = false;
+            else item[field.key] = '';
           });
           return item;
+        });
+      } else {
+        preview.content[variable.key] = preview.content[variable.key].map(item => {
+          const next = { ...(item || {}) };
+          (variable.fields || []).forEach(field => {
+            if (field.type === 'image' && !next[field.key]) next[field.key] = emptyImageDataUri();
+          });
+          return next;
         });
       }
       return;
     }
 
     if (variable.type === 'image') {
-      const previewSrc = getTemplateAssetPreviewSrc(variable.key);
-      if (previewSrc) {
-        preview.content[variable.key] = previewSrc;
-      } else {
-        preview.content[variable.key] = '';
-        missingImageKeys.push(variable.key);
-      }
+      preview.content[variable.key] = getTemplateAssetPreviewSrc(variable.key) || emptyImageDataUri();
       return;
     }
 
     if (preview.content[variable.key] === '' || preview.content[variable.key] == null) {
-      if (variable.type === 'text') {
-        preview.content[variable.key] = variable.label || variable.key;
-      } else if (variable.type === 'number') {
-        preview.content[variable.key] = variable.default ?? 1;
-      } else if (variable.type === 'url') {
-        preview.content[variable.key] = 'https://example.com';
-      } else if (variable.type === 'boolean') {
-        preview.content[variable.key] = Boolean(variable.default);
-      }
+      if (variable.type === 'text') preview.content[variable.key] = variable.label || variable.key;
+      else if (variable.type === 'number') preview.content[variable.key] = variable.default ?? 1;
+      else if (variable.type === 'url') preview.content[variable.key] = 'https://example.com';
+      else if (variable.type === 'boolean') preview.content[variable.key] = Boolean(variable.default);
     }
   });
 
-    preview.content.__missing_images_list = missingImageKeys.length
-    ? createMissingImagesSvgDataUri(missingImageKeys, baseWidth, baseHeight)
-    : '';
-
+  preview.content.__missing_images_list = '';
   return preview;
 }
 
@@ -291,14 +259,7 @@ function buildTemplatePreviewDocument(bundle) {
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <style>
-html, body {
-  margin: 0;
-  padding: 0;
-  width: 100%;
-  height: 100%;
-  overflow: hidden;
-  background: transparent;
-}
+html, body { margin:0; padding:0; width:100%; height:100%; overflow:hidden; background:transparent; }
 ${bundle.css}
 </style>
 </head>
@@ -372,9 +333,7 @@ function applyTemplateCanvasSizeOptions(templateId) {
   const canvasSize = document.getElementById('canvasSize');
   if (!canvasSize) return;
 
-  if (!state.originalCanvasSizeOptions) {
-    state.originalCanvasSizeOptions = canvasSize.innerHTML;
-  }
+  if (!state.originalCanvasSizeOptions) state.originalCanvasSizeOptions = canvasSize.innerHTML;
 
   const sizes = getAllowedSizesForTemplate(templateId);
   canvasSize.innerHTML = sizes.map(size => `<option value="${size}">${size}</option>`).join('');
@@ -394,11 +353,8 @@ async function hydrateRegistrySchemas() {
 
   await Promise.all(registry.map(async template => {
     if (template.schema) return;
-    try {
-      template.schema = await engine.loadTemplateSchema(template);
-    } catch (err) {
-      console.error('Failed to load template schema', template.id, err);
-    }
+    try { template.schema = await engine.loadTemplateSchema(template); }
+    catch (err) { console.error('Failed to load template schema', template.id, err); }
   }));
 }
 
@@ -407,28 +363,21 @@ function setTemplateCanvasSize(size) {
   const canvasSize = document.getElementById('canvasSize');
   const customWidth = document.getElementById('customWidth');
   const customHeight = document.getElementById('customHeight');
-
   if (!canvasSize || !customWidth || !customHeight) return;
-
   canvasSize.value = size;
   customWidth.value = width;
   customHeight.value = height;
-
-  $(canvasSize).trigger('change');
+  if (window.$) $(canvasSize).trigger('change');
+  else canvasSize.dispatchEvent(new Event('change', { bubbles: true }));
 }
 
 function buildDefaultContent(schema) {
   const content = {};
   (schema.variables || []).forEach(variable => {
-    if (variable.type === 'repeater') {
-      content[variable.key] = [];
-    } else if (variable.type === 'boolean') {
-      content[variable.key] = Boolean(variable.default);
-    } else if (variable.default != null) {
-      content[variable.key] = variable.default;
-    } else {
-      content[variable.key] = '';
-    }
+    if (variable.type === 'repeater') content[variable.key] = [];
+    else if (variable.type === 'boolean') content[variable.key] = Boolean(variable.default);
+    else if (variable.default != null) content[variable.key] = variable.default;
+    else content[variable.key] = '';
   });
   return content;
 }
@@ -464,55 +413,30 @@ function renderTemplateImageField(variable) {
           <div class="text-xs text-gray-500">Click or drop to replace</div>
         </div>
         <button type="button" class="template-image-delete shrink-0 px-2 py-1 text-xs rounded bg-red-600 hover:bg-red-700 text-white" data-template-key="${variable.key}">Delete</button>
-      </div>
-    `;
+      </div>`;
   }
 
   return `
     <label class="text-sm text-gray-300 block">${label}</label>
-    <div class="template-image-dropzone border border-dashed border-gray-600 rounded-lg px-3 py-4 text-center bg-gray-800/70 hover:bg-gray-800 transition-colors cursor-pointer" data-template-key="${variable.key}" data-template-type="image" tabindex="0" role="button">
+    <div class="template-image-dropzone border border-gray-700 rounded-lg px-3 py-4 text-center bg-gray-800/70 hover:bg-gray-800 transition-colors cursor-pointer" data-template-key="${variable.key}" data-template-type="image" tabindex="0" role="button">
       <div class="text-sm text-gray-200">Drop image here</div>
       <div class="text-xs text-gray-500 mt-1">or click to upload</div>
       <input data-template-key="${variable.key}" data-template-type="image" type="file" accept="image/*" class="template-image-input hidden">
-      <div class="mt-2 h-20 rounded border border-dashed border-gray-700 bg-gray-950 flex items-center justify-center text-xs text-gray-500">No image uploaded</div>
-    </div>
-  `;
+    </div>`;
 }
 
 function renderTemplateVariableField(variable, currentValue) {
   const label = variable.label || variable.key;
-
   if (variable.type === 'repeater') {
     const textareaValue = JSON.stringify(currentValue || [], null, 2);
-    return `
-      <label class="text-sm text-gray-300 block">${label}</label>
-      <p class="text-xs text-gray-500">Enter JSON array for repeater content.</p>
-      <textarea data-template-key="${variable.key}" data-template-type="repeater" class="template-field-input w-full bg-gray-800 rounded px-3 py-2 text-sm min-h-[160px]">${textareaValue}</textarea>
-    `;
+    return `<label class="text-sm text-gray-300 block">${label}</label><p class="text-xs text-gray-500">Enter JSON array for repeater content.</p><textarea data-template-key="${variable.key}" data-template-type="repeater" class="template-field-input w-full bg-gray-800 rounded px-3 py-2 text-sm min-h-[160px]">${textareaValue}</textarea>`;
   }
-
-  if (variable.type === 'image') {
-    return renderTemplateImageField(variable);
-  }
-
-  if (variable.type === 'boolean') {
-    return `
-      <label class="flex items-center gap-2 text-sm text-gray-300">
-        <input data-template-key="${variable.key}" data-template-type="boolean" type="checkbox" class="template-field-input" ${currentValue ? 'checked' : ''}>
-        <span>${label}</span>
-      </label>
-    `;
-  }
-
+  if (variable.type === 'image') return renderTemplateImageField(variable);
+  if (variable.type === 'boolean') return `<label class="flex items-center gap-2 text-sm text-gray-300"><input data-template-key="${variable.key}" data-template-type="boolean" type="checkbox" class="template-field-input" ${currentValue ? 'checked' : ''}><span>${label}</span></label>`;
   const inputType = variable.type === 'number' ? 'number' : 'text';
   const safeValue = currentValue == null ? '' : String(currentValue).replace(/"/g, '&quot;');
   const helper = variable.inferred ? '<p class="text-xs text-gray-500">Auto-added from template defaults.</p>' : '';
-
-  return `
-    <label class="text-sm text-gray-300 block">${label}</label>
-    ${helper}
-    <input data-template-key="${variable.key}" data-template-type="${variable.type}" type="${inputType}" class="template-field-input w-full bg-gray-800 rounded px-3 py-2 text-sm" value="${safeValue}">
-  `;
+  return `<label class="text-sm text-gray-300 block">${label}</label>${helper}<input data-template-key="${variable.key}" data-template-type="${variable.type}" type="${inputType}" class="template-field-input w-full bg-gray-800 rounded px-3 py-2 text-sm" value="${safeValue}">`;
 }
 
 function renderTemplateFields() {
@@ -520,14 +444,17 @@ function renderTemplateFields() {
   const panel = document.getElementById('templateContentPanel');
   const meta = document.getElementById('templateMetaText');
   const wrap = document.getElementById('templateFieldsWrap');
+  const exportBtn = document.getElementById('templateExportBtn');
   if (!panel || !meta || !wrap) return;
 
   if (state.editorMode !== 'template' || !state.activeDefinition || !state.activeTemplate) {
     panel.classList.add('hidden');
+    if (exportBtn) exportBtn.classList.add('hidden');
     return;
   }
 
   panel.classList.remove('hidden');
+  if (exportBtn) exportBtn.classList.remove('hidden');
   meta.textContent = `${state.activeDefinition.schema.name} • ${state.activeTemplate.size}`;
 
   wrap.innerHTML = '';
@@ -535,7 +462,7 @@ function renderTemplateFields() {
   fields.forEach(variable => {
     const fieldWrap = document.createElement('div');
     fieldWrap.className = 'space-y-1';
-    const currentValue = state.activeTemplate.content.hasOwnProperty(variable.key)
+    const currentValue = Object.prototype.hasOwnProperty.call(state.activeTemplate.content, variable.key)
       ? state.activeTemplate.content[variable.key]
       : state.activeTemplate.settings?.[variable.key];
     fieldWrap.innerHTML = renderTemplateVariableField(variable, currentValue);
@@ -546,26 +473,15 @@ function renderTemplateFields() {
 function syncTemplateField(key, type, rawValue, checkedValue) {
   const state = getTemplateModeState();
   if (!state.activeTemplate) return;
-
   let nextValue = rawValue;
   if (type === 'repeater') {
-    try {
-      nextValue = JSON.parse(rawValue || '[]');
-    } catch (err) {
-      console.warn('Invalid repeater JSON for', key, err);
-      return;
-    }
-  } else if (type === 'number') {
-    nextValue = rawValue === '' ? '' : Number(rawValue);
-  } else if (type === 'boolean') {
-    nextValue = Boolean(checkedValue);
-  }
+    try { nextValue = JSON.parse(rawValue || '[]'); }
+    catch (err) { console.warn('Invalid repeater JSON for', key, err); return; }
+  } else if (type === 'number') nextValue = rawValue === '' ? '' : Number(rawValue);
+  else if (type === 'boolean') nextValue = Boolean(checkedValue);
 
-  if (state.activeTemplate.content.hasOwnProperty(key)) {
-    state.activeTemplate.content[key] = nextValue;
-  } else {
-    state.activeTemplate.settings[key] = nextValue;
-  }
+  if (Object.prototype.hasOwnProperty.call(state.activeTemplate.content, key)) state.activeTemplate.content[key] = nextValue;
+  else state.activeTemplate.settings[key] = nextValue;
 
   renderTemplateFields();
   renderTemplatePreview();
@@ -574,30 +490,20 @@ function syncTemplateField(key, type, rawValue, checkedValue) {
 function setTemplateImageAsset(key, file, dataUrl) {
   const state = getTemplateModeState();
   const filename = ensureUniqueTemplateAssetFilename(key, file?.name || `${key}.png`);
-  state.templateAssets[key] = {
-    filename,
-    originalName: file?.name || filename,
-    mimeType: file?.type || 'image/png',
-    dataUrl: String(dataUrl || '')
-  };
+  state.templateAssets[key] = { filename, originalName: file?.name || filename, mimeType: file?.type || 'image/png', dataUrl: String(dataUrl || '') };
   syncTemplateField(key, 'image', filename, false);
 }
 
 function deleteTemplateImageAsset(key) {
   const state = getTemplateModeState();
-  if (state.templateAssets[key]) {
-    delete state.templateAssets[key];
-  }
+  if (state.templateAssets[key]) delete state.templateAssets[key];
   syncTemplateField(key, 'image', '', false);
 }
 
 function handleTemplateImageFile(key, file) {
   if (!file || !file.type || !file.type.startsWith('image/')) return;
-
   const reader = new FileReader();
-  reader.onload = function() {
-    setTemplateImageAsset(key, file, reader.result);
-  };
+  reader.onload = function() { setTemplateImageAsset(key, file, reader.result); };
   reader.readAsDataURL(file);
 }
 
@@ -608,7 +514,6 @@ function updateTemplateModeUI() {
     picker.classList.toggle('hidden', state.editorMode !== 'template');
     picker.classList.toggle('flex', state.editorMode === 'template');
   }
-
   if (state.editorMode !== 'template') {
     restoreFreeformCanvasSizeOptions();
     state.activeTemplate = null;
@@ -616,7 +521,6 @@ function updateTemplateModeUI() {
     state.templateAssets = {};
     clearTemplatePreview();
   }
-
   renderTemplateFields();
   renderTemplatePreview();
 }
@@ -631,21 +535,12 @@ async function createActiveTemplate() {
   if (!templateMeta || !engine || !canvasSize) return;
 
   applyTemplateCanvasSizeOptions(templateId);
-
   const allowedSizes = getAllowedSizesForTemplate(templateId);
   const size = allowedSizes.includes(canvasSize.value) ? canvasSize.value : allowedSizes[0];
-
   const definition = await engine.loadTemplateDefinition(templateMeta, size);
   state.activeDefinition = definition;
-  state.activeTemplate = {
-    mode: 'template',
-    templateId: templateMeta.id,
-    size,
-    content: buildDefaultContent(definition.schema),
-    settings: { ...(definition.schema.defaults || {}) }
-  };
+  state.activeTemplate = { mode: 'template', templateId: templateMeta.id, size, content: buildDefaultContent(definition.schema), settings: { ...(definition.schema.defaults || {}) } };
   state.templateAssets = {};
-
   setTemplateCanvasSize(size);
   renderTemplateFields();
   renderTemplatePreview();
@@ -660,7 +555,6 @@ function buildTemplateExportHtml(bundle, size) {
 <meta name="ad.size" content="width=${width},height=${height}">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>${bundle.template.schema.name}</title>
-<script src="manifest.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/gsap.min.js"></script>
 <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
 <style>${bundle.css}</style>
@@ -673,103 +567,79 @@ ${bundle.html}
 </html>`;
 }
 
+async function loadTemplateManifestFile(bundle, size) {
+  const templateMeta = bundle?.template?.meta;
+  if (!templateMeta?.basePath || !size) return '';
+  const manifestPath = `${templateMeta.basePath}/sizes/${size}/manifest.js`;
+  try {
+    const response = await fetch(manifestPath, { cache: 'no-store' });
+    if (!response.ok) return '';
+    return response.text();
+  } catch (err) {
+    console.warn('[AdBuilder] Template manifest.js not found:', manifestPath, err);
+    return '';
+  }
+}
+
 async function exportActiveTemplate() {
   const state = getTemplateModeState();
   const engine = getTemplateEngine();
   if (!state.activeTemplate || !engine) return;
-
   const bundle = await engine.renderTemplateBundle(state.activeTemplate);
   const html = buildTemplateExportHtml(bundle, state.activeTemplate.size);
   const zip = new JSZip();
   zip.file('index.html', html);
-
-  const bundledAssets = [];
   Object.entries(state.templateAssets || {}).forEach(([, asset]) => {
     if (!asset?.filename || !asset?.dataUrl) return;
     zip.file(asset.filename, dataUrlToUint8Array(asset.dataUrl), { binary: true });
-    bundledAssets.push({ filename: asset.filename, mimeType: asset.mimeType || '' });
   });
-
-  zip.file('manifest.js', buildTemplateManifest(bundledAssets));
-
-  const assetCandidates = [];
-  Object.values(state.activeTemplate.content).forEach(value => {
-    if (typeof value === 'string' && value.trim() && !value.startsWith('data:') && !bundledAssets.find(asset => asset.filename === value.trim())) {
-      assetCandidates.push(value.trim());
-    }
-    if (Array.isArray(value)) {
-      value.forEach(item => {
-        Object.values(item || {}).forEach(inner => {
-          if (typeof inner === 'string' && /\.(png|jpe?g|gif|svg|webp|mp4)$/i.test(inner.trim())) {
-            assetCandidates.push(inner.trim());
-          }
-        });
-      });
-    }
-  });
-
-  const instructions = assetCandidates.length
-    ? `\n\nExternal template assets still referenced but not bundled automatically:\n${assetCandidates.join('\n')}`
-    : '';
-  zip.file('README-template-assets.txt', `Template image uploads are bundled as files and listed in manifest.js.${instructions}`);
-
+  const templateManifest = await loadTemplateManifestFile(bundle, state.activeTemplate.size);
+  if (templateManifest) zip.file('manifest.js', templateManifest);
   const blob = await zip.generateAsync({ type: 'blob' });
   const bannerName = document.getElementById('bannerName')?.value || state.activeTemplate.templateId;
   saveAs(blob, `${bannerName}.zip`);
 }
 
 function bindTemplateModeEvents() {
+  if (window.__adBuilderTemplateModeEventsBound) return;
+  window.__adBuilderTemplateModeEventsBound = true;
+
   document.addEventListener('change', function(e) {
     if (e.target && e.target.id === 'editorModeSelect') {
       const state = getTemplateModeState();
       state.editorMode = e.target.value;
       updateTemplateModeUI();
-      if (state.editorMode === 'template') {
-        createActiveTemplate();
-      }
+      if (state.editorMode === 'template') createActiveTemplate();
       return;
     }
-
-    if (e.target && e.target.id === 'templateSelect') {
-      createActiveTemplate();
-      return;
-    }
-
+    if (e.target && e.target.id === 'templateSelect') { createActiveTemplate(); return; }
     if (e.target && e.target.id === 'canvasSize') {
       const state = getTemplateModeState();
-      if (state.editorMode === 'template' && state.activeTemplate) {
+      if (state.editorMode === 'template' && state.activeTemplate && e.target.value !== state.activeTemplate.size) {
         state.activeTemplate.size = e.target.value;
         createActiveTemplate();
       }
       return;
     }
-
     if (e.target && e.target.classList.contains('template-image-input')) {
       const file = e.target.files && e.target.files[0];
       handleTemplateImageFile(e.target.dataset.templateKey, file);
       e.target.value = '';
       return;
     }
-
     if (e.target && e.target.classList.contains('template-field-input')) {
-      syncTemplateField(
-        e.target.dataset.templateKey,
-        e.target.dataset.templateType,
-        e.target.value,
-        e.target.checked
-      );
+      syncTemplateField(e.target.dataset.templateKey, e.target.dataset.templateType, e.target.value, e.target.checked);
     }
   });
 
   document.addEventListener('click', function(e) {
+    const state = getTemplateModeState();
+    const templateExport = e.target && e.target.closest ? e.target.closest('#templateExportBtn') : null;
+    if (templateExport) { e.preventDefault(); exportActiveTemplate(); return; }
+    const exportLike = e.target && e.target.closest ? e.target.closest('#exportBtn, #exportZipBtn, #downloadZipBtn, [data-action="export"], [data-export="zip"]') : null;
+    if (exportLike && state.editorMode === 'template') { e.preventDefault(); e.stopPropagation(); exportActiveTemplate(); return; }
     const deleteBtn = e.target && e.target.closest ? e.target.closest('.template-image-delete') : null;
-    if (deleteBtn) {
-      e.preventDefault();
-      e.stopPropagation();
-      deleteTemplateImageAsset(deleteBtn.dataset.templateKey);
-      return;
-    }
-
+    if (deleteBtn) { e.preventDefault(); e.stopPropagation(); deleteTemplateImageAsset(deleteBtn.dataset.templateKey); return; }
     const dropzone = e.target && e.target.closest ? e.target.closest('.template-image-dropzone') : null;
     if (!dropzone) return;
     const input = dropzone.querySelector('.template-image-input');
@@ -794,38 +664,26 @@ function bindTemplateModeEvents() {
     if (!dropzone) return;
     e.preventDefault();
     dropzone.classList.remove('border-indigo-400');
-    const file = e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0];
+    const file = e.dataTransfer?.files?.[0];
     handleTemplateImageFile(dropzone.dataset.templateKey, file);
   });
-
-  const exportBtn = document.getElementById('exportBtn');
-  if (exportBtn) {
-    exportBtn.addEventListener('click', async function(e) {
-      const state = getTemplateModeState();
-      if (state.editorMode !== 'template' || !state.activeTemplate) return;
-      e.preventDefault();
-      e.stopImmediatePropagation();
-      try {
-        await exportActiveTemplate();
-      } catch (err) {
-        console.error('Template export failed', err);
-        alert('Template export failed. Check console for details.');
-      }
-    }, true);
-  }
 }
 
 async function initTemplateMode() {
   injectTemplateToolbar();
   injectTemplatePanel();
+  bindTemplateModeEvents();
   await hydrateRegistrySchemas();
   populateTemplatePicker();
+  const state = getTemplateModeState();
+  const modeSelect = document.getElementById('editorModeSelect');
+  if (modeSelect) modeSelect.value = state.editorMode;
+  const templateSelect = document.getElementById('templateSelect');
+  if (templateSelect && !templateSelect.value && templateSelect.options.length) templateSelect.value = templateSelect.options[0].value;
   updateTemplateModeUI();
-  bindTemplateModeEvents();
 }
 
-if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', initTemplateMode);
-} else {
-  initTemplateMode();
-}
+window.adBuilderTemplateMode = { init: initTemplateMode, exportActiveTemplate, renderTemplatePreview, createActiveTemplate };
+
+if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', initTemplateMode);
+else initTemplateMode();
