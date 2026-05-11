@@ -98,6 +98,114 @@ function injectTemplatePanel() {
   leftCol.appendChild(panel);
 }
 
+function ensureTemplatePreviewLayer() {
+  const canvas = document.getElementById('canvas');
+  if (!canvas) return null;
+
+  let layer = document.getElementById('templatePreviewLayer');
+  if (!layer) {
+    layer = document.createElement('div');
+    layer.id = 'templatePreviewLayer';
+    layer.style.position = 'absolute';
+    layer.style.left = '0';
+    layer.style.top = '0';
+    layer.style.width = '100%';
+    layer.style.height = '100%';
+    layer.style.zIndex = '0';
+    layer.style.pointerEvents = 'none';
+    layer.style.overflow = 'hidden';
+    canvas.appendChild(layer);
+  }
+
+  return layer;
+}
+
+function clearTemplatePreview() {
+  const layer = document.getElementById('templatePreviewLayer');
+  if (layer) {
+    layer.innerHTML = '';
+    layer.style.display = 'none';
+  }
+}
+
+function createPlaceholderSvgDataUri(label, width = 300, height = 250, fill = '#374151', textColor = '#E5E7EB') {
+  const safeLabel = String(label || '').replace(/[&<>]/g, '');
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}"><rect width="100%" height="100%" fill="${fill}"/><rect x="1" y="1" width="${width - 2}" height="${height - 2}" fill="none" stroke="#6B7280" stroke-dasharray="6 4"/><text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" font-family="Arial, sans-serif" font-size="18" fill="${textColor}">${safeLabel}</text></svg>`;
+  return `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`;
+}
+
+function buildPreviewTemplateInstance(instance, definition) {
+  const preview = JSON.parse(JSON.stringify(instance));
+  const schema = definition.schema || {};
+  const layout = schema.layouts?.[instance.size] || { width: 300, height: 250, slide_width: 300, slide_height: 250 };
+
+  (schema.variables || []).forEach(variable => {
+    if (variable.type === 'repeater') {
+      const min = Math.max(variable.min || 1, 1);
+      if (!Array.isArray(preview.content[variable.key]) || preview.content[variable.key].length === 0) {
+        preview.content[variable.key] = Array.from({ length: min }, (_, index) => {
+          const item = {};
+          (variable.fields || []).forEach(field => {
+            if (field.type === 'image') {
+              item[field.key] = createPlaceholderSvgDataUri(`Slide ${index + 1}`, layout.slide_width || layout.width || 300, layout.slide_height || layout.height || 250);
+            } else if (field.type === 'text') {
+              item[field.key] = field.key === 'heading' ? `Headline ${index + 1}` : `Body copy ${index + 1}`;
+            } else if (field.type === 'url') {
+              item[field.key] = 'https://example.com';
+            } else if (field.type === 'number') {
+              item[field.key] = index + 1;
+            } else {
+              item[field.key] = '';
+            }
+          });
+          return item;
+        });
+      }
+      return;
+    }
+
+    if (!preview.content[variable.key]) {
+      if (variable.type === 'image') {
+        const label = variable.key.replace(/_/g, ' ');
+        const width = variable.key.includes('arrow') ? 48 : 120;
+        const height = variable.key.includes('arrow') ? 48 : 36;
+        preview.content[variable.key] = createPlaceholderSvgDataUri(label, width, height);
+      } else if (variable.type === 'text') {
+        preview.content[variable.key] = variable.key;
+      } else if (variable.type === 'number') {
+        preview.content[variable.key] = 1;
+      } else if (variable.type === 'url') {
+        preview.content[variable.key] = 'https://example.com';
+      }
+    }
+  });
+
+  return preview;
+}
+
+async function renderTemplatePreview() {
+  const state = getTemplateModeState();
+  const engine = getTemplateEngine();
+  const layer = ensureTemplatePreviewLayer();
+  if (!layer) return;
+
+  if (state.editorMode !== 'template' || !state.activeTemplate || !state.activeDefinition || !engine) {
+    clearTemplatePreview();
+    return;
+  }
+
+  try {
+    const previewInstance = buildPreviewTemplateInstance(state.activeTemplate, state.activeDefinition);
+    const bundle = await engine.renderTemplateBundle(previewInstance);
+    layer.style.display = 'block';
+    layer.innerHTML = `<style>${bundle.css}</style>${bundle.html}`;
+  } catch (err) {
+    console.error('Failed to render template preview', err);
+    layer.style.display = 'block';
+    layer.innerHTML = '<div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(17,24,39,0.65);color:#e5e7eb;font:14px Arial,sans-serif;">Template preview unavailable</div>';
+  }
+}
+
 function populateTemplatePicker() {
   const registry = getTemplateRegistry();
   const select = document.getElementById('templateSelect');
@@ -231,15 +339,18 @@ function syncTemplateField(key, type, rawValue) {
     } catch (err) {
       console.warn('Invalid repeater JSON for', key, err);
     }
+    renderTemplatePreview();
     return;
   }
 
   if (state.activeTemplate.content.hasOwnProperty(key)) {
     state.activeTemplate.content[key] = rawValue;
+    renderTemplatePreview();
     return;
   }
 
   state.activeTemplate.settings[key] = type === 'number' ? Number(rawValue) : rawValue;
+  renderTemplatePreview();
 }
 
 function updateTemplateModeUI() {
@@ -254,9 +365,11 @@ function updateTemplateModeUI() {
     restoreFreeformCanvasSizeOptions();
     state.activeTemplate = null;
     state.activeDefinition = null;
+    clearTemplatePreview();
   }
 
   renderTemplateFields();
+  renderTemplatePreview();
 }
 
 async function createActiveTemplate() {
@@ -285,6 +398,7 @@ async function createActiveTemplate() {
 
   setTemplateCanvasSize(size);
   renderTemplateFields();
+  renderTemplatePreview();
 }
 
 function buildTemplateExportHtml(bundle, size) {
@@ -364,6 +478,7 @@ function bindTemplateModeEvents() {
       if (state.editorMode === 'template' && state.activeTemplate) {
         state.activeTemplate.size = e.target.value;
         renderTemplateFields();
+        renderTemplatePreview();
       }
       return;
     }
