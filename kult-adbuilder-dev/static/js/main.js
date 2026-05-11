@@ -21,6 +21,7 @@ import './templates/manifestPatch.js';
 import './templates/schemaHydrationPatch.js';
 import './templates/previewAssetBasePatch.js';
 import './templates/exportAssetBundlePatch.js';
+import './templates/videoFieldPatch.js';
 import './canvas/videoPreviewPatch.js';
 
 const store = createStore(createBannerState());
