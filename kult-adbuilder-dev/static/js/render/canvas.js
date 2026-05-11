@@ -25,24 +25,29 @@ function normalizePreviewVideoUrl(url = '') {
     const trimmed = String(url || '').trim();
     if (!trimmed) return '';
     if (/^(https?:|blob:|data:)/i.test(trimmed)) return trimmed;
-    return trimmed;
+
+    const cleanPath = trimmed
+        .replace(/^\/+/, '')
+        .replace(/\.mp4(?:[?#].*)?$/i, '');
+
+    return `https://cdn.flashtalking.com/${cleanPath}.mp4`;
 }
 
 function buildVideoPreviewMarkup(element, playText) {
     const videoUrl = normalizePreviewVideoUrl(element.videoUrl);
     const videoName = element.videoName || 'video1';
     const mutedAttr = element.muted !== false ? 'muted' : '';
-    const controlsAttr = element.controls ? 'controls' : '';
+    const controlsAttr = 'controls';
     const autoplayAttr = element.playTrigger === 'autoplay' ? 'autoplay playsinline loop' : 'playsinline';
 
     if (videoUrl) {
         return `
-            <video class="freeform-video-preview" src="${escapeAttr(videoUrl)}" ${mutedAttr} ${controlsAttr} ${autoplayAttr} preload="metadata" style="width:100%;height:100%;object-fit:cover;display:block;background:#000;pointer-events:none;"></video>
+            <video class="freeform-video-preview" src="${escapeAttr(videoUrl)}" ${mutedAttr} ${controlsAttr} ${autoplayAttr} preload="metadata" style="width:100%;height:100%;object-fit:cover;display:block;background:#000;pointer-events:auto;"></video>
             <div class="freeform-video-fallback" style="display:none;text-align:center;width:100%;padding:0 8px;box-sizing:border-box;overflow:hidden;pointer-events:none;">
                 <i class="fas fa-video" style="font-size:32px;margin-bottom:8px;"></i>
                 <div>${escapeAttr(videoName)}</div>
                 <div style="font-size:11px;opacity:0.7;word-break:break-all;overflow:hidden;">${escapeAttr(videoUrl)}</div>
-                <div style="font-size:11px;margin-top:4px;">${playText} ${element.muted ? '🔇 Muted' : '🔊 Sound'} ${element.controls ? '⚙ Controls' : ''}</div>
+                <div style="font-size:11px;margin-top:4px;">${playText} ${element.muted ? '🔇 Muted' : '🔊 Sound'} ⚙ Controls</div>
             </div>
         `;
     }
@@ -52,7 +57,7 @@ function buildVideoPreviewMarkup(element, playText) {
             <i class="fas fa-video" style="font-size:32px;margin-bottom:8px;"></i>
             <div>${escapeAttr(videoName)}</div>
             <div style="font-size:11px;opacity:0.7;word-break:break-all;overflow:hidden;">No video URL</div>
-            <div style="font-size:11px;margin-top:4px;">${playText} ${element.muted ? '🔇 Muted' : '🔊 Sound'} ${element.controls ? '⚙ Controls' : ''}</div>
+            <div style="font-size:11px;margin-top:4px;">${playText} ${element.muted ? '🔇 Muted' : '🔊 Sound'} ⚙ Controls</div>
         </div>
     `;
 }
