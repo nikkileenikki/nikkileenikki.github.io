@@ -234,14 +234,24 @@ function restoreResizeHandles(element, handles) {
     handle.style.maxHeight = '10px';
     handle.style.padding = '0';
     handle.style.margin = '0';
-    handle.style.flex = '0 0 10px';
-    handle.style.zIndex = '20';
+    handle.style.flex = 'none';
+    handle.style.zIndex = '999';
     handle.style.boxSizing = 'border-box';
+    handle.style.pointerEvents = 'auto';
+    handle.style.background = 'rgb(59, 130, 246)';
+    handle.style.border = '1px solid white';
+    handle.style.borderRadius = '50%';
+    handle.style.display = 'block';
 
-    handle.style.left = isNw || isSw ? '-5px' : '';
-    handle.style.right = isNe || isSe ? '-5px' : '';
-    handle.style.top = isNw || isNe ? '-5px' : '';
-    handle.style.bottom = isSw || isSe ? '-5px' : '';
+    handle.style.left = isNw || isSw ? '-5px' : 'auto';
+    handle.style.right = isNe || isSe ? '-5px' : 'auto';
+    handle.style.top = isNw || isNe ? '-5px' : 'auto';
+    handle.style.bottom = isSw || isSe ? '-5px' : 'auto';
+
+    if (isNw) handle.style.cursor = 'nw-resize';
+    if (isNe) handle.style.cursor = 'ne-resize';
+    if (isSw) handle.style.cursor = 'sw-resize';
+    if (isSe) handle.style.cursor = 'se-resize';
 
     element.appendChild(handle);
   });
@@ -356,6 +366,10 @@ function deferSelectedVideoPreviewRefresh() {
     forceSelectedVideoPreviewRefresh();
     syncVideoCheckboxDefaults();
   }, 0);
+  window.setTimeout(() => {
+    setSelectedVideoStateFromInputs();
+    forceSelectedVideoPreviewRefresh();
+  }, 80);
 }
 
 function installVideoPreviewObserver() {
