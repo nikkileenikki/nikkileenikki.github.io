@@ -22,6 +22,7 @@ import './templates/schemaHydrationPatch.js';
 import './templates/previewAssetBasePatch.js';
 import './templates/exportAssetBundlePatch.js';
 import './templates/videoFieldPatch.js';
+import './templates/landingUrlFieldPatch.js';
 import './canvas/videoPreviewPatch.js';
 
 const store = createStore(createBannerState());
