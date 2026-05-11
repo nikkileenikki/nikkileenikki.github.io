@@ -17,6 +17,46 @@ export function calculateFolderBounds({ folderId, groups, elements, canvasWidth,
     };
 }
 
+function escapeAttr(value = '') {
+    return String(value).replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
+
+function normalizePreviewVideoUrl(url = '') {
+    const trimmed = String(url || '').trim();
+    if (!trimmed) return '';
+    if (/^(https?:|blob:|data:)/i.test(trimmed)) return trimmed;
+    return trimmed;
+}
+
+function buildVideoPreviewMarkup(element, playText) {
+    const videoUrl = normalizePreviewVideoUrl(element.videoUrl);
+    const videoName = element.videoName || 'video1';
+    const mutedAttr = element.muted !== false ? 'muted' : '';
+    const controlsAttr = element.controls ? 'controls' : '';
+    const autoplayAttr = element.playTrigger === 'autoplay' ? 'autoplay playsinline loop' : 'playsinline';
+
+    if (videoUrl) {
+        return `
+            <video class="freeform-video-preview" src="${escapeAttr(videoUrl)}" ${mutedAttr} ${controlsAttr} ${autoplayAttr} preload="metadata" style="width:100%;height:100%;object-fit:cover;display:block;background:#000;pointer-events:none;"></video>
+            <div class="freeform-video-fallback" style="display:none;text-align:center;width:100%;padding:0 8px;box-sizing:border-box;overflow:hidden;pointer-events:none;">
+                <i class="fas fa-video" style="font-size:32px;margin-bottom:8px;"></i>
+                <div>${escapeAttr(videoName)}</div>
+                <div style="font-size:11px;opacity:0.7;word-break:break-all;overflow:hidden;">${escapeAttr(videoUrl)}</div>
+                <div style="font-size:11px;margin-top:4px;">${playText} ${element.muted ? '🔇 Muted' : '🔊 Sound'} ${element.controls ? '⚙ Controls' : ''}</div>
+            </div>
+        `;
+    }
+
+    return `
+        <div style="text-align:center;width:100%;padding:0 8px;box-sizing:border-box;overflow:hidden;pointer-events:none;">
+            <i class="fas fa-video" style="font-size:32px;margin-bottom:8px;"></i>
+            <div>${escapeAttr(videoName)}</div>
+            <div style="font-size:11px;opacity:0.7;word-break:break-all;overflow:hidden;">No video URL</div>
+            <div style="font-size:11px;margin-top:4px;">${playText} ${element.muted ? '🔇 Muted' : '🔊 Sound'} ${element.controls ? '⚙ Controls' : ''}</div>
+        </div>
+    `;
+}
+
 export function createElementDOM({ element, getAbsolutePosition }) {
     const pos = getAbsolutePosition({ element });
     let $element;
@@ -163,6 +203,7 @@ export function createElementDOM({ element, getAbsolutePosition }) {
             element.playTrigger === 'autoplay' ? '▶ Autoplay' :
             element.playTrigger === 'mouseover' ? '🖱 On Hover' :
             '👆 On Click';
+        const previewMarkup = buildVideoPreviewMarkup(element, playText);
 
         $element = $(`
             <div class="canvas-element video-element" id="${element.id}" style="
@@ -183,20 +224,21 @@ export function createElementDOM({ element, getAbsolutePosition }) {
                 font-size: 14px;
                 border: 2px solid #e53e3e;
             ">
-                <div style="text-align: center; width: 100%; padding: 0 8px; box-sizing: border-box; overflow: hidden;">
-                    <i class="fas fa-video" style="font-size: 32px; margin-bottom: 8px;"></i>
-                    <div>${element.videoName}</div>
-                    <div style="font-size: 11px; opacity: 0.7; word-break: break-all; overflow: hidden;">${element.videoUrl}</div>
-                    <div style="font-size: 11px; margin-top: 4px;">
-                        ${playText} ${element.muted ? '🔇 Muted' : '🔊 Sound'} ${element.controls ? '⚙ Controls' : ''}
-                    </div>
-                </div>
+                ${previewMarkup}
                 <div class="resize-handle nw"></div>
                 <div class="resize-handle ne"></div>
                 <div class="resize-handle sw"></div>
                 <div class="resize-handle se"></div>
             </div>
         `);
+
+        const $video = $element.find('video.freeform-video-preview');
+        if ($video.length) {
+            $video.on('error', function() {
+                $(this).hide();
+                $element.find('.freeform-video-fallback').css('display', 'block');
+            });
+        }
     }
 
     return $element;
