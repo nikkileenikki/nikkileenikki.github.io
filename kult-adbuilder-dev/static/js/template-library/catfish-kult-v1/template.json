@@ -1,0 +1,25 @@
+{
+  "id": "catfish-v1",
+  "name": "Catfish Banner",
+  "category": "standard",
+  "defaults": {
+  },
+  "variables": [
+    { "key": "video_url", "type": "text", "required": true, "label": "video" },
+    { "key": "background_image", "type": "image", "required": true, "label": "background image" }
+  ],
+  "sizes": {
+    "320x200": {
+      "label": "320x200",
+      "width": 320,
+      "height": 200,
+      "layout": {
+        "width": 320,
+        "height": 200
+      },
+      "html": "sizes/320x200/template.html",
+      "css": "sizes/320x200/template.css",
+      "js": "sizes/320x200/template.js"
+    }
+  }
+}
