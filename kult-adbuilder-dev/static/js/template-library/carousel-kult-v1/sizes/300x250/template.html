@@ -1,0 +1,17 @@
+<div class="loader"></div>
+<div id="container" class="container">
+    <img class="cta o" id="cta" src="{{cta_default}}" />
+    <img class="cta o" id="cta-in" src="{{cta_hover}}" />
+    <div class="clickTag f-wh"></div>
+    <div id="slide" class="slide">
+        {{#each slides}}
+        <div class="slides article mask" id="article{{index}}" data-click-index="{{click_index}}" data-click-url="{{click_url}}">
+            <img class="article-image image" id="image{{index}}" src="{{image}}" />
+            <div class="article-text1 text" id="text{{index}}-1">{{heading}}</div>
+            <div class="article-text2 text" id="text{{index}}-2">{{body}}</div>
+        </div>
+        {{/each}}
+    </div>
+    <img src="{{arrow_asset}}" class="f-wh arrow arrow-left o" />
+    <img src="{{arrow_asset}}" class="f-wh r180 arrow arrow-right o" />
+</div>
