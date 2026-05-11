@@ -20,6 +20,7 @@ import './templates/templateMode.js';
 import './templates/manifestPatch.js';
 import './templates/schemaHydrationPatch.js';
 import './templates/previewAssetBasePatch.js';
+import './templates/exportAssetBundlePatch.js';
 import './canvas/videoPreviewPatch.js';
 
 const store = createStore(createBannerState());
