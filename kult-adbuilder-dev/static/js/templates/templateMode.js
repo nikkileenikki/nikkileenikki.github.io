@@ -134,10 +134,28 @@ function createPlaceholderSvgDataUri(label, width = 300, height = 250, fill = '#
   return `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`;
 }
 
+function getTemplateSizeKeys(schema) {
+  const engine = getTemplateEngine();
+  return engine?.getTemplateSizeKeys ? engine.getTemplateSizeKeys(schema) : [];
+}
+
+function getTemplateSizeConfig(schema, size) {
+  const engine = getTemplateEngine();
+  return engine?.getTemplateSizeConfig ? engine.getTemplateSizeConfig(schema, size) : null;
+}
+
+function getTemplateLayout(schema, size) {
+  const engine = getTemplateEngine();
+  return engine?.getTemplateLayout ? engine.getTemplateLayout(schema, size) : (schema?.layouts?.[size] || {});
+}
+
 function buildPreviewTemplateInstance(instance, definition) {
   const preview = JSON.parse(JSON.stringify(instance));
   const schema = definition.schema || {};
-  const layout = schema.layouts?.[instance.size] || { width: 300, height: 250, slide_width: 300, slide_height: 250 };
+  const sizeConfig = getTemplateSizeConfig(schema, instance.size) || {};
+  const layout = getTemplateLayout(schema, instance.size) || {};
+  const baseWidth = layout.slide_width || layout.width || sizeConfig.width || 300;
+  const baseHeight = layout.slide_height || layout.height || sizeConfig.height || 250;
 
   (schema.variables || []).forEach(variable => {
     if (variable.type === 'repeater') {
@@ -147,13 +165,15 @@ function buildPreviewTemplateInstance(instance, definition) {
           const item = {};
           (variable.fields || []).forEach(field => {
             if (field.type === 'image') {
-              item[field.key] = createPlaceholderSvgDataUri(`Slide ${index + 1}`, layout.slide_width || layout.width || 300, layout.slide_height || layout.height || 250);
+              item[field.key] = createPlaceholderSvgDataUri(`Slide ${index + 1}`, baseWidth, baseHeight);
             } else if (field.type === 'text') {
               item[field.key] = field.key === 'heading' ? `Headline ${index + 1}` : `Body copy ${index + 1}`;
             } else if (field.type === 'url') {
               item[field.key] = 'https://example.com';
             } else if (field.type === 'number') {
               item[field.key] = index + 1;
+            } else if (field.type === 'boolean') {
+              item[field.key] = false;
             } else {
               item[field.key] = '';
             }
@@ -164,18 +184,20 @@ function buildPreviewTemplateInstance(instance, definition) {
       return;
     }
 
-    if (!preview.content[variable.key]) {
+    if (preview.content[variable.key] === '' || preview.content[variable.key] == null) {
       if (variable.type === 'image') {
-        const label = variable.key.replace(/_/g, ' ');
+        const label = variable.label || variable.key.replace(/_/g, ' ');
         const width = variable.key.includes('arrow') ? 48 : 120;
         const height = variable.key.includes('arrow') ? 48 : 36;
         preview.content[variable.key] = createPlaceholderSvgDataUri(label, width, height);
       } else if (variable.type === 'text') {
-        preview.content[variable.key] = variable.key;
+        preview.content[variable.key] = variable.label || variable.key;
       } else if (variable.type === 'number') {
-        preview.content[variable.key] = 1;
+        preview.content[variable.key] = variable.default ?? 1;
       } else if (variable.type === 'url') {
         preview.content[variable.key] = 'https://example.com';
+      } else if (variable.type === 'boolean') {
+        preview.content[variable.key] = Boolean(variable.default);
       }
     }
   });
@@ -223,7 +245,9 @@ function populateTemplatePicker() {
 function getAllowedSizesForTemplate(templateId) {
   const registry = getTemplateRegistry();
   const template = registry.find(item => item.id === templateId);
-  return template?.schema?.sizes || template?.sizes || ['300x250'];
+  const schema = template?.schema || null;
+  const sizes = getTemplateSizeKeys(schema);
+  return sizes.length ? sizes : (template?.sizes || ['300x250']);
 }
 
 function applyTemplateCanvasSizeOptions(templateId) {
@@ -254,8 +278,7 @@ async function hydrateRegistrySchemas() {
   await Promise.all(registry.map(async template => {
     if (template.schema) return;
     try {
-      const definition = await engine.loadTemplateDefinition(template);
-      template.schema = definition.schema;
+      template.schema = await engine.loadTemplateSchema(template);
     } catch (err) {
       console.error('Failed to load template schema', template.id, err);
     }
@@ -282,11 +305,62 @@ function buildDefaultContent(schema) {
   (schema.variables || []).forEach(variable => {
     if (variable.type === 'repeater') {
       content[variable.key] = [];
+    } else if (variable.type === 'boolean') {
+      content[variable.key] = Boolean(variable.default);
+    } else if (variable.default != null) {
+      content[variable.key] = variable.default;
     } else {
       content[variable.key] = '';
     }
   });
   return content;
+}
+
+function getRenderableTemplateFields(schema) {
+  const variables = Array.isArray(schema?.variables) ? schema.variables : [];
+  const defaults = schema?.defaults || {};
+  const existingKeys = new Set(variables.map(variable => variable.key));
+  const inferred = Object.keys(defaults)
+    .filter(key => !existingKeys.has(key))
+    .map(key => ({
+      key,
+      type: typeof defaults[key] === 'boolean' ? 'boolean' : (typeof defaults[key] === 'number' ? 'number' : 'text'),
+      default: defaults[key],
+      inferred: true
+    }));
+  return [...variables, ...inferred];
+}
+
+function renderTemplateVariableField(variable, currentValue) {
+  const label = variable.label || variable.key;
+
+  if (variable.type === 'repeater') {
+    const textareaValue = JSON.stringify(currentValue || [], null, 2);
+    return `
+      <label class="text-sm text-gray-300 block">${label}</label>
+      <p class="text-xs text-gray-500">Enter JSON array for repeater content.</p>
+      <textarea data-template-key="${variable.key}" data-template-type="repeater" class="template-field-input w-full bg-gray-800 rounded px-3 py-2 text-sm min-h-[160px]">${textareaValue}</textarea>
+    `;
+  }
+
+  if (variable.type === 'boolean') {
+    return `
+      <label class="flex items-center gap-2 text-sm text-gray-300">
+        <input data-template-key="${variable.key}" data-template-type="boolean" type="checkbox" class="template-field-input" ${currentValue ? 'checked' : ''}>
+        <span>${label}</span>
+      </label>
+    `;
+  }
+
+  const inputType = variable.type === 'number' ? 'number' : 'text';
+  const safeValue = currentValue == null ? '' : String(currentValue).replace(/"/g, '&quot;');
+  const helper = variable.inferred ? '<p class="text-xs text-gray-500">Auto-added from template defaults.</p>' : '';
+
+  return `
+    <label class="text-sm text-gray-300 block">${label}</label>
+    ${helper}
+    <input data-template-key="${variable.key}" data-template-type="${variable.type}" type="${inputType}" class="template-field-input w-full bg-gray-800 rounded px-3 py-2 text-sm" value="${safeValue}">
+  `;
 }
 
 function renderTemplateFields() {
@@ -305,51 +379,42 @@ function renderTemplateFields() {
   meta.textContent = `${state.activeDefinition.schema.name} • ${state.activeTemplate.size}`;
 
   wrap.innerHTML = '';
-  (state.activeDefinition.schema.variables || []).forEach(variable => {
+  const fields = getRenderableTemplateFields(state.activeDefinition.schema);
+  fields.forEach(variable => {
     const fieldWrap = document.createElement('div');
     fieldWrap.className = 'space-y-1';
-
-    if (variable.type === 'repeater') {
-      const textareaValue = JSON.stringify(state.activeTemplate.content[variable.key] || [], null, 2);
-      fieldWrap.innerHTML = `
-        <label class="text-sm text-gray-300 block">${variable.key}</label>
-        <p class="text-xs text-gray-500">Enter JSON array for repeater content.</p>
-        <textarea data-template-key="${variable.key}" data-template-type="repeater" class="template-field-input w-full bg-gray-800 rounded px-3 py-2 text-sm min-h-[160px]">${textareaValue}</textarea>
-      `;
-    } else {
-      const inputType = variable.type === 'number' ? 'number' : 'text';
-      const value = state.activeTemplate.content[variable.key] || state.activeTemplate.settings?.[variable.key] || '';
-      fieldWrap.innerHTML = `
-        <label class="text-sm text-gray-300 block">${variable.key}</label>
-        <input data-template-key="${variable.key}" data-template-type="${variable.type}" type="${inputType}" class="template-field-input w-full bg-gray-800 rounded px-3 py-2 text-sm" value="${String(value).replace(/"/g, '&quot;')}">
-      `;
-    }
-
+    const currentValue = state.activeTemplate.content.hasOwnProperty(variable.key)
+      ? state.activeTemplate.content[variable.key]
+      : state.activeTemplate.settings?.[variable.key];
+    fieldWrap.innerHTML = renderTemplateVariableField(variable, currentValue);
     wrap.appendChild(fieldWrap);
   });
 }
 
-function syncTemplateField(key, type, rawValue) {
+function syncTemplateField(key, type, rawValue, checkedValue) {
   const state = getTemplateModeState();
   if (!state.activeTemplate) return;
 
+  let nextValue = rawValue;
   if (type === 'repeater') {
     try {
-      state.activeTemplate.content[key] = JSON.parse(rawValue || '[]');
+      nextValue = JSON.parse(rawValue || '[]');
     } catch (err) {
       console.warn('Invalid repeater JSON for', key, err);
+      return;
     }
-    renderTemplatePreview();
-    return;
+  } else if (type === 'number') {
+    nextValue = rawValue === '' ? '' : Number(rawValue);
+  } else if (type === 'boolean') {
+    nextValue = Boolean(checkedValue);
   }
 
   if (state.activeTemplate.content.hasOwnProperty(key)) {
-    state.activeTemplate.content[key] = rawValue;
-    renderTemplatePreview();
-    return;
+    state.activeTemplate.content[key] = nextValue;
+  } else {
+    state.activeTemplate.settings[key] = nextValue;
   }
 
-  state.activeTemplate.settings[key] = type === 'number' ? Number(rawValue) : rawValue;
   renderTemplatePreview();
 }
 
@@ -386,7 +451,7 @@ async function createActiveTemplate() {
   const allowedSizes = getAllowedSizesForTemplate(templateId);
   const size = allowedSizes.includes(canvasSize.value) ? canvasSize.value : allowedSizes[0];
 
-  const definition = await engine.loadTemplateDefinition(templateMeta);
+  const definition = await engine.loadTemplateDefinition(templateMeta, size);
   state.activeDefinition = definition;
   state.activeTemplate = {
     mode: 'template',
@@ -477,14 +542,18 @@ function bindTemplateModeEvents() {
       const state = getTemplateModeState();
       if (state.editorMode === 'template' && state.activeTemplate) {
         state.activeTemplate.size = e.target.value;
-        renderTemplateFields();
-        renderTemplatePreview();
+        createActiveTemplate();
       }
       return;
     }
 
     if (e.target && e.target.classList.contains('template-field-input')) {
-      syncTemplateField(e.target.dataset.templateKey, e.target.dataset.templateType, e.target.value);
+      syncTemplateField(
+        e.target.dataset.templateKey,
+        e.target.dataset.templateType,
+        e.target.value,
+        e.target.checked
+      );
     }
   });
 
