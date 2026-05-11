@@ -94,4 +94,3 @@ function onEnded() {
 
 myFT.on("expand", function(){});
 myFT.contract = function(){};
-    
