@@ -226,30 +226,60 @@ function restoreResizeHandles(element, handles) {
     const isSe = handle.classList.contains('se');
 
     handle.style.position = 'absolute';
-    handle.style.width = '8px';
-    handle.style.height = '8px';
-    handle.style.minWidth = '8px';
-    handle.style.maxWidth = '8px';
-    handle.style.minHeight = '8px';
-    handle.style.maxHeight = '8px';
-    handle.style.flex = '0 0 8px';
+    handle.style.width = '10px';
+    handle.style.height = '10px';
+    handle.style.minWidth = '10px';
+    handle.style.maxWidth = '10px';
+    handle.style.minHeight = '10px';
+    handle.style.maxHeight = '10px';
+    handle.style.padding = '0';
+    handle.style.margin = '0';
+    handle.style.flex = '0 0 10px';
     handle.style.zIndex = '20';
     handle.style.boxSizing = 'border-box';
 
-    handle.style.left = isNw || isSw ? '-4px' : '';
-    handle.style.right = isNe || isSe ? '-4px' : '';
-    handle.style.top = isNw || isNe ? '-4px' : '';
-    handle.style.bottom = isSw || isSe ? '-4px' : '';
+    handle.style.left = isNw || isSw ? '-5px' : '';
+    handle.style.right = isNe || isSe ? '-5px' : '';
+    handle.style.top = isNw || isNe ? '-5px' : '';
+    handle.style.bottom = isSw || isSe ? '-5px' : '';
 
     element.appendChild(handle);
   });
 }
 
+function applyControlsToVideoElement(element) {
+  const video = element?.querySelector?.('video.freeform-video-preview');
+  if (!video) return;
+
+  const selected = getSelectedVideoElement();
+  const controlsInput = document.getElementById('propVideoControls');
+  const selectedIsThisElement = selected && selected.id === element.id;
+  const controlsEnabled = selectedIsThisElement && controlsInput
+    ? Boolean(controlsInput.checked)
+    : readControlsFlag(findVideoElementData(element.id));
+
+  video.controls = controlsEnabled;
+  if (controlsEnabled) {
+    video.setAttribute('controls', '');
+  } else {
+    video.removeAttribute('controls');
+  }
+
+  forEachVideoStateMatch(element.id, data => writeControlsFlag(data, controlsEnabled));
+}
+
 function patchVideoElement(element, force = false) {
   if (!element) return;
 
+  const selected = getSelectedVideoElement();
+  const controlsInput = document.getElementById('propVideoControls');
   const videoData = getVideoDataForElement(element);
   if (!videoData?.videoUrl) return;
+
+  if (selected && selected.id === element.id && controlsInput) {
+    videoData.controls = Boolean(controlsInput.checked);
+    forEachVideoStateMatch(element.id, data => writeControlsFlag(data, videoData.controls));
+  }
 
   const previewUrl = normalizeFtVideoPreviewUrl(videoData.videoUrl);
   if (!previewUrl) return;
@@ -261,7 +291,10 @@ function patchVideoElement(element, force = false) {
     playTrigger: videoData.playTrigger || 'click'
   });
 
-  if (!force && element.dataset.videoPreviewSignature === signature && element.querySelector('video.freeform-video-preview')) return;
+  if (!force && element.dataset.videoPreviewSignature === signature && element.querySelector('video.freeform-video-preview')) {
+    applyControlsToVideoElement(element);
+    return;
+  }
 
   const previewMarkup = buildVideoPreview(videoData);
   if (!previewMarkup) return;
@@ -310,7 +343,11 @@ function patchCanvasVideoPreviews(force = false) {
 function forceSelectedVideoPreviewRefresh() {
   setSelectedVideoStateFromInputs();
   const selected = getSelectedVideoElement();
-  if (selected) patchVideoElement(selected, true);
+  if (selected) {
+    selected.dataset.videoPreviewSignature = '';
+    patchVideoElement(selected, true);
+    applyControlsToVideoElement(selected);
+  }
 }
 
 function deferSelectedVideoPreviewRefresh() {
