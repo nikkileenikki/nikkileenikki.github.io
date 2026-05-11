@@ -18,9 +18,65 @@ function escapeAttr(value = '') {
     .replace(/>/g, '&gt;');
 }
 
+function getCandidateStateArrays() {
+  return [
+    window.adBuilderStore?.getState?.()?.elements,
+    window.elements,
+    window.adBuilderElements,
+    window.currentElements,
+    window.bannerElements,
+    window.adBuilderState?.elements,
+    window.state?.elements
+  ].filter(Array.isArray);
+}
+
 function findVideoElementData(elementId) {
-  const elements = window.adBuilderStore?.getState?.()?.elements || window.elements || [];
-  return Array.isArray(elements) ? elements.find(item => item?.id === elementId && item.type === 'video') : null;
+  for (const elements of getCandidateStateArrays()) {
+    const match = elements.find(item => item?.id === elementId && item.type === 'video');
+    if (match) return match;
+  }
+  return null;
+}
+
+function readVideoUrlFromDom(element) {
+  if (!element) return '';
+
+  const dataUrl = element.getAttribute('data-video-url') || element.dataset?.videoUrl;
+  if (dataUrl) return dataUrl;
+
+  const directVideo = element.querySelector('video[src], source[src]');
+  if (directVideo?.getAttribute('src')) return directVideo.getAttribute('src');
+
+  const text = String(element.textContent || '').trim();
+  const httpMatch = text.match(/https?:\/\/[^\s<>"']+/i);
+  if (httpMatch) return httpMatch[0];
+
+  const ftAssetMatch = text.match(/\b\d{3,}\/[-_a-zA-Z0-9/]+\b/);
+  if (ftAssetMatch) return ftAssetMatch[0];
+
+  const selectedInput = document.getElementById('propVideoUrl');
+  if (selectedInput && document.getElementById(element.id)?.classList.contains('selected')) {
+    return selectedInput.value || '';
+  }
+
+  return '';
+}
+
+function getVideoDataForElement(element) {
+  const fromState = findVideoElementData(element.id);
+  if (fromState?.videoUrl) return fromState;
+
+  const url = readVideoUrlFromDom(element);
+  if (!url) return null;
+
+  return {
+    id: element.id,
+    videoUrl: url,
+    videoName: element.querySelector('.video-name')?.textContent || 'video1',
+    muted: true,
+    controls: true,
+    playTrigger: 'click'
+  };
 }
 
 function buildVideoPreview(videoData) {
@@ -32,15 +88,21 @@ function buildVideoPreview(videoData) {
   const autoplay = videoData.playTrigger === 'autoplay' ? 'autoplay playsinline loop' : 'playsinline';
 
   return `
-    <video class="freeform-video-preview" src="${escapeAttr(previewUrl)}" controls ${muted} ${autoplay} preload="metadata" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;background:#000;display:block;pointer-events:auto;"></video>
+    <video class="freeform-video-preview" src="${escapeAttr(previewUrl)}" controls ${muted} ${autoplay} preload="metadata" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;background:#000;display:block;pointer-events:auto;z-index:1;"></video>
   `;
 }
 
 function patchVideoElement(element) {
-  if (!element || element.dataset.videoPreviewPatched === '1') return;
+  if (!element) return;
 
-  const videoData = findVideoElementData(element.id);
+  const videoData = getVideoDataForElement(element);
   if (!videoData?.videoUrl) return;
+
+  const previewUrl = normalizeFtVideoPreviewUrl(videoData.videoUrl);
+  if (!previewUrl) return;
+
+  const existingVideo = element.querySelector('video.freeform-video-preview');
+  if (existingVideo && existingVideo.getAttribute('src') === previewUrl) return;
 
   const previewMarkup = buildVideoPreview(videoData);
   if (!previewMarkup) return;
@@ -49,23 +111,27 @@ function patchVideoElement(element) {
   element.dataset.videoPreviewUrl = videoData.videoUrl;
   element.classList.add('has-video-preview');
   element.style.backgroundColor = '#000';
-  element.style.border = element.style.border || '2px solid #e53e3e';
   element.style.overflow = 'hidden';
+  element.style.position = element.style.position || 'absolute';
 
   const handles = Array.from(element.querySelectorAll('.resize-handle'));
   element.innerHTML = previewMarkup;
-  handles.forEach(handle => element.appendChild(handle));
+  handles.forEach(handle => {
+    handle.style.zIndex = '2';
+    element.appendChild(handle);
+  });
 
   const video = element.querySelector('video.freeform-video-preview');
   if (video) {
     video.addEventListener('error', () => {
       element.dataset.videoPreviewPatched = '0';
+      console.warn('[AdBuilder] Could not load video preview:', previewUrl);
     });
   }
 }
 
 function patchCanvasVideoPreviews() {
-  document.querySelectorAll('.canvas-element.video-element').forEach(patchVideoElement);
+  document.querySelectorAll('.canvas-element.video-element, .video-element, [data-type="video"], [data-element-type="video"]').forEach(patchVideoElement);
 }
 
 function installVideoPreviewObserver() {
@@ -80,13 +146,11 @@ function installVideoPreviewObserver() {
 
   observer.observe(document.body, {
     childList: true,
-    subtree: true
+    subtree: true,
+    characterData: true
   });
 
-  const store = window.adBuilderStore;
-  if (store?.subscribe) {
-    store.subscribe(() => window.requestAnimationFrame(patchCanvasVideoPreviews));
-  }
+  window.setInterval(patchCanvasVideoPreviews, 1000);
 }
 
 if (document.readyState === 'loading') {
