@@ -224,6 +224,7 @@ function buildPreviewTemplateInstance(instance, definition) {
   const layout = getTemplateLayout(schema, instance.size) || {};
   const baseWidth = layout.slide_width || layout.width || sizeConfig.width || 300;
   const baseHeight = layout.slide_height || layout.height || sizeConfig.height || 250;
+  const missingImageKeys = [];
 
   (schema.variables || []).forEach(variable => {
     if (variable.type === 'repeater') {
@@ -256,17 +257,15 @@ function buildPreviewTemplateInstance(instance, definition) {
       const previewSrc = getTemplateAssetPreviewSrc(variable.key);
       if (previewSrc) {
         preview.content[variable.key] = previewSrc;
-        return;
+      } else {
+        preview.content[variable.key] = '';
+        missingImageKeys.push(variable.key);
       }
+      return;
     }
 
     if (preview.content[variable.key] === '' || preview.content[variable.key] == null) {
-      if (variable.type === 'image') {
-        const label = variable.label || variable.key.replace(/_/g, ' ');
-        const width = variable.key.includes('arrow') ? 48 : 120;
-        const height = variable.key.includes('arrow') ? 48 : 36;
-        preview.content[variable.key] = createPlaceholderSvgDataUri(label, width, height);
-      } else if (variable.type === 'text') {
+      if (variable.type === 'text') {
         preview.content[variable.key] = variable.label || variable.key;
       } else if (variable.type === 'number') {
         preview.content[variable.key] = variable.default ?? 1;
@@ -277,6 +276,10 @@ function buildPreviewTemplateInstance(instance, definition) {
       }
     }
   });
+
+    preview.content.__missing_images_list = missingImageKeys.length
+    ? createMissingImagesSvgDataUri(missingImageKeys, baseWidth, baseHeight)
+    : '';
 
   return preview;
 }
