@@ -1,0 +1,34 @@
+{
+  "id": "standard-banner-v1",
+  "name": "Standard Banner",
+  "category": "standard",
+  "defaults": {
+    "autoplay": true,
+    "autoplay_delay": 1.5,
+    "transition_duration": 0.5,
+    "enable_swipe": true,
+    "shuffle": false
+  },
+  "variables": [
+    { "key": "background_image", "type": "image", "required": true, "label": "background image" },
+    { "key": "logo_image", "type": "image", "required": true, "label": "logo image" },
+    { "key": "product_image", "type": "image", "required": true, "label": "product image" },
+    { "key": "ctacta_texttext", "type": "text", "required": true, "label": "cta text" }
+  ],
+  "sizes": {
+    "300x250": {
+      "label": "300x250",
+      "width": 300,
+      "height": 250,
+      "layout": {
+        "width": 300,
+        "height": 250,
+        "slide_width": 300,
+        "slide_height": 250
+      },
+      "html": "sizes/300x250/template.html",
+      "css": "sizes/300x250/template.css",
+      "js": "sizes/300x250/template.js"
+    }
+  }
+}
