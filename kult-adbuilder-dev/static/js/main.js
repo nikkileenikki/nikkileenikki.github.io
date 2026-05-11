@@ -16,6 +16,7 @@ import * as modalKeysUI from './ui/modalKeys.js';
 import './templates/registry.js';
 import './templates/engine.js';
 import './templates/templateMode.js';
+import './export/freeformVideo.js';
 
 const store = createStore(createBannerState());
 const history = createHistory();
