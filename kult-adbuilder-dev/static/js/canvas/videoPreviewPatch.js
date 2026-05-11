@@ -220,9 +220,27 @@ function collectResizeHandles(element) {
 
 function restoreResizeHandles(element, handles) {
   handles.forEach(handle => {
-    handle.style.position = '';
+    const isNw = handle.classList.contains('nw');
+    const isNe = handle.classList.contains('ne');
+    const isSw = handle.classList.contains('sw');
+    const isSe = handle.classList.contains('se');
+
+    handle.style.position = 'absolute';
+    handle.style.width = '8px';
+    handle.style.height = '8px';
+    handle.style.minWidth = '8px';
+    handle.style.maxWidth = '8px';
+    handle.style.minHeight = '8px';
+    handle.style.maxHeight = '8px';
+    handle.style.flex = '0 0 8px';
     handle.style.zIndex = '20';
-    handle.style.flex = 'none';
+    handle.style.boxSizing = 'border-box';
+
+    handle.style.left = isNw || isSw ? '-4px' : '';
+    handle.style.right = isNe || isSe ? '-4px' : '';
+    handle.style.top = isNw || isNe ? '-4px' : '';
+    handle.style.bottom = isSw || isSe ? '-4px' : '';
+
     element.appendChild(handle);
   });
 }
@@ -253,7 +271,7 @@ function patchVideoElement(element, force = false) {
   element.dataset.videoPreviewSignature = signature;
   element.classList.add('has-video-preview');
   element.style.backgroundColor = '#000';
-  element.style.overflow = 'hidden';
+  element.style.overflow = 'visible';
   element.style.position = element.style.position || 'absolute';
   element.style.display = 'block';
   element.style.alignItems = '';
@@ -266,7 +284,17 @@ function patchVideoElement(element, force = false) {
   const video = element.querySelector('video.freeform-video-preview');
   if (video) {
     video.controls = Boolean(videoData.controls);
+    if (videoData.controls) {
+      video.setAttribute('controls', '');
+    } else {
+      video.removeAttribute('controls');
+    }
     video.muted = Boolean(videoData.muted);
+    if (videoData.muted) {
+      video.setAttribute('muted', '');
+    } else {
+      video.removeAttribute('muted');
+    }
     video.addEventListener('error', () => {
       element.dataset.videoPreviewPatched = '0';
       console.warn('[AdBuilder] Could not load video preview:', previewUrl);
