@@ -6,6 +6,31 @@ function isRelativeAssetPath(value = '') {
   return true;
 }
 
+function getUploadedTemplateAssetFilenames() {
+  const assets = window.adBuilderTemplateModeState?.templateAssets || {};
+  return new Set(
+    Object.values(assets)
+      .map(asset => asset?.filename)
+      .filter(Boolean)
+      .map(filename => String(filename).trim())
+  );
+}
+
+function getPathFilename(value = '') {
+  const cleaned = String(value || '').split(/[?#]/)[0];
+  return cleaned.split('/').filter(Boolean).pop() || cleaned;
+}
+
+function isUploadedTemplateAssetPath(value = '') {
+  const uploaded = getUploadedTemplateAssetFilenames();
+  if (!uploaded.size) return false;
+
+  const raw = String(value || '').trim();
+  const filename = getPathFilename(raw);
+
+  return uploaded.has(raw) || uploaded.has(filename);
+}
+
 function getTemplateFileDir(bundle) {
   const template = bundle?.template;
   const schema = template?.schema || {};
@@ -20,6 +45,7 @@ function getTemplateFileDir(bundle) {
 
 function resolveTemplateAssetPath(path, baseHref) {
   if (!isRelativeAssetPath(path)) return path;
+  if (isUploadedTemplateAssetPath(path)) return path;
   return new URL(path, baseHref).href;
 }
 
@@ -40,7 +66,7 @@ function rewriteHtmlAssetPaths(html, baseHref) {
 }
 
 function rewriteCssAssetPaths(css, baseHref) {
-  return String(css || '').replace(/url\((['"]?)([^)'"]+)\1\)/gi, (match, quote, value) => {
+  return String(css || '').replace(/url\((['"]?)([^)'" ]+)\1\)/gi, (match, quote, value) => {
     const trimmed = String(value || '').trim();
     return `url(${quote || ''}${resolveTemplateAssetPath(trimmed, baseHref)}${quote || ''})`;
   });
@@ -80,5 +106,7 @@ window.adBuilderTemplateAssetPathRewritePatch = {
   rewriteBundleAssetPaths,
   rewriteHtmlAssetPaths,
   rewriteCssAssetPaths,
-  getTemplateFileDir
+  getTemplateFileDir,
+  getUploadedTemplateAssetFilenames,
+  isUploadedTemplateAssetPath
 };
