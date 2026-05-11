@@ -41,21 +41,82 @@ async function fetchText(path) {
   return response.text();
 }
 
-async function loadTemplateDefinition(templateMeta) {
+async function loadTemplateSchema(templateMeta) {
   if (!templateMeta || !templateMeta.basePath) {
     throw new Error('Invalid template metadata');
   }
 
-  const [schemaText, htmlText, cssText, jsText] = await Promise.all([
-    fetchText(`${templateMeta.basePath}/template.json`),
-    fetchText(`${templateMeta.basePath}/template.html`),
-    fetchText(`${templateMeta.basePath}/template.css`),
-    fetchText(`${templateMeta.basePath}/template.js`)
+  const schemaText = await fetchText(`${templateMeta.basePath}/template.json`);
+  return JSON.parse(schemaText);
+}
+
+function getTemplateSizeKeys(schema) {
+  if (Array.isArray(schema?.sizes)) {
+    return schema.sizes;
+  }
+  if (schema?.sizes && typeof schema.sizes === 'object') {
+    return Object.keys(schema.sizes);
+  }
+  if (schema?.layouts && typeof schema.layouts === 'object') {
+    return Object.keys(schema.layouts);
+  }
+  return [];
+}
+
+function getTemplateSizeConfig(schema, size) {
+  if (schema?.sizes && !Array.isArray(schema.sizes) && typeof schema.sizes === 'object') {
+    return schema.sizes[size] || null;
+  }
+  return null;
+}
+
+function getTemplateLayout(schema, size) {
+  const sizeConfig = getTemplateSizeConfig(schema, size);
+  if (sizeConfig) {
+    return {
+      ...(sizeConfig.layout || {}),
+      width: sizeConfig.width ?? sizeConfig.layout?.width,
+      height: sizeConfig.height ?? sizeConfig.layout?.height,
+      slide_width: sizeConfig.slide_width ?? sizeConfig.layout?.slide_width,
+      slide_height: sizeConfig.slide_height ?? sizeConfig.layout?.slide_height
+    };
+  }
+  return schema?.layouts?.[size] || {};
+}
+
+function getTemplateFilesForSize(schema, size) {
+  const sizeConfig = getTemplateSizeConfig(schema, size);
+  if (sizeConfig && sizeConfig.html && sizeConfig.css && sizeConfig.js) {
+    return {
+      html: sizeConfig.html,
+      css: sizeConfig.css,
+      js: sizeConfig.js
+    };
+  }
+
+  return {
+    html: 'template.html',
+    css: 'template.css',
+    js: 'template.js'
+  };
+}
+
+async function loadTemplateDefinition(templateMeta, selectedSize) {
+  const schema = await loadTemplateSchema(templateMeta);
+  const sizeKeys = getTemplateSizeKeys(schema);
+  const resolvedSize = selectedSize || sizeKeys[0];
+  const files = getTemplateFilesForSize(schema, resolvedSize);
+
+  const [htmlText, cssText, jsText] = await Promise.all([
+    fetchText(`${templateMeta.basePath}/${files.html}`),
+    fetchText(`${templateMeta.basePath}/${files.css}`),
+    fetchText(`${templateMeta.basePath}/${files.js}`)
   ]);
 
   return {
     meta: templateMeta,
-    schema: JSON.parse(schemaText),
+    schema,
+    selectedSize: resolvedSize,
     files: {
       html: htmlText,
       css: cssText,
@@ -65,7 +126,7 @@ async function loadTemplateDefinition(templateMeta) {
 }
 
 function buildTemplateContext(instance, schema) {
-  const layout = schema.layouts?.[instance.size] || {};
+  const layout = getTemplateLayout(schema, instance.size);
   return {
     ...schema.defaults,
     ...instance.settings,
@@ -84,7 +145,7 @@ async function renderTemplateBundle(instance) {
     throw new Error(`Template not found: ${instance.templateId}`);
   }
 
-  const definition = await loadTemplateDefinition(templateMeta);
+  const definition = await loadTemplateDefinition(templateMeta, instance.size);
   const context = buildTemplateContext(instance, definition.schema);
 
   return {
@@ -99,7 +160,11 @@ async function renderTemplateBundle(instance) {
 window.adBuilderTemplateEngine = {
   getByPath,
   renderTemplateString,
+  loadTemplateSchema,
   loadTemplateDefinition,
+  getTemplateSizeKeys,
+  getTemplateSizeConfig,
+  getTemplateLayout,
   buildTemplateContext,
   renderTemplateBundle
 };
