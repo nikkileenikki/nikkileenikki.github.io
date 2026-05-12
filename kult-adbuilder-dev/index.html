@@ -531,19 +531,22 @@
         <!-- Main Canvas Area -->
         <div class="flex-1 flex flex-col">
             <!-- Toolbar -->
-            <div class="bg-gray-800 border-b border-gray-700 p-4 flex items-start justify-start flex-col">
-                <div id="templateModeToolbar" class="flex items-center gap-3 mb-2 overflow-x-auto whitespace-nowrap">
-              <label class="text-sm text-gray-400 whitespace-nowrap">Mode:</label>
-                  <select id="editorModeSelect" class="bg-gray-700 rounded px-3 py-1 text-sm text-white shrink-0">
-                    <option value="freeform">Free-form</option>
-                    <option value="template">Template</option>
-                  </select>
-              <div id="templatePickerWrap" class="hidden items-center gap-2 shrink-0">
-                <label class="text-sm text-gray-400 whitespace-nowrap">Template:</label>
-                <select id="templateSelect" class="bg-gray-700 rounded px-3 py-1 text-sm text-white w-48 shrink-0"></select>
-              </div>
-            </div>
+            <div class="bg-gray-800 border-b border-gray-700 p-4 flex items-start justify-start flex-row">
+                <div id="templateModeToolbar" class="flex items-center gap-3 mb-2 overflow-x-auto whitespace-nowrap space-x-4">
+                    <label class="text-sm text-gray-400 whitespace-nowrap">Mode:</label>
+                    <select id="editorModeSelect" class="bg-gray-700 rounded px-3 py-1 text-sm text-white shrink-0">
+                        <option value="freeform">Free-form</option>
+                        <option value="template">Template</option>
+                    </select>
+                    <div id="templatePickerWrap" class="hidden items-center gap-2 shrink-0">
+                        <label class="text-sm text-gray-400 whitespace-nowrap">Template:</label>
+                        <select id="templateSelect" class="bg-gray-700 rounded px-3 py-1 text-sm text-white w-48 shrink-0"></select>
+                    </div>
+                </div>
                 <div class="flex items-center space-x-4">
+
+
+                    <div class="flex items-start space-x-5" style="flex-grow:5">
                     <div class="flex items-center space-x-2">
                         <label class="text-sm text-gray-400 whitespace-nowrap">Banner Name:</label>
                         <input type="text" id="bannerName" placeholder="my-banner"
@@ -579,7 +582,11 @@
                         </button>
                     </div>
                 </div>
-                <div class="flex items-center space-x-2">
+
+
+
+
+                        <div class="flex items-end space-x-1" style="flex-grow:1">
                     <button id="clearBtn" class="bg-red-600 hover:bg-red-700 text-white px-4 py-1 rounded text-sm transition-colors">
                         <i class="fas fa-trash mr-2"></i>Clear All
                     </button>
@@ -613,6 +620,7 @@
                         </div>
                     </div>
                 </div>
+                </div>  
             </div>
 
             <!-- Canvas -->
