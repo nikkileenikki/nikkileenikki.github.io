@@ -16,7 +16,6 @@ import * as modalKeysUI from './ui/modalKeys.js';
 import './templates/registry.js';
 import './templates/engine.js';
 import './templates/assetPathRewritePatch.js';
-import './templates/staticToolbarPatch.js';
 import './templates/templateMode.js';
 import './templates/manifestPatch.js';
 import './templates/schemaHydrationPatch.js';
