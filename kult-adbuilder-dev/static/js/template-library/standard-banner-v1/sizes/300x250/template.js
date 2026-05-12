@@ -11,7 +11,7 @@ function startAnim() {
 	gsap.set('#container', {autoAlpha:1});
 }
 function click1(){
-	myFT.clickTag(1, "");
+	myFT.clickTag(1, "{{landing_url}}");
 }	
 function checkFT(){
 	if (myFT.hasLoaded) {
