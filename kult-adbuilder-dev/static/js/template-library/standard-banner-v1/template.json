@@ -5,10 +5,11 @@
   "defaults": {
   },
   "variables": [
+    { "key": "landing_url", "type": "landing_url", "required": false, "label": "landing" }
+    { "key": "cta_text", "type": "text", "required": true, "label": "cta text" },
     { "key": "background_image", "type": "image", "required": true, "label": "background image" },
     { "key": "logo_image", "type": "image", "required": true, "label": "logo image" },
-    { "key": "product_image", "type": "image", "required": true, "label": "product image" },
-    { "key": "cta_text", "type": "text", "required": true, "label": "cta text" }
+    { "key": "product_image", "type": "image", "required": true, "label": "product image" }
   ],
   "sizes": {
     "300x250": {
@@ -17,9 +18,7 @@
       "height": 250,
       "layout": {
         "width": 300,
-        "height": 250,
-        "slide_width": 300,
-        "slide_height": 250
+        "height": 250
       },
       "html": "sizes/300x250/template.html",
       "css": "sizes/300x250/template.css",
