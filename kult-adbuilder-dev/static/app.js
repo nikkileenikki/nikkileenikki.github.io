@@ -5320,9 +5320,11 @@ return compactInlineStyles(html);
                 };
 
                 const zip = new JSZip();
+
+                // Add project JSON inside ZIP
                 zip.file('project.json', JSON.stringify(projectData, null, 2));
 
-                // Add uploaded template image assets as real files
+                // Add uploaded template images inside ZIP as real files
                 Object.values(projectData.assets || {}).forEach(asset => {
                     if (!asset?.filename || !asset?.dataUrl) return;
 
@@ -5333,6 +5335,7 @@ return compactInlineStyles(html);
                 });
 
                 const blob = await zip.generateAsync({ type: 'blob' });
+
                 const timestamp = new Date().toISOString().slice(0, 10);
                 const filename = `${safeBannerName}-${timestamp}.zip`;
 
