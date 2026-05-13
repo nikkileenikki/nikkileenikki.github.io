@@ -188,6 +188,58 @@ function installJsonBlobModeStamp() {
   window.__adBuilderJsonBlobModeStampInstalled = true;
 }
 
+function decodeDataUriPayload(uri) {
+  const value = String(uri || '');
+  const commaIndex = value.indexOf(',');
+  if (commaIndex < 0) return '';
+  const meta = value.slice(0, commaIndex).toLowerCase();
+  const payload = value.slice(commaIndex + 1);
+  if (meta.includes(';base64')) {
+    try { return atob(payload); }
+    catch (err) { return ''; }
+  }
+  try { return decodeURIComponent(payload); }
+  catch (err) { return payload; }
+}
+
+function encodeJsonDataUri(jsonText) {
+  return `data:application/json;charset=utf-8,${encodeURIComponent(jsonText)}`;
+}
+
+function patchAnchorJsonDownload(anchor) {
+  if (!anchor || anchor.dataset.adBuilderModeStamped === '1') return;
+  const download = String(anchor.getAttribute('download') || '').toLowerCase();
+  const href = String(anchor.getAttribute('href') || '');
+  if (!download.endsWith('.json') && !href.startsWith('data:application/json')) return;
+  if (!href.startsWith('data:')) return;
+
+  const jsonText = decodeDataUriPayload(href);
+  if (!jsonText) return;
+
+  const stamped = stampModeIntoJsonText(jsonText);
+  if (stamped === jsonText) return;
+
+  anchor.href = encodeJsonDataUri(stamped);
+  anchor.dataset.adBuilderModeStamped = '1';
+}
+
+function installAnchorJsonDownloadStamp() {
+  if (window.__adBuilderAnchorJsonDownloadStampInstalled) return;
+  const nativeClick = HTMLAnchorElement.prototype.click;
+
+  HTMLAnchorElement.prototype.click = function(...args) {
+    patchAnchorJsonDownload(this);
+    return nativeClick.apply(this, args);
+  };
+
+  document.addEventListener('click', event => {
+    const anchor = event.target?.closest?.('a[download]');
+    if (anchor) patchAnchorJsonDownload(anchor);
+  }, true);
+
+  window.__adBuilderAnchorJsonDownloadStampInstalled = true;
+}
+
 function installModeAwareJsonImport() {
   if (window.__adBuilderModeAwareJsonImportInstalled) return;
   window.__adBuilderModeAwareJsonImportInstalled = true;
@@ -221,6 +273,7 @@ function installModeAwareJsonImport() {
 
 function installProjectSaveModeSupport() {
   installJsonBlobModeStamp();
+  installAnchorJsonDownloadStamp();
   installTemplateProjectSaveClickBypass();
   installModeAwareJsonSave();
   installModeAwareJsonImport();
