@@ -22,6 +22,87 @@ function getModeAwareJsonPayload(originalPayload = null) {
   return payload;
 }
 
+function sanitizeProjectFilename(name = '') {
+  return String(name || 'template-banner')
+    .trim()
+    .replace(/\.json$/i, '')
+    .replace(/[^a-zA-Z0-9._-]+/g, '-')
+    .replace(/-+/g, '-')
+    .replace(/^-|-$/g, '') || 'template-banner';
+}
+
+function getProjectJsonFilename() {
+  const bannerName = document.getElementById('bannerName')?.value || window.adBuilderTemplateModeState?.activeTemplate?.templateId || 'template-banner';
+  return `${sanitizeProjectFilename(bannerName)}.json`;
+}
+
+function saveTemplateProjectJson() {
+  const payload = window.adBuilderTemplateMode?.getTemplateSaveState?.();
+  if (!payload) return false;
+
+  const json = JSON.stringify(payload, null, 2);
+  const blob = new Blob([json], { type: 'application/json' });
+
+  if (typeof window.saveAs === 'function') {
+    window.saveAs(blob, getProjectJsonFilename());
+  } else {
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = getProjectJsonFilename();
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    URL.revokeObjectURL(url);
+  }
+
+  return true;
+}
+
+function isTemplateProjectSaveTrigger(target) {
+  const trigger = target?.closest?.('button, a, [role="button"], [data-action], [data-export]');
+  if (!trigger) return false;
+
+  const id = String(trigger.id || '').toLowerCase();
+  const action = String(trigger.dataset?.action || '').toLowerCase();
+  const exportType = String(trigger.dataset?.export || '').toLowerCase();
+  const text = String(trigger.textContent || trigger.getAttribute('aria-label') || trigger.title || '').toLowerCase();
+
+  if (id.includes('zip') || action.includes('zip') || exportType.includes('zip') || text.includes('zip')) return false;
+  if (id.includes('html') || action.includes('html') || exportType.includes('html') || text.includes('html')) return false;
+
+  return (
+    id.includes('save') ||
+    id.includes('project') ||
+    id.includes('json') ||
+    action.includes('save') ||
+    action.includes('project') ||
+    action.includes('json') ||
+    exportType.includes('json') ||
+    text.includes('save project') ||
+    text.includes('save json') ||
+    text.includes('export json') ||
+    text.includes('project json')
+  );
+}
+
+function installTemplateProjectSaveClickBypass() {
+  if (window.__adBuilderTemplateProjectSaveClickBypassInstalled) return;
+  window.__adBuilderTemplateProjectSaveClickBypassInstalled = true;
+
+  document.addEventListener('click', event => {
+    if (getCurrentEditorMode() !== 'template') return;
+    if (!isTemplateProjectSaveTrigger(event.target)) return;
+
+    const saved = saveTemplateProjectJson();
+    if (!saved) return;
+
+    event.preventDefault();
+    event.stopPropagation();
+    event.stopImmediatePropagation();
+  }, true);
+}
+
 async function blobToJsonPayload(blob) {
   if (!blob || typeof blob.text !== 'function') return null;
   try {
@@ -56,7 +137,7 @@ function installModeAwareJsonSave() {
       const payload = getModeAwareJsonPayload(originalPayload);
       const json = JSON.stringify(payload, null, 2);
       const nextBlob = new Blob([json], { type: 'application/json' });
-      originalSaveAs.call(this, nextBlob, filename, ...rest);
+      originalSaveAs.call(this, nextBlob, filename || getProjectJsonFilename(), ...rest);
     }).catch(err => {
       console.warn('[AdBuilder] Could not add mode to JSON save:', err);
       originalSaveAs.call(this, blob, filename, ...rest);
@@ -100,6 +181,7 @@ function installModeAwareJsonImport() {
 }
 
 function installProjectSaveModeSupport() {
+  installTemplateProjectSaveClickBypass();
   installModeAwareJsonSave();
   installModeAwareJsonImport();
 }
@@ -112,5 +194,6 @@ if (document.readyState === 'loading') {
 
 window.adBuilderProjectSaveMode = {
   getCurrentEditorMode,
-  getModeAwareJsonPayload
+  getModeAwareJsonPayload,
+  saveTemplateProjectJson
 };
