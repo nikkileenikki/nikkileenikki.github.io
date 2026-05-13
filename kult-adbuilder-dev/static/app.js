@@ -4189,12 +4189,21 @@
     // EXPORT
     // ============================================
     async function exportToZip() {
+        const isTemplateMode =
+            window.adBuilderTemplateModeState?.editorMode === 'template' &&
+            window.adBuilderTemplateModeState?.activeTemplate;
+
+        // Template mode export should use template exporter
+        if (isTemplateMode) {
+            await window.adBuilderTemplateMode?.exportActiveTemplate?.();
+            return;
+        }
+
         if (elements.length === 0) {
             alert('Please add at least one element to export');
             return;
         }
-        
-        // Check if there's at least one clickthrough
+
         const hasClickthrough = elements.some(el => el.type === 'clickthrough');
         if (!hasClickthrough) {
             const proceed = confirm('Warning: No clickthrough layer added. The banner will not be clickable.\n\nDo you want to continue exporting?');
@@ -4202,58 +4211,101 @@
                 return;
             }
         }
-        
-        // Get and validate banner name
+
         let bannerName = $('#bannerName').val();
         _log('Raw banner name:', bannerName);
-        
+
         if (bannerName) {
             bannerName = bannerName.trim();
         }
-        
+
         if (!bannerName) {
             bannerName = 'ad-banner';
         }
-        
-        // Remove spaces and special characters, keep only alphanumeric, dash, underscore
+
         bannerName = bannerName.replace(/\s+/g, '-').replace(/[^a-zA-Z0-9-_]/g, '');
-        
+
         if (!bannerName) {
             bannerName = 'ad-banner';
         }
-        
+
         _log('Final banner name:', bannerName);
-        
-        // Get polite load option from checkbox
+
         const usePoliteLoad = $('#politeLoadCheckbox').is(':checked');
-        
+
         const zip = new JSZip();
+
         updateStructureFromDOM();
-        const html = generateHTML(usePoliteLoad);
-        zip.file('index.html', html);
-        
-        // Generate and add manifest.js
-        const manifest = generateManifest();
-        zip.file('manifest.js', manifest);
-        
-        // Add images to root folder in z-index order (matching HTML generation)
+
+        let html = generateHTML(usePoliteLoad);
+
+        // Add images to root folder and replace base64 references in HTML
         const imageElements = elements
-            .filter(el => el.type === 'image')
-            .sort((a, b) => a.zIndex - b.zIndex); // Same sort as HTML generation
-        
+            .filter(el => el.type === 'image' && el.src)
+            .sort((a, b) => a.zIndex - b.zIndex);
+
+        const usedFilenames = new Set();
+
+        function getUniqueImageFilename(baseName) {
+            let filename = baseName;
+            let counter = 2;
+
+            while (usedFilenames.has(filename)) {
+                const dotIndex = baseName.lastIndexOf('.');
+                const name = dotIndex >= 0 ? baseName.slice(0, dotIndex) : baseName;
+                const ext = dotIndex >= 0 ? baseName.slice(dotIndex) : '';
+                filename = `${name}_${counter}${ext}`;
+                counter++;
+            }
+
+            usedFilenames.add(filename);
+            return filename;
+        }
+
+        function sanitizeImageFilename(name, fallback) {
+            const clean = String(name || fallback || 'image.png')
+                .split('/').pop()
+                .replace(/[^a-zA-Z0-9._-]+/g, '_')
+                .replace(/_+/g, '_')
+                .replace(/^_+|_+$/g, '');
+
+            return clean || fallback || 'image.png';
+        }
+
         for (let i = 0; i < imageElements.length; i++) {
             const element = imageElements[i];
+
             try {
-                const response = await fetch(element.src);
-                const blob = await response.blob();
-                // Place images in root folder (same level as index.html)
-                zip.file(`image_${i}.${getExtensionFromDataUrl(element.src)}`, blob);
-                _log(`Saved image_${i}.png - element: ${element.id}, zIndex: ${element.zIndex}`);
+                const ext = getExtensionFromDataUrl(element.src);
+                const fallbackName = `image_${i + 1}.${ext}`;
+                const preferredName = element.name || element.fileName || element.imageFile || fallbackName;
+                const filename = getUniqueImageFilename(sanitizeImageFilename(preferredName, fallbackName));
+
+                if (String(element.src).startsWith('data:image/')) {
+                    const base64Data = element.src.split(',')[1];
+                    zip.file(filename, base64Data, { base64: true });
+
+                    // Replace all references to the base64 image in exported HTML
+                    html = html.split(element.src).join(filename);
+                } else {
+                    const response = await fetch(element.src);
+                    const blob = await response.blob();
+                    zip.file(filename, blob);
+
+                    html = html.split(element.src).join(filename);
+                }
+
+                _log(`Saved ${filename} - element: ${element.id}, zIndex: ${element.zIndex}`);
             } catch (error) {
                 _err('Error adding image to zip:', error);
             }
         }
-        
+
+        zip.file('index.html', html);
+
+        const manifest = generateManifest();
+        zip.file('manifest.js', manifest);
+
         zip.generateAsync({ type: 'blob' }).then(function(content) {
             _log('Saving as:', `${bannerName}.zip`);
             saveAs(content, `${bannerName}.zip`);
@@ -5239,27 +5291,82 @@ return compactInlineStyles(html);
     
     async function saveProject() {
         try {
-            // Check if canvas is empty
+            const isTemplateMode =
+                window.adBuilderTemplateModeState?.editorMode === 'template' &&
+                window.adBuilderTemplateModeState?.activeTemplate;
+
+            // Template mode save
+            if (isTemplateMode) {
+                const templateProject = window.adBuilderTemplateMode?.getTemplateSaveState?.();
+
+                if (!templateProject) {
+                    alert('Nothing to save! Please select a template first.');
+                    return;
+                }
+
+                let bannerName = ($('#bannerName').val() || '').trim();
+                if (!bannerName) {
+                    bannerName = `${templateProject.size || 'template'}-banner`;
+                }
+
+                const safeBannerName = bannerName.replace(/[^a-z0-9_-]/gi, '_') || 'template-banner';
+
+                const projectData = {
+                    ...templateProject,
+                    mode: 'template',
+                    editorMode: 'template',
+                    timestamp: new Date().toISOString(),
+                    bannerName: bannerName
+                };
+
+                const zip = new JSZip();
+                zip.file('project.json', JSON.stringify(projectData, null, 2));
+
+                // Add uploaded template image assets as real files
+                Object.values(projectData.assets || {}).forEach(asset => {
+                    if (!asset?.filename || !asset?.dataUrl) return;
+
+                    const base64Data = String(asset.dataUrl).split(',')[1];
+                    if (!base64Data) return;
+
+                    zip.file(asset.filename, base64Data, { base64: true });
+                });
+
+                const blob = await zip.generateAsync({ type: 'blob' });
+                const timestamp = new Date().toISOString().slice(0, 10);
+                const filename = `${safeBannerName}-${timestamp}.zip`;
+
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = filename;
+                document.body.appendChild(a);
+                a.click();
+                a.remove();
+                URL.revokeObjectURL(url);
+
+                _log('Template project saved successfully as:', filename);
+                return;
+            }
+
+            // Free-form save
             if (elements.length === 0) {
                 alert('Nothing to save! Please add some elements to the canvas first.');
                 return;
             }
-            
-            // Use the banner name from the input field
+
             let bannerName = ($('#bannerName').val() || '').trim();
             if (!bannerName) {
                 bannerName = `${canvasWidth}x${canvasHeight}-banner`;
             }
-            
-            // Sanitize filename (remove special characters)
+
             const safeBannerName = bannerName.replace(/[^a-z0-9_-]/gi, '_') || 'banner';
-            
-            // Build image mapping first
+
             const imageMapping = {};
             let imageIndex = 0;
-            
+
             elements.forEach(el => {
-                if (el.type === 'image') {
+                if (el.type === 'image' && el.src && String(el.src).startsWith('data:image/')) {
                     imageIndex++;
                     const ext = getExtensionFromDataUrl(el.src);
                     const filename = `image_${imageIndex}.${ext}`;
@@ -5269,55 +5376,55 @@ return compactInlineStyles(html);
                     };
                 }
             });
-            
-            // Create project data
+
             const projectData = {
+                mode: 'freeform',
+                editorMode: 'freeform',
                 version: '1.0',
                 timestamp: new Date().toISOString(),
-                bannerName: bannerName,  // Store original banner name
+                bannerName: bannerName,
                 canvasWidth: canvasWidth,
                 canvasHeight: canvasHeight,
                 totalDuration: totalDuration,
-                animLoop: animLoop,  // GSAP repeat count (0 = once, 1 = twice, etc.)
+                animLoop: animLoop,
                 elements: elements.map(el => {
-                    // For images, store reference to filename in ZIP
-                    if (el.type === 'image') {
+                    if (el.type === 'image' && imageMapping[el.id]) {
                         return {
                             ...el,
-                            imageFile: imageMapping[el.id].filename  // Reference to file in ZIP
+                            src: imageMapping[el.id].filename,
+                            imageFile: imageMapping[el.id].filename
                         };
                     }
+
                     return el;
                 }),
                 groups: groups
             };
-            
-            // Create ZIP file
+
             const zip = new JSZip();
-            
-            // Add project.json
+
             zip.file('project.json', JSON.stringify(projectData, null, 2));
-            
-            // Add all images to ZIP
-            for (const [elementId, imageData] of Object.entries(imageMapping)) {
-                // Convert data URL to blob
+
+            for (const imageData of Object.values(imageMapping)) {
                 const base64Data = imageData.dataUrl.split(',')[1];
                 zip.file(imageData.filename, base64Data, { base64: true });
             }
-            
-            // Generate ZIP
+
             const blob = await zip.generateAsync({ type: 'blob' });
-            
-            // Download ZIP with banner name
+
             const timestamp = new Date().toISOString().slice(0, 10);
             const filename = `${safeBannerName}-${timestamp}.zip`;
             const url = URL.createObjectURL(blob);
+
             const a = document.createElement('a');
             a.href = url;
             a.download = filename;
+            document.body.appendChild(a);
             a.click();
+            a.remove();
+
             URL.revokeObjectURL(url);
-            
+
             _log('Project saved successfully as:', filename);
         } catch (error) {
             _err('Error saving project:', error);
