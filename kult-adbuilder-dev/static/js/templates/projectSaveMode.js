@@ -23,6 +23,27 @@ function dataUrlToBase64(dataUrl = '') {
   return String(dataUrl || '').split(',')[1] || '';
 }
 
+function arrayBufferToDataUrl(buffer, mimeType = 'application/octet-stream') {
+  const bytes = new Uint8Array(buffer);
+  let binary = '';
+  const chunkSize = 0x8000;
+  for (let i = 0; i < bytes.length; i += chunkSize) {
+    const chunk = bytes.subarray(i, i + chunkSize);
+    binary += String.fromCharCode.apply(null, chunk);
+  }
+  return `data:${mimeType};base64,${btoa(binary)}`;
+}
+
+function getMimeTypeFromFilename(filename = '') {
+  const lower = String(filename || '').toLowerCase();
+  if (lower.endsWith('.jpg') || lower.endsWith('.jpeg')) return 'image/jpeg';
+  if (lower.endsWith('.png')) return 'image/png';
+  if (lower.endsWith('.gif')) return 'image/gif';
+  if (lower.endsWith('.webp')) return 'image/webp';
+  if (lower.endsWith('.svg')) return 'image/svg+xml';
+  return 'application/octet-stream';
+}
+
 async function saveTemplateProjectZip() {
   const payload = window.adBuilderTemplateMode?.getTemplateSaveState?.();
   if (!payload || typeof JSZip === 'undefined') return false;
@@ -104,40 +125,110 @@ function installTemplateProjectSaveZip() {
   }, true);
 }
 
-function installModeAwareTemplateImport() {
-  if (window.__adBuilderTemplateProjectImportInstalled) return;
-  window.__adBuilderTemplateProjectImportInstalled = true;
+function switchEditorMode(mode) {
+  const state = window.adBuilderTemplateModeState;
+  if (state) state.editorMode = mode;
 
-  document.addEventListener('change', event => {
+  const modeSelect = document.getElementById('editorModeSelect');
+  if (modeSelect) {
+    modeSelect.value = mode;
+    modeSelect.dispatchEvent(new Event('change', { bubbles: true }));
+  }
+}
+
+async function hydrateTemplateAssetsFromZip(projectData, zip) {
+  const assets = projectData.assets || projectData.templateAssets || {};
+
+  await Promise.all(Object.keys(assets).map(async key => {
+    const asset = assets[key];
+    if (!asset?.filename || asset.dataUrl) return;
+
+    const file = zip.file(asset.filename);
+    if (!file) return;
+
+    const buffer = await file.async('arraybuffer');
+    asset.dataUrl = arrayBufferToDataUrl(buffer, asset.mimeType || getMimeTypeFromFilename(asset.filename));
+  }));
+
+  projectData.assets = assets;
+  return projectData;
+}
+
+async function loadTemplateProjectData(projectData) {
+  switchEditorMode('template');
+
+  const loaded = await window.adBuilderTemplateMode?.loadTemplateSaveState?.(projectData);
+  if (!loaded) return false;
+
+  const bannerName = document.getElementById('bannerName');
+  if (bannerName && projectData.bannerName) bannerName.value = projectData.bannerName;
+
+  return true;
+}
+
+async function loadTemplateProjectJsonFile(file) {
+  const text = await file.text();
+  const projectData = JSON.parse(text || '{}');
+  const mode = window.adBuilderTemplateMode?.detectSavedEditorMode?.(projectData) || projectData.mode || projectData.editorMode || 'freeform';
+  if (mode !== 'template') return false;
+  return loadTemplateProjectData(projectData);
+}
+
+async function loadTemplateProjectZipFile(file) {
+  if (typeof JSZip === 'undefined') return false;
+
+  const zip = await JSZip.loadAsync(file);
+  const projectFile = zip.file('project.json');
+  if (!projectFile) return false;
+
+  const projectData = JSON.parse(await projectFile.async('string'));
+  const mode = window.adBuilderTemplateMode?.detectSavedEditorMode?.(projectData) || projectData.mode || projectData.editorMode || 'freeform';
+  if (mode !== 'template') {
+    switchEditorMode('freeform');
+    return false;
+  }
+
+  await hydrateTemplateAssetsFromZip(projectData, zip);
+  return loadTemplateProjectData(projectData);
+}
+
+function installModeAwareProjectImport() {
+  if (window.__adBuilderModeAwareProjectImportInstalled) return;
+  window.__adBuilderModeAwareProjectImportInstalled = true;
+
+  document.addEventListener('change', async event => {
     const input = event.target;
     if (!input || input.tagName !== 'INPUT' || input.type !== 'file') return;
 
     const file = input.files && input.files[0];
-    if (!file || !String(file.name || '').toLowerCase().endsWith('.json')) return;
+    if (!file) return;
 
-    const reader = new FileReader();
-    reader.onload = async () => {
-      let payload = null;
-      try { payload = JSON.parse(String(reader.result || '{}')); }
-      catch (err) { return; }
+    const filename = String(file.name || '').toLowerCase();
+    if (!filename.endsWith('.json') && !filename.endsWith('.zip')) return;
 
-      const mode = window.adBuilderTemplateMode?.detectSavedEditorMode?.(payload) || payload.mode || payload.editorMode || 'freeform';
-      if (mode !== 'template') return;
+    try {
+      let loaded = false;
 
-      const loaded = await window.adBuilderTemplateMode?.loadTemplateSaveState?.(payload);
+      if (filename.endsWith('.zip')) {
+        loaded = await loadTemplateProjectZipFile(file);
+      } else if (filename.endsWith('.json')) {
+        loaded = await loadTemplateProjectJsonFile(file);
+      }
+
       if (loaded) {
         event.preventDefault();
         event.stopImmediatePropagation();
         input.value = '';
       }
-    };
-    reader.readAsText(file);
+    } catch (err) {
+      console.warn('[AdBuilder] Could not auto-load project file:', err);
+    }
   }, true);
 }
 
 function installProjectSaveModeSupport() {
   installTemplateProjectSaveZip();
-  installModeAwareTemplateImport();
+  installModeAwareProjectImport();
 }
 
 if (document.readyState === 'loading') {
@@ -148,5 +239,7 @@ if (document.readyState === 'loading') {
 
 window.adBuilderProjectSaveMode = {
   getCurrentEditorMode,
-  saveTemplateProjectZip
+  saveTemplateProjectZip,
+  loadTemplateProjectZipFile,
+  loadTemplateProjectJsonFile
 };
