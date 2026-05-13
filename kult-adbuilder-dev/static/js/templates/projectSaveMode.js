@@ -94,15 +94,17 @@ function isTemplateProjectSaveTrigger(target) {
   const exportType = String(trigger.dataset?.export || '').toLowerCase();
   const text = String(trigger.textContent || trigger.getAttribute('aria-label') || trigger.title || '').toLowerCase();
 
+  if (id.includes('loadprojectbtn') || id.includes('loadprojectinput')) return false;
+  if (id.includes('load') || text.includes('load') || action.includes('load')) return false;
+  if (id.includes('import') || text.includes('import') || action.includes('import')) return false;
   if (id.includes('exportbtn') || id.includes('zip') || action.includes('zip') || exportType.includes('zip') || text.includes('export zip')) return false;
   if (id.includes('html') || action.includes('html') || exportType.includes('html') || text.includes('html')) return false;
 
   return (
+    id.includes('saveprojectbtn') ||
     id.includes('saveproject') ||
     id.includes('save') ||
-    id.includes('project') ||
     action.includes('save') ||
-    action.includes('project') ||
     text.includes('save project') ||
     text.includes('save banner')
   );
