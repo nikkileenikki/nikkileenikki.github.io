@@ -16,8 +16,8 @@ function getModeAwareJsonPayload(originalPayload = null) {
     ? { ...originalPayload }
     : {};
 
-  if (!payload.mode) payload.mode = 'freeform';
-  if (!payload.editorMode) payload.editorMode = 'freeform';
+  payload.mode = payload.mode || 'freeform';
+  payload.editorMode = payload.editorMode || payload.mode || 'freeform';
 
   return payload;
 }
@@ -149,6 +149,45 @@ function installModeAwareJsonSave() {
   window.__adBuilderModeAwareJsonSaveInstalled = true;
 }
 
+function stampModeIntoJsonText(text) {
+  try {
+    const parsed = JSON.parse(String(text || '{}'));
+    return JSON.stringify(getModeAwareJsonPayload(parsed), null, 2);
+  } catch (err) {
+    return text;
+  }
+}
+
+function isJsonBlobParts(parts, options) {
+  const type = String(options?.type || '').toLowerCase();
+  if (type.includes('application/json')) return true;
+  if (!Array.isArray(parts) || parts.length !== 1) return false;
+  const only = parts[0];
+  if (typeof only !== 'string') return false;
+  const trimmed = only.trim();
+  return trimmed.startsWith('{') && trimmed.endsWith('}') && trimmed.includes('"elements"');
+}
+
+function installJsonBlobModeStamp() {
+  if (window.__adBuilderJsonBlobModeStampInstalled) return;
+  const NativeBlob = window.Blob;
+  if (typeof NativeBlob !== 'function') return;
+
+  function ModeAwareBlob(parts = [], options = {}) {
+    let nextParts = parts;
+    if (isJsonBlobParts(parts, options)) {
+      nextParts = [stampModeIntoJsonText(parts[0])];
+      options = { ...options, type: 'application/json' };
+    }
+    return new NativeBlob(nextParts, options);
+  }
+
+  ModeAwareBlob.prototype = NativeBlob.prototype;
+  Object.setPrototypeOf(ModeAwareBlob, NativeBlob);
+  window.Blob = ModeAwareBlob;
+  window.__adBuilderJsonBlobModeStampInstalled = true;
+}
+
 function installModeAwareJsonImport() {
   if (window.__adBuilderModeAwareJsonImportInstalled) return;
   window.__adBuilderModeAwareJsonImportInstalled = true;
@@ -181,6 +220,7 @@ function installModeAwareJsonImport() {
 }
 
 function installProjectSaveModeSupport() {
+  installJsonBlobModeStamp();
   installTemplateProjectSaveClickBypass();
   installModeAwareJsonSave();
   installModeAwareJsonImport();
