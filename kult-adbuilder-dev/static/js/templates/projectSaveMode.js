@@ -194,36 +194,57 @@ async function loadTemplateProjectZipFile(file) {
   return loadTemplateProjectData(projectData);
 }
 
+async function handleProjectFileInput(input) {
+  const file = input.files && input.files[0];
+  if (!file) return false;
+
+  const filename = String(file.name || '').toLowerCase();
+  if (!filename.endsWith('.json') && !filename.endsWith('.zip')) return false;
+
+  if (filename.endsWith('.zip')) return loadTemplateProjectZipFile(file);
+  if (filename.endsWith('.json')) return loadTemplateProjectJsonFile(file);
+  return false;
+}
+
 function installModeAwareProjectImport() {
   if (window.__adBuilderModeAwareProjectImportInstalled) return;
   window.__adBuilderModeAwareProjectImportInstalled = true;
 
+  const input = document.getElementById('loadProjectInput');
+  if (input && window.jQuery) {
+    window.jQuery(input).off('change');
+    window.jQuery(input).on('change', async function(event) {
+      try {
+        const loaded = await handleProjectFileInput(this);
+        if (!loaded && typeof window.loadProject === 'function') {
+          window.loadProject(event);
+        }
+      } catch (err) {
+        console.warn('[AdBuilder] Could not auto-load project file:', err);
+        alert('Error loading project. Please make sure the file is a valid project ZIP.');
+      } finally {
+        this.value = '';
+      }
+    });
+    return;
+  }
+
   document.addEventListener('change', async event => {
-    const input = event.target;
-    if (!input || input.tagName !== 'INPUT' || input.type !== 'file') return;
+    const target = event.target;
+    if (!target || target.id !== 'loadProjectInput') return;
 
-    const file = input.files && input.files[0];
-    if (!file) return;
-
-    const filename = String(file.name || '').toLowerCase();
-    if (!filename.endsWith('.json') && !filename.endsWith('.zip')) return;
+    event.preventDefault();
+    event.stopPropagation();
+    event.stopImmediatePropagation();
 
     try {
-      let loaded = false;
-
-      if (filename.endsWith('.zip')) {
-        loaded = await loadTemplateProjectZipFile(file);
-      } else if (filename.endsWith('.json')) {
-        loaded = await loadTemplateProjectJsonFile(file);
-      }
-
-      if (loaded) {
-        event.preventDefault();
-        event.stopImmediatePropagation();
-        input.value = '';
-      }
+      const loaded = await handleProjectFileInput(target);
+      if (!loaded) console.warn('[AdBuilder] Project file was not handled by mode-aware loader.');
     } catch (err) {
       console.warn('[AdBuilder] Could not auto-load project file:', err);
+      alert('Error loading project. Please make sure the file is a valid project ZIP.');
+    } finally {
+      target.value = '';
     }
   }, true);
 }
