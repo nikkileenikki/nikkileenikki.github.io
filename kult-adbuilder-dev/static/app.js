@@ -5436,107 +5436,191 @@ return compactInlineStyles(html);
     }
     
     async function loadProject(event) {
-        const file = event.target.files[0];
-        if (!file) return;
-        
-        try {
-            // Read ZIP file
-            const zip = await JSZip.loadAsync(file);
-            
-            // Extract project.json
-            const projectJsonFile = zip.file('project.json');
-            if (!projectJsonFile) {
-                alert('Invalid project file: project.json not found');
+    const file = event.target.files[0];
+    if (!file) return;
+
+    try {
+        const zip = await JSZip.loadAsync(file);
+
+        const projectJsonFile = zip.file('project.json');
+        if (!projectJsonFile) {
+            alert('Invalid project file: project.json not found');
+            return;
+        }
+
+        const projectJson = await projectJsonFile.async('string');
+        const projectData = JSON.parse(projectJson);
+
+        const projectMode =
+            projectData.mode ||
+            projectData.editorMode ||
+            (projectData.templateId ? 'template' : 'freeform');
+
+        // =====================================================
+        // TEMPLATE MODE PROJECT LOAD
+        // =====================================================
+        if (projectMode === 'template') {
+            if (!window.adBuilderTemplateMode?.loadTemplateSaveState) {
+                alert('Template loader is not ready. Please refresh and try again.');
                 return;
             }
-            
-            const projectJson = await projectJsonFile.async('string');
-            const projectData = JSON.parse(projectJson);
-            
-            // Load all images from ZIP into a map
-            const imageDataUrls = {};
-            const imageFiles = Object.keys(zip.files).filter(f => f.startsWith('image_'));
-            
-            for (const filename of imageFiles) {
-                const imageFile = zip.file(filename);
-                if (imageFile) {
-                    const imageBlob = await imageFile.async('blob');
-                    const dataUrl = await blobToDataURL(imageBlob);
-                    imageDataUrls[filename] = dataUrl;
+
+            const assets = projectData.assets || projectData.templateAssets || {};
+
+            for (const [key, asset] of Object.entries(assets)) {
+                if (!asset || asset.dataUrl || !asset.filename) continue;
+
+                const assetFile = zip.file(asset.filename);
+                if (!assetFile) continue;
+
+                const assetBlob = await assetFile.async('blob');
+                asset.dataUrl = await blobToDataURL(assetBlob);
+
+                if (!asset.mimeType && assetBlob.type) {
+                    asset.mimeType = assetBlob.type;
                 }
             }
-            
-            // Clear current project
+
+            projectData.assets = assets;
+
+            // Clear free-form state before switching
             elements.length = 0;
             groups.length = 0;
             selectedElement = null;
-            syncSelectedElementToStore();
             selectedFolder = null;
-            
-            // Restore canvas settings
-            canvasWidth = projectData.canvasWidth || 300;
-            canvasHeight = projectData.canvasHeight || 250;
-            syncCanvasSizeToStore();
-            totalDuration = projectData.totalDuration || 5;
-            syncTimelineDurationToStore();
-            animLoop = projectData.animLoop !== undefined ? projectData.animLoop : 0;
-            
-            // Update UI (convert animLoop back to user-friendly loop count)
-            $('#canvasSize').val(`${canvasWidth}x${canvasHeight}`);
-            $('#totalDuration').val(totalDuration);
-            $('#animLoop').val(animLoop + 1);  // UI shows 1-based count
-            if (projectData.bannerName) {
-                $('#bannerName').val(projectData.bannerName);
-            }
-            updateCanvasSize();
-            
-            // Restore elements with loaded images
-            for (const element of projectData.elements) {
-                if (element.type === 'image' && element.imageFile) {
-                    // Replace imageFile reference with actual data URL
-                    element.src = imageDataUrls[element.imageFile] || element.src;
-                    delete element.imageFile;  // Clean up temporary field
-                }
-                elements.push(element);
-            }
-            
-            // Restore groups
-            if (projectData.groups) {
-                groups.push(...projectData.groups);
-            }
-            
-            // Increment elementCounter to avoid ID conflicts
-            const maxId = Math.max(0, ...elements.map(el => {
-                const match = el.id.match(/element_(\d+)/);
-                return match ? parseInt(match[1]) : 0;
-            }));
-            elementCounter = maxId;
-            
-            // Increment folderCounter to avoid ID conflicts
-            const maxFolderId = Math.max(0, ...groups.map(g => {
-                const match = g.id.match(/folder_(\d+)/);
-                return match ? parseInt(match[1]) : 0;
-            }));
-            folderCounter = maxFolderId;
-            
-            // Update display
+            syncSelectedElementToStore();
+
             updateCanvas();
             updateLayersList();
             updateTimelineTracks();
             updateStructureFromDOM();
             rebuildTimeline();
             updatePropertiesPanel();
-            
-            // Reset file input
+
+            const modeSelect = document.getElementById('editorModeSelect');
+            if (modeSelect) {
+                modeSelect.value = 'template';
+                modeSelect.dispatchEvent(new Event('change', { bubbles: true }));
+            } else if (window.adBuilderTemplateModeState) {
+                window.adBuilderTemplateModeState.editorMode = 'template';
+            }
+
+            const loaded = await window.adBuilderTemplateMode.loadTemplateSaveState(projectData);
+
+            if (!loaded) {
+                alert('Unable to load template project. Please make sure the template still exists.');
+                return;
+            }
+
+            if (projectData.bannerName) {
+                $('#bannerName').val(projectData.bannerName);
+            }
+
             $('#loadProjectInput').val('');
-            
-            _log('Project loaded successfully!');
-            alert('Project loaded successfully!');
-        } catch (error) {
-            _err('Error loading project:', error);
-            alert('Error loading project. Please make sure the file is a valid project ZIP.');
+
+            _log('Template project loaded successfully!');
+            return;
         }
+
+        // =====================================================
+        // FREE-FORM PROJECT LOAD
+        // =====================================================
+
+        const imageDataUrls = {};
+        const imageFiles = Object.keys(zip.files).filter(filename => {
+            return (
+                filename.startsWith('image_') ||
+                /\.(png|jpg|jpeg|gif|webp|svg)$/i.test(filename)
+            );
+        });
+
+        for (const filename of imageFiles) {
+            const imageFile = zip.file(filename);
+            if (imageFile) {
+                const imageBlob = await imageFile.async('blob');
+                const dataUrl = await blobToDataURL(imageBlob);
+                imageDataUrls[filename] = dataUrl;
+            }
+        }
+
+        elements.length = 0;
+        groups.length = 0;
+        selectedElement = null;
+        syncSelectedElementToStore();
+        selectedFolder = null;
+
+        canvasWidth = projectData.canvasWidth || 300;
+        canvasHeight = projectData.canvasHeight || 250;
+        syncCanvasSizeToStore();
+
+        totalDuration = projectData.totalDuration || 5;
+        syncTimelineDurationToStore();
+
+        animLoop = projectData.animLoop !== undefined ? projectData.animLoop : 0;
+
+        $('#canvasSize').val(`${canvasWidth}x${canvasHeight}`);
+        $('#totalDuration').val(totalDuration);
+        $('#animLoop').val(animLoop + 1);
+
+        if (projectData.bannerName) {
+            $('#bannerName').val(projectData.bannerName);
+        }
+
+        updateCanvasSize();
+
+        for (const element of projectData.elements || []) {
+            if (element.type === 'image') {
+                if (element.imageFile) {
+                    element.src = imageDataUrls[element.imageFile] || element.src;
+                    delete element.imageFile;
+                } else if (element.src && imageDataUrls[element.src]) {
+                    element.src = imageDataUrls[element.src];
+                }
+            }
+
+            elements.push(element);
+        }
+
+        if (projectData.groups) {
+            groups.push(...projectData.groups);
+        }
+
+        const maxId = Math.max(0, ...elements.map(el => {
+            const match = String(el.id || '').match(/element_(\d+)/);
+            return match ? parseInt(match[1], 10) : 0;
+        }));
+        elementCounter = maxId;
+
+        const maxFolderId = Math.max(0, ...groups.map(g => {
+            const match = String(g.id || '').match(/folder_(\d+)/);
+            return match ? parseInt(match[1], 10) : 0;
+        }));
+        folderCounter = maxFolderId;
+
+        const modeSelect = document.getElementById('editorModeSelect');
+        if (modeSelect) {
+            modeSelect.value = 'freeform';
+            modeSelect.dispatchEvent(new Event('change', { bubbles: true }));
+        } else if (window.adBuilderTemplateModeState) {
+            window.adBuilderTemplateModeState.editorMode = 'freeform';
+        }
+
+        updateCanvas();
+        updateLayersList();
+        updateTimelineTracks();
+        updateStructureFromDOM();
+        rebuildTimeline();
+        updatePropertiesPanel();
+
+        $('#loadProjectInput').val('');
+
+        _log('Project loaded successfully!');
+        alert('Project loaded successfully!');
+    } catch (error) {
+        _err('Error loading project:', error);
+        alert('Error loading project. Please make sure the file is a valid project ZIP.');
     }
+}
     
     // Helper function to convert Blob to Data URL
     function blobToDataURL(blob) {
