@@ -46,14 +46,6 @@
                     <i class="fas fa-ad mr-2 text-blue-400"></i>
                     Ad Builder
                 </h1>                
-                <!-- Layers Panel -->
-                <div class="mb-2">
-                    <h2 class="text-lg font-semibold mb-2">Layers</h2>
-                    <div id="layersList" class="space-y-1">
-                        <p class="text-sm text-gray-500 text-center py-4">No layers yet</p>
-                    </div>
-                </div>
-
                 <!-- Add Elements -->
                 <div class="mb-2">
                     <h2 class="text-lg font-semibold mb-3">Add Elements</h2>
@@ -531,7 +523,10 @@
                     </div>
                 </div>
 
-                <!-- hidden file input for Load Banner (moved to toolbar dropdown) -->
+                <!-- #layersList: required by app.js but layers are rendered in the timeline only -->
+                <div id="layersList" class="hidden"></div>
+
+            <!-- hidden file input for Load Banner (moved to toolbar dropdown) -->
                 <input type="file" id="loadProjectInput" accept=".zip,application/zip" class="hidden">
             </div>
         </div>
