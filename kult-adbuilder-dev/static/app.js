@@ -2920,10 +2920,12 @@
     
     function updateClickthroughDisplay(element) {
         const $element = $(`#${element.id}`);
+        const safeUrl = (element.url || '')
+            .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
         $element.find('div').last().html(`
             <i class="fas fa-mouse-pointer text-2xl mb-2"></i>
             <div class="text-xs">Clickthrough</div>
-            <div class="text-xs font-bold">${element.url}</div>
+            <div class="text-xs font-bold">${safeUrl}</div>
         `);
     }
     
@@ -4652,7 +4654,8 @@
                 const autoplayAttr = element.playTrigger === 'autoplay' ? ' autoplay' : '';
                 const mutedAttr = element.muted ? ' muted' : '';
                 const controlsAttr = element.controls ? ' controls' : '';
-                const playTrigger = element.playTrigger || 'autoplay';
+                const validTriggers = ['autoplay', 'mouseover', 'click'];
+                const playTrigger = validTriggers.includes(element.playTrigger) ? element.playTrigger : 'autoplay';
                 elementsHtml += `
         <ft-video id="${element.videoName}" name="${element.videoName}"${autoplayAttr}${mutedAttr}${controlsAttr} data-play-trigger="${playTrigger}" style="
             position: absolute;
@@ -5046,83 +5049,7 @@ return compactInlineStyles(html);
     }
     
     function getAnimationPropsForExport(type, element, customProps = {}) {
-        if (type === 'custom') {
-            return customProps;
-        }
-        
-        const props = {};
-        
-        switch(type) {
-            case 'fadeIn':
-                props.startAt = { opacity: 0 };
-                props.opacity = element.opacity;
-                break;
-            case 'fadeOut':
-                props.opacity = 0;
-                break;
-            case 'slideLeft':
-                props.startAt = { x: -canvasWidth };
-                props.x = 0;
-                break;
-            case 'slideRight':
-                props.startAt = { x: canvasWidth };
-                props.x = 0;
-                break;
-            case 'slideUp':
-                props.startAt = { y: -canvasHeight };
-                props.y = 0;
-                break;
-            case 'slideDown':
-                props.startAt = { y: canvasHeight };
-                props.y = 0;
-                break;
-            case 'slideToLeft':
-                props.x = -canvasWidth;
-                break;
-            case 'slideToRight':
-                props.x = canvasWidth;
-                break;
-            case 'slideToUp':
-                props.y = -canvasHeight;
-                break;
-            case 'slideToDown':
-                props.y = canvasHeight;
-                break;
-            case 'scale':
-            case 'scaleIn':
-                props.startAt = { scale: 0 };
-                props.scale = 1;
-                break;
-            case 'scaleOut':
-                props.startAt = { scale: 1 };
-                props.scale = 0;
-                break;
-            case 'scaleFrom':
-                const scaleFrom = customProps.scaleFrom !== undefined ? customProps.scaleFrom : 0;
-                props.startAt = { scale: scaleFrom };
-                props.scale = 1;
-                break;
-            case 'rotate':
-            case 'rotate360':
-                props.rotation = '+=360';
-                break;
-            case 'rotate90':
-                props.rotation = '+=90';
-                break;
-            case 'rotate180':
-                props.rotation = '+=180';
-                break;
-            case 'rotate270':
-                props.rotation = '+=270';
-                break;
-            case 'rotateFrom':
-                const rotateFrom = customProps.rotateFrom !== undefined ? customProps.rotateFrom : 0;
-                props.startAt = { rotation: rotateFrom };
-                props.rotation = element.rotation;
-                break;
-        }
-        
-        return props;
+        return getAnimationProps(type, element, customProps);
     }
     
     function clearAll() {
@@ -5135,7 +5062,7 @@ return compactInlineStyles(html);
             $canvas.empty();
             $layersList.html('<p class="text-sm text-gray-500 text-center py-4">No layers yet</p>');
             $propertiesPanel.addClass('hidden');
-            $timelineTracks.html('<div class="text-center text-gray-500 text-sm py-8">Add elements and animations to see timeline</div>');
+            renderEmptyTimelineState();
             timeline.clear();
             stopTimeline();
         }

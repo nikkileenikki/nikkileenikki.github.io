@@ -479,8 +479,23 @@ function syncTemplateField(key, type, rawValue, checkedValue) {
   if (!state.activeTemplate) return;
   let nextValue = rawValue;
   if (type === 'repeater') {
-    try { nextValue = JSON.parse(rawValue || '[]'); }
-    catch (err) { console.warn('Invalid repeater JSON for', key, err); return; }
+    try {
+      nextValue = JSON.parse(rawValue || '[]');
+    } catch (err) {
+      console.warn('Invalid repeater JSON for', key, err);
+      const ta = document.querySelector(`[data-template-key="${key}"][data-template-type="repeater"]`);
+      if (ta) {
+        ta.style.borderColor = '#f87171';
+        let errEl = ta.nextElementSibling;
+        if (!errEl || !errEl.classList.contains('template-json-error')) {
+          errEl = document.createElement('p');
+          errEl.className = 'template-json-error text-xs text-red-400 mt-1';
+          ta.insertAdjacentElement('afterend', errEl);
+        }
+        errEl.textContent = 'Invalid JSON — check array syntax';
+      }
+      return;
+    }
   } else if (type === 'number') nextValue = rawValue === '' ? '' : Number(rawValue);
   else if (type === 'boolean') nextValue = Boolean(checkedValue);
 
