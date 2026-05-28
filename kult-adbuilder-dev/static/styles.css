@@ -145,6 +145,7 @@ input, select, button, textarea, label {
     overflow-x: hidden;
     scrollbar-width: none;       /* Firefox */
     -ms-overflow-style: none;    /* IE/Edge */
+    min-height: 180px;
 }
 .timeline-tracks-scroll::-webkit-scrollbar {
     display: none;               /* Chrome/Safari/Opera */

@@ -118,7 +118,7 @@ export function renderTrack({ element, elements, totalDuration }) {
 }
 
 export function renderEmptyTimelineState({ $timelineTracks }) {
-    $timelineTracks.html('<div class="text-center text-gray-500 text-sm py-8">Add elements and animations to see timeline</div>');
+    $timelineTracks.html('<div class="flex items-center justify-center text-gray-500 text-sm h-full">Add elements and animations to see timeline</div>');
 }
 
 export function buildTimelineItems({ groups, elements }) {
