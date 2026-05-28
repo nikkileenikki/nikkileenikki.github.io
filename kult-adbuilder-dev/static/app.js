@@ -31,7 +31,6 @@
     let totalDuration = 5;
     let isPlaying = false;
     let playbackTimeout = null; // Store timeout ID to clear on stop
-    let zoomLevel = 1; // Now controls timeline duration scale
     let animLoop = 0; // Default: 0 = play once (GSAP repeat count)
     let editingAnimation = null; // For editing existing animations
     
@@ -4121,11 +4120,9 @@
         
         // Store timeout ID so we can clear it on stop
         playbackTimeout = setTimeout(() => {
-            if (animLoop !== -1) {
-                isPlaying = false;
-                $('#timelinePlayhead').css('left', '0');
-                stopTimeline();
-            }
+            isPlaying = false;
+            $('#timelinePlayhead').css('left', '0');
+            stopTimeline();
         }, playbackTime);
     }
     
@@ -4745,33 +4742,43 @@
                 } else if (action === 'addShadow') {
                     const shadow = `${interactions.click.shadowX}px ${interactions.click.shadowY}px ${interactions.click.shadowBlur}px ${interactions.click.shadowColor}`;
                     interactionsJs += `\n            var targetEl = document.getElementById('${target}');`;
-                    interactionsJs += `\n            targetEl.style.transition = '${element.type === 'text' ? 'text-shadow' : 'box-shadow'} 0.3s ease';`;
+                    interactionsJs += `\n            if (targetEl) {`;
+                    interactionsJs += `\n                targetEl.style.transition = '${element.type === 'text' ? 'text-shadow' : 'box-shadow'} 0.3s ease';`;
                     if (element.type === 'text') {
-                        interactionsJs += `\n            targetEl.style.textShadow = '${shadow}';`;
+                        interactionsJs += `\n                targetEl.style.textShadow = '${shadow}';`;
                     } else {
-                        interactionsJs += `\n            targetEl.style.boxShadow = '${shadow}';`;
+                        interactionsJs += `\n                targetEl.style.boxShadow = '${shadow}';`;
                     }
+                    interactionsJs += `\n            }`;
                 } else if (action === 'addGlow') {
                     const glow = `${interactions.click.glowX}px ${interactions.click.glowY}px ${interactions.click.glowBlur}px ${interactions.click.glowColor}`;
                     interactionsJs += `\n            var targetEl = document.getElementById('${target}');`;
-                    interactionsJs += `\n            targetEl.style.transition = '${element.type === 'text' ? 'text-shadow' : 'box-shadow'} 0.3s ease';`;
+                    interactionsJs += `\n            if (targetEl) {`;
+                    interactionsJs += `\n                targetEl.style.transition = '${element.type === 'text' ? 'text-shadow' : 'box-shadow'} 0.3s ease';`;
                     if (element.type === 'text') {
-                        interactionsJs += `\n            targetEl.style.textShadow = '${glow}';`;
+                        interactionsJs += `\n                targetEl.style.textShadow = '${glow}';`;
                     } else {
-                        interactionsJs += `\n            targetEl.style.boxShadow = '${glow}';`;
+                        interactionsJs += `\n                targetEl.style.boxShadow = '${glow}';`;
                     }
+                    interactionsJs += `\n            }`;
                 } else if (action === 'scale') {
                     interactionsJs += `\n            var targetEl = document.getElementById('${target}');`;
-                    interactionsJs += `\n            targetEl.style.transition = 'transform 0.3s ease';`;
-                    interactionsJs += `\n            targetEl.style.transform = 'scale(${interactions.click.scaleAmount})';`;
+                    interactionsJs += `\n            if (targetEl) {`;
+                    interactionsJs += `\n                targetEl.style.transition = 'transform 0.3s ease';`;
+                    interactionsJs += `\n                targetEl.style.transform = 'scale(${interactions.click.scaleAmount})';`;
+                    interactionsJs += `\n            }`;
                 } else if (action === 'hide') {
                     interactionsJs += `\n            var targetEl = document.getElementById('${target}');`;
-                    interactionsJs += `\n            targetEl.style.transition = 'opacity 0.3s ease';`;
-                    interactionsJs += `\n            targetEl.style.opacity = '0';`;
+                    interactionsJs += `\n            if (targetEl) {`;
+                    interactionsJs += `\n                targetEl.style.transition = 'opacity 0.3s ease';`;
+                    interactionsJs += `\n                targetEl.style.opacity = '0';`;
+                    interactionsJs += `\n            }`;
                 } else if (action === 'show') {
                     interactionsJs += `\n            var targetEl = document.getElementById('${target}');`;
-                    interactionsJs += `\n            targetEl.style.transition = 'opacity 0.3s ease';`;
-                    interactionsJs += `\n            targetEl.style.opacity = '1';`;
+                    interactionsJs += `\n            if (targetEl) {`;
+                    interactionsJs += `\n                targetEl.style.transition = 'opacity 0.3s ease';`;
+                    interactionsJs += `\n                targetEl.style.opacity = '1';`;
+                    interactionsJs += `\n            }`;
                 }
                 
                 interactionsJs += `\n        });`;
@@ -4789,44 +4796,54 @@
                 } else if (action === 'addShadow') {
                     const shadow = `${interactions.hover.shadowX}px ${interactions.hover.shadowY}px ${interactions.hover.shadowBlur}px ${interactions.hover.shadowColor}`;
                     interactionsJs += `\n            var targetEl = document.getElementById('${target}');`;
-                    interactionsJs += `\n            targetEl.style.transition = '${element.type === 'text' ? 'text-shadow' : 'box-shadow'} 0.3s ease';`;
+                    interactionsJs += `\n            if (targetEl) {`;
+                    interactionsJs += `\n                targetEl.style.transition = '${element.type === 'text' ? 'text-shadow' : 'box-shadow'} 0.3s ease';`;
                     if (element.type === 'text') {
-                        interactionsJs += `\n            targetEl.style.textShadow = '${shadow}';`;
+                        interactionsJs += `\n                targetEl.style.textShadow = '${shadow}';`;
                     } else {
-                        interactionsJs += `\n            targetEl.style.boxShadow = '${shadow}';`;
+                        interactionsJs += `\n                targetEl.style.boxShadow = '${shadow}';`;
                     }
+                    interactionsJs += `\n            }`;
                 } else if (action === 'addGlow') {
                     const glow = `${interactions.hover.glowX}px ${interactions.hover.glowY}px ${interactions.hover.glowBlur}px ${interactions.hover.glowColor}`;
                     interactionsJs += `\n            var targetEl = document.getElementById('${target}');`;
-                    interactionsJs += `\n            targetEl.style.transition = '${element.type === 'text' ? 'text-shadow' : 'box-shadow'} 0.3s ease';`;
+                    interactionsJs += `\n            if (targetEl) {`;
+                    interactionsJs += `\n                targetEl.style.transition = '${element.type === 'text' ? 'text-shadow' : 'box-shadow'} 0.3s ease';`;
                     if (element.type === 'text') {
-                        interactionsJs += `\n            targetEl.style.textShadow = '${glow}';`;
+                        interactionsJs += `\n                targetEl.style.textShadow = '${glow}';`;
                     } else {
-                        interactionsJs += `\n            targetEl.style.boxShadow = '${glow}';`;
+                        interactionsJs += `\n                targetEl.style.boxShadow = '${glow}';`;
                     }
+                    interactionsJs += `\n            }`;
                 } else if (action === 'scale') {
                     interactionsJs += `\n            var targetEl = document.getElementById('${target}');`;
-                    interactionsJs += `\n            targetEl.style.transition = 'transform 0.3s ease';`;
-                    interactionsJs += `\n            targetEl.style.transform = 'scale(${interactions.hover.scaleAmount})';`;
+                    interactionsJs += `\n            if (targetEl) {`;
+                    interactionsJs += `\n                targetEl.style.transition = 'transform 0.3s ease';`;
+                    interactionsJs += `\n                targetEl.style.transform = 'scale(${interactions.hover.scaleAmount})';`;
+                    interactionsJs += `\n            }`;
                 }
-                
+
                 interactionsJs += `\n        });`;
-                
+
                 // Mouse leave to restore
                 interactionsJs += `\n        document.getElementById('${elemId}').addEventListener('mouseleave', function() {`;
-                
+
                 if (action === 'addShadow' || action === 'addGlow') {
                     interactionsJs += `\n            var targetEl = document.getElementById('${target}');`;
-                    interactionsJs += `\n            targetEl.style.transition = '${element.type === 'text' ? 'text-shadow' : 'box-shadow'} 0.3s ease';`;
+                    interactionsJs += `\n            if (targetEl) {`;
+                    interactionsJs += `\n                targetEl.style.transition = '${element.type === 'text' ? 'text-shadow' : 'box-shadow'} 0.3s ease';`;
                     if (element.type === 'text') {
-                        interactionsJs += `\n            targetEl.style.textShadow = '';`;
+                        interactionsJs += `\n                targetEl.style.textShadow = '';`;
                     } else {
-                        interactionsJs += `\n            targetEl.style.boxShadow = '';`;
+                        interactionsJs += `\n                targetEl.style.boxShadow = '';`;
                     }
+                    interactionsJs += `\n            }`;
                 } else if (action === 'scale') {
                     interactionsJs += `\n            var targetEl = document.getElementById('${target}');`;
-                    interactionsJs += `\n            targetEl.style.transition = 'transform 0.3s ease';`;
-                    interactionsJs += `\n            targetEl.style.transform = 'scale(1)';`;
+                    interactionsJs += `\n            if (targetEl) {`;
+                    interactionsJs += `\n                targetEl.style.transition = 'transform 0.3s ease';`;
+                    interactionsJs += `\n                targetEl.style.transform = 'scale(1)';`;
+                    interactionsJs += `\n            }`;
                 }
                 
                 interactionsJs += `\n        });`;
