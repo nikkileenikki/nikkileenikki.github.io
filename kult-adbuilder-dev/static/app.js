@@ -4,6 +4,15 @@
     function _log(...a)  { if (window.AD_BUILDER_DEBUG) console.log(...a); }
     function _err(...a)  { if (window.AD_BUILDER_DEBUG) console.error(...a); }
     function _warn(...a) { if (window.AD_BUILDER_DEBUG) console.warn(...a); }
+
+    function escapeHtml(str) {
+        return String(str == null ? '' : str)
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#39;');
+    }
     // ============================================
     // STATE MANAGEMENT
     // ============================================
@@ -2920,12 +2929,10 @@
     
     function updateClickthroughDisplay(element) {
         const $element = $(`#${element.id}`);
-        const safeUrl = (element.url || '')
-            .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
         $element.find('div').last().html(`
             <i class="fas fa-mouse-pointer text-2xl mb-2"></i>
             <div class="text-xs">Clickthrough</div>
-            <div class="text-xs font-bold">${safeUrl}</div>
+            <div class="text-xs font-bold">${escapeHtml(element.url)}</div>
         `);
     }
     
@@ -4538,7 +4545,7 @@
             z-index: ${exportZIndex};
             user-select: none;
             cursor: pointer;
-        ">${element.text}</div>`;
+        ">${escapeHtml(element.text)}</div>`;
                 
                 // Add hover CSS if needed
                 if (element.shadowHover || element.glowHover) {
@@ -4555,7 +4562,7 @@
                 // Use div with JavaScript click handler instead of <a> tag
                 // Always include data-url and data-click-index
                 const clickIndex = element.clickIndex || 1;
-                const dataAttrs = `data-url="${element.url || ''}" data-click-index="${clickIndex}"`;
+                const dataAttrs = `data-url="${escapeHtml(element.url || '')}" data-click-index="${clickIndex}"`;
                 elementsHtml += `
         <div id="${element.id}" class="clickthrough-zone" ${dataAttrs} style="
             position: absolute;
@@ -5053,12 +5060,17 @@ return compactInlineStyles(html);
     }
     
     function clearAll() {
-        if (elements.length === 0) return;
-        
+        if (elements.length === 0 && groups.length === 0) return;
+
         if (confirm('Are you sure you want to clear all elements?')) {
             saveState();
             elements = [];
+            groups = [];
             selectedElement = null;
+            selectedFolder = null;
+            elementCounter = 0;
+            folderCounter = 0;
+            clearSelectionUI();
             $canvas.empty();
             $layersList.html('<p class="text-sm text-gray-500 text-center py-4">No layers yet</p>');
             $propertiesPanel.addClass('hidden');

@@ -1,3 +1,5 @@
+import { escapeHtml } from '../core/utils.js';
+
 export function getAbsolutePosition({ element }) {
     return {
         x: element.x,
@@ -88,7 +90,7 @@ export function createElementDOM({ element, getAbsolutePosition }) {
                 z-index: ${element.zIndex};
                 ${visibilityStyle}
             ">
-                ${element.text}
+                ${escapeHtml(element.text)}
                 <div class="resize-handle nw"></div>
                 <div class="resize-handle ne"></div>
                 <div class="resize-handle sw"></div>
@@ -146,7 +148,7 @@ export function createElementDOM({ element, getAbsolutePosition }) {
                 <div style="text-align: center; color: rgba(168, 85, 247, 0.8); pointer-events: none;">
                     <i class="fas fa-mouse-pointer text-2xl mb-2"></i>
                     <div class="text-xs">Clickthrough</div>
-                    ${element.url ? `<div class="text-xs font-bold">${element.url}</div>` : ''}
+                    ${element.url ? `<div class="text-xs font-bold">${escapeHtml(element.url)}</div>` : ''}
                 </div>
                 <div class="resize-handle nw"></div>
                 <div class="resize-handle ne"></div>

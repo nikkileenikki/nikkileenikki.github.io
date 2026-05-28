@@ -1,3 +1,5 @@
+import { escapeHtml } from '../core/utils.js';
+
 function round1(value) {
     return Math.round(value * 10) / 10;
 }
@@ -69,7 +71,7 @@ export function renderTrack({ element, elements, totalDuration }) {
             <div class="timeline-track-label">
                 <span class="timeline-handle">⋮⋮</span>
                 <i class="fas ${icon} text-blue-400 mr-2"></i>
-                <span class="truncate flex-1 track-name-label" data-element-id="${element.id}">${label}</span>
+                <span class="truncate flex-1 track-name-label" data-element-id="${element.id}">${escapeHtml(label)}</span>
                 <div class="flex items-center gap-1 ml-2">
                     <button class="timeline-layer-btn toggle-visibility" data-id="${element.id}" title="Toggle visibility">
                         <i class="fas ${element.visible === false ? 'fa-eye-slash' : 'fa-eye'} text-xs"></i>
@@ -155,7 +157,7 @@ export function renderFolderTrack({ group, elements, totalDuration, renderTrack 
                     <span class="timeline-handle">⋮⋮</span>
                     <span class="timeline-folder-toggle">${group.collapsed ? '▸' : '▾'}</span>
                     <i class="fas fa-folder text-yellow-400 mr-2"></i>
-                    <span class="flex-1 track-name-label" data-folder-id="${group.id}">${group.name}</span>
+                    <span class="flex-1 track-name-label" data-folder-id="${group.id}">${escapeHtml(group.name)}</span>
                     <div class="flex items-center gap-1 ml-2">
                         <button class="timeline-layer-btn toggle-folder-visibility" data-id="${group.id}" title="Toggle folder visibility">
                             <i class="fas ${group.visible === false ? 'fa-eye-slash' : 'fa-eye'} text-xs"></i>

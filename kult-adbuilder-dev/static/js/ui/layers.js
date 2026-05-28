@@ -1,3 +1,5 @@
+import { escapeHtml } from '../core/utils.js';
+
 export function renderLayersEmptyState({ $layersList }) {
     $layersList.html('<p class="text-sm text-gray-500 text-center py-4">No layers yet</p>');
 }
@@ -45,7 +47,7 @@ export function renderLayerItem({ element, index, elements }) {
             <div class="flex items-center flex-1">
                 <i class="fas fa-grip-vertical text-gray-600 mr-2 cursor-move"></i>
                 <i class="fas ${icon} text-blue-400 mr-2"></i>
-                <span class="text-sm">${label}</span>
+                <span class="text-sm">${escapeHtml(label)}</span>
             </div>
             <div class="flex items-center space-x-1">
                 <button class="toggle-layer-visibility text-gray-400 hover:text-white px-2 py-1" data-id="${element.id}" title="Toggle Visibility">
