@@ -46,6 +46,14 @@
                     <i class="fas fa-ad mr-2 text-blue-400"></i>
                     Ad Builder
                 </h1>                
+                <!-- Layers Panel -->
+                <div class="mb-2">
+                    <h2 class="text-lg font-semibold mb-2">Layers</h2>
+                    <div id="layersList" class="space-y-1">
+                        <p class="text-sm text-gray-500 text-center py-4">No layers yet</p>
+                    </div>
+                </div>
+
                 <!-- Add Elements -->
                 <div class="mb-2">
                     <h2 class="text-lg font-semibold mb-3">Add Elements</h2>
@@ -909,13 +917,13 @@
                 <div class="opacity-inline-wrap">
                     <label class="text-sm text-gray-400">Opacity</label>
                     <div class="min-w-0">
-                        <input type="range" id="propOpacity" class="w-full min-w-0" min="0" max="1" step="0.1" value="1">
+                        <input type="range" id="shapeOpacity" class="w-full min-w-0" min="0" max="1" step="0.1" value="1">
                         <div class="mt-1 text-xs text-gray-500 text-right">
-                            <span id="opacityValue">100%</span>
+                            <span id="shapeOpacityValue">100%</span>
                         </div>
                     </div>
                 </div>
-                
+
                 <button id="saveShapeBtn" class="w-full bg-teal-600 hover:bg-teal-700 text-white py-2 rounded transition-colors">
                     Add Shape
                 </button>
