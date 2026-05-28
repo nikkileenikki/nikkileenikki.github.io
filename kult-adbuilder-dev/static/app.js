@@ -1377,11 +1377,10 @@
         // For SVGs, extract dimensions from the SVG markup directly
         function getSvgDimensions(dataUrl) {
             try {
-                const svgText = decodeURIComponent(
-                    dataUrl.startsWith('data:image/svg+xml,')
-                        ? dataUrl.slice('data:image/svg+xml,'.length)
-                        : atob(dataUrl.split(',')[1])
-                );
+                const [header, content] = dataUrl.split(',');
+                const svgText = header.includes(';base64')
+                    ? atob(content)
+                    : decodeURIComponent(content);
                 const parser = new DOMParser();
                 const doc = parser.parseFromString(svgText, 'image/svg+xml');
                 const svgEl = doc.querySelector('svg');
@@ -2213,7 +2212,10 @@
         const id = $(e.currentTarget).data('id');
         const element = elements.find(el => el.id === id);
         const parentFolder = element && element.folderId ? groups.find(g => g.id === element.folderId) : null;
-        if (!element || element.locked || (parentFolder && parentFolder.locked)) return;
+        if (!element || element.locked || (parentFolder && parentFolder.locked)) {
+            if (element) flashLockFeedback(id);
+            return;
+        }
         saveState();
         elements = elements.filter(el => el.id !== id);
         $(`#${id}`).remove();
@@ -2233,7 +2235,10 @@
         if (!source) return;
 
         const parentFolder = source.folderId ? groups.find(g => g.id === source.folderId) : null;
-        if (source.locked || (parentFolder && parentFolder.locked)) return;
+        if (source.locked || (parentFolder && parentFolder.locked)) {
+            flashLockFeedback(id);
+            return;
+        }
 
         saveState();
 
@@ -2297,6 +2302,13 @@
         $('#propertiesLockOverlay').toggleClass('hidden', !isLocked);
     }
 
+    function flashLockFeedback(id) {
+        const $btn = $(`[data-id="${id}"] .toggle-layer-lock, .timeline-track[data-element-id="${id}"] .toggle-layer-lock, .timeline-folder[data-folder-id="${id}"] .toggle-folder-lock`).first();
+        if (!$btn.length) return;
+        $btn.addClass('lock-flash');
+        setTimeout(() => $btn.removeClass('lock-flash'), 600);
+    }
+
     function handleAddLayerAnimation(e) {
         e.stopPropagation();
         const id = $(e.currentTarget).data('id');
@@ -2320,14 +2332,20 @@
         
         if (id.startsWith('folder_')) {
             const folder = groups.find(g => g.id === id);
-            if (!folder || folder.locked) return;
+            if (!folder || folder.locked) {
+                if (folder) flashLockFeedback(id);
+                return;
+            }
         } else {
             const element = elements.find(el => el.id === id);
             const parentFolder = element && element.folderId ? groups.find(g => g.id === element.folderId) : null;
-            if (!element || element.locked || (parentFolder && parentFolder.locked)) return;
+            if (!element || element.locked || (parentFolder && parentFolder.locked)) {
+                if (element) flashLockFeedback(id);
+                return;
+            }
         }
         _log('selectedElement after selection:', selectedElement);
-        
+
         openAnimationModal();
     }
     
@@ -3738,7 +3756,13 @@
         
         // Remove folder
         groups = groups.filter(g => g.id !== folderId);
-        
+
+        if (selectedFolder === folderId) {
+            selectedFolder = null;
+            clearSelectionUI();
+            $propertiesPanel.addClass('hidden');
+        }
+
         updateTimelineTracks();
         updateLayersList();
         
