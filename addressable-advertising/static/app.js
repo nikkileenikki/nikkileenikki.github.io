@@ -5527,6 +5527,28 @@ return compactInlineStyles(html);
         const LOGO_W = 300, LOGO_H = 200;
         const QR_SIZE = 220;
 
+        // --- Background color shape (full white canvas behind all content) ---
+        elementCounter++;
+        const bgId = `element_${elementCounter}`;
+        const bgEl = {
+            id: bgId, locked: false, type: 'shape', shapeType: 'rectangle',
+            fillColor: '#ffffff', borderColor: '#ffffff', borderWidth: 0, borderRadius: 0,
+            transparent: false,
+            x: 0, y: 0, width: canvasWidth, height: canvasHeight,
+            rotation: 0, opacity: 1,
+            shadowX: 0, shadowY: 0, shadowBlur: 0, shadowSpread: 0, shadowColor: '#000000', shadowHover: false,
+            glowX: 0, glowY: 0, glowBlur: 0, glowSpread: 0, glowColor: '#ffffff', glowHover: false,
+            zIndex: getNextElementZIndex(), animations: [], interactions: initInteractionProperties()
+        };
+        elements.push(bgEl);
+        const $bg = $(`<div class="canvas-element" id="${bgId}" style="
+            left:0px;top:0px;width:${canvasWidth}px;height:${canvasHeight}px;
+            background-color:#ffffff;opacity:1;z-index:${bgEl.zIndex};">
+            <div class="resize-handle nw"></div><div class="resize-handle ne"></div>
+            <div class="resize-handle sw"></div><div class="resize-handle se"></div>
+        </div>`);
+        appendElementToCanvas($bg, bgEl);
+
         // --- Black sidebar 608x1080, top-left (fully locked placeholder) ---
         elementCounter++;
         const sideId = `element_${elementCounter}`;
@@ -5616,7 +5638,7 @@ return compactInlineStyles(html);
         const line1Id = `element_${elementCounter}`;
         const line1El = {
             id: line1Id, locked: false, type: 'text', text: 'Line 1 text here',
-            x: CONTENT_LEFT, y: MARGIN, width: 900, height: 110,
+            x: CONTENT_LEFT, y: MARGIN, width: 850, height: 670,
             rotation: 0, opacity: 1,
             fontSize: 80, fontFamily: 'Arial', color: '#111827',
             bold: false, italic: false, underline: false, textAlign: 'left',
@@ -5700,14 +5722,19 @@ return compactInlineStyles(html);
                 if (ev.key === 'Enter') {
                     ev.preventDefault();
                     ev.stopPropagation();
-                    // Insert <br> via Selection API (execCommand is deprecated)
                     const sel = window.getSelection();
                     if (sel && sel.rangeCount) {
                         const range = sel.getRangeAt(0);
                         range.deleteContents();
                         const br = document.createElement('br');
                         range.insertNode(br);
-                        // Move cursor after the <br>
+                        // If nothing follows this <br> (end of content), insert a trailing <br>
+                        // so the cursor visually moves to a new line
+                        let next = br.nextSibling;
+                        if (!next || (next.nodeType === Node.TEXT_NODE && next.textContent === '')) {
+                            const trailingBr = document.createElement('br');
+                            br.parentNode.insertBefore(trailingBr, br.nextSibling);
+                        }
                         range.setStartAfter(br);
                         range.setEndAfter(br);
                         sel.removeAllRanges();

@@ -51,34 +51,7 @@
                 <div class="mb-2">
                     <h2 class="text-lg font-semibold mb-3">Add Elements</h2>
                     <div class="space-y-2">
-                        <div id="dropzone" class="border-2 border-dashed border-gray-600 rounded-lg p-4 text-center cursor-pointer hover:border-blue-400 transition-colors">
-                            <i class="fas fa-cloud-upload-alt text-3xl text-gray-500 mb-1"></i>
-                            <p class="text-sm text-gray-400">Upload Images</p>
-                            <p class="text-xs text-gray-500 mt-1">JPG, PNG, GIF, SVG, WEBP (Multiple files supported)</p>
-                        </div>
                         <input type="file" id="fileInput" accept="image/jpeg,image/png,image/gif,image/svg+xml,image/webp" multiple class="hidden">
-                        
-                        <div class="grid grid-cols-2 gap-2">
-                            <button id="addTextBtn" class="bg-blue-600 hover:bg-blue-700 text-white py-2 rounded transition-colors">
-                                <i class="fas fa-font mr-1"></i>Text
-                            </button>
-                            
-                            <button id="addShapeBtn" class="bg-teal-600 hover:bg-teal-700 text-white py-2 rounded transition-colors">
-                                <i class="fas fa-shapes mr-1"></i>Shape
-                            </button>
-                        </div>
-                        
-                        <button id="addVideoBtn" class="w-full bg-red-600 hover:bg-red-700 text-white py-2 rounded transition-colors">
-                            <i class="fas fa-video mr-2"></i>Add Video
-                        </button>
-                        
-                        <button id="addInvisibleBtn" class="w-full bg-gray-600 hover:bg-gray-700 text-white py-2 rounded transition-colors">
-                            <i class="fas fa-eye-slash mr-2"></i>Add Invisible Layer
-                        </button>
-                        
-                        <button id="addClickthroughBtn" class="w-full bg-purple-600 hover:bg-purple-700 text-white py-2 rounded transition-colors">
-                            <i class="fas fa-mouse-pointer mr-2"></i>Add Clickthrough
-                        </button>
                     </div>
                 </div>
 
@@ -412,7 +385,7 @@
                         </div>
                         
                         <!-- Interactions Section -->
-                        <div id="interactionsSection" class="mt-4 pt-4 border-t border-gray-700">
+                        <div id="interactionsSection" class="hidden mt-4 pt-4 border-t border-gray-700">
                             <h3 class="text-sm font-semibold text-gray-300 mb-3">
                                 <i class="fas fa-hand-pointer mr-2"></i>Interactions
                             </h3>
