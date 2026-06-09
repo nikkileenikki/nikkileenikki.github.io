@@ -5507,7 +5507,7 @@ return compactInlineStyles(html);
                     const natH = img.naturalHeight;
                     const aspectRatio = natH / natW;
 
-                    // Fit image within the placeholder box, preserving aspect ratio
+                    // Fit within placeholder box preserving aspect ratio
                     const boxW = element.width;
                     const boxH = element.height;
                     let fitW = boxW;
@@ -5524,16 +5524,21 @@ return compactInlineStyles(html);
                     element.width = fitW;
                     element.height = fitH;
 
-                    // Re-snap to corner with new dimensions
                     if (element.stickyCorner) enforceStickyMargin(element);
+
+                    // Draw onto a <canvas> so html2canvas captures pixels exactly
+                    const cvs = document.createElement('canvas');
+                    cvs.width = fitW;
+                    cvs.height = fitH;
+                    cvs.style.cssText = `width:${fitW}px;height:${fitH}px;display:block;pointer-events:none;`;
+                    cvs.getContext('2d').drawImage(img, 0, 0, fitW, fitH);
 
                     const hideHandle = corner === 'tr' ? 'ne' : corner === 'br' ? 'se' : corner === 'tl' ? 'nw' : '';
                     const handles = ['nw', 'ne', 'sw', 'se'].map(h =>
                         `<div class="resize-handle ${h}" style="${h === hideHandle ? 'display:none;' : ''}"></div>`
                     ).join('');
 
-                    // No object-fit — element is already the exact image size
-                    $el.html(`<img src="${dataUrl}" style="width:100%;height:100%;display:block;pointer-events:none;">${handles}`);
+                    $el.empty().append(cvs).append(handles);
                     $el.css({
                         background: 'transparent',
                         border: 'none',
@@ -5767,7 +5772,7 @@ return compactInlineStyles(html);
             id: disId, locked: false, templateProtected: true,
             type: 'text', text: '', placeholder: '*Disclaimer',
             x: MARGIN, y: canvasHeight - disHeight - MARGIN,
-            width: 900, height: disHeight,
+            width: 505, height: disHeight,
             rotation: 0, opacity: 1,
             fontSize: 32, fontFamily: 'Arial', color: '#374151',
             bold: false, italic: false, underline: false, textAlign: 'left',
