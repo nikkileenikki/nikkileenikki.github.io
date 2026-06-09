@@ -444,6 +444,11 @@
             exportToZip();
         });
 
+        $('#exportJpgBtn').on('click', function() {
+            $('#importExportMenu').addClass('hidden');
+            exportCanvasAsJpg();
+        });
+
         $('#saveProjectBtn').on('click', function() {
             $('#importExportMenu').addClass('hidden');
             saveProject();
@@ -5437,6 +5442,25 @@ return compactInlineStyles(html);
             reader.readAsDataURL(blob);
         });
     }
-    
+
+    function exportCanvasAsJpg() {
+        const canvasEl = document.getElementById('canvas');
+        const name = ($('#bannerName').val() || 'banner').trim();
+        html2canvas(canvasEl, {
+            useCORS: true,
+            allowTaint: true,
+            scale: 1,
+            width: canvasEl.offsetWidth,
+            height: canvasEl.offsetHeight,
+        }).then(function(rendered) {
+            rendered.toBlob(function(blob) {
+                saveAs(blob, name + '.jpg');
+            }, 'image/jpeg', 0.95);
+        }).catch(function(err) {
+            _err('JPG export failed:', err);
+            alert('JPG export failed: ' + err.message);
+        });
+    }
+
 })();
     

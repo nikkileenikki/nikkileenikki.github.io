@@ -11,6 +11,7 @@
     <link href="https://code.jquery.com/ui/1.13.2/themes/base/jquery-ui.css" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <link href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css" rel="stylesheet">
     <link href="static/styles.css" rel="stylesheet">
 
@@ -575,24 +576,8 @@
                             <i class="fas fa-chevron-down text-xs ml-1"></i>
                         </button>
                         <div id="importExportMenu" class="hidden absolute right-0 mt-1 w-56 bg-white rounded-lg shadow-xl border border-gray-200 z-50 py-1 text-gray-800 text-sm">
-                            <button id="saveProjectBtn" class="w-full flex items-center px-4 py-2 hover:bg-gray-100 transition-colors">
-                                <i class="fas fa-save mr-3 text-blue-500 w-4"></i>Save Banner
-                            </button>
-                            <button id="loadProjectBtn" class="w-full flex items-center px-4 py-2 hover:bg-gray-100 transition-colors">
-                                <i class="fas fa-folder-open mr-3 text-indigo-500 w-4"></i>Load Banner
-                            </button>
-                            <div class="border-t border-gray-200 my-1"></div>
-                            <!-- FIX #16: Added title tooltip to explain Polite Load -->
-                            <label class="w-full flex items-center px-4 py-2 hover:bg-gray-100 transition-colors cursor-pointer" title="Polite Load: defers banner asset loading until after the page has fully loaded, reducing impact on page performance. Recommended for display advertising.">
-                                <input type="checkbox" id="politeLoadCheckbox" checked class="mr-3 w-4 h-4 text-blue-600">
-                                <span>Polite Load</span>
-                                <i class="fas fa-info-circle ml-auto text-gray-400 text-xs" title="Defers asset loading until page load is complete"></i>
-                            </label>
-                            <button id="exportBtn" class="w-full flex items-center px-4 py-2 hover:bg-gray-100 transition-colors">
-                                <i class="fas fa-file-archive mr-3 text-green-500 w-4"></i>Export as ZIP
-                            </button>
-                            <button id="previewBtn" class="w-full flex items-center px-4 py-2 hover:bg-gray-100 transition-colors">
-                                <i class="fas fa-play mr-3 text-purple-500 w-4"></i>Preview Animation
+                            <button id="exportJpgBtn" class="w-full flex items-center px-4 py-2 hover:bg-gray-100 transition-colors">
+                                <i class="fas fa-image mr-3 text-orange-500 w-4"></i>Export .JPG
                             </button>
                         </div>
                     </div>
@@ -614,7 +599,7 @@
                 </div>
                 
                 <!-- Timeline Editor - Fixed at bottom -->
-                <div class="flex-shrink-0 bg-gray-800 border-t border-gray-700 p-4">
+                <div class="hidden flex-shrink-0 bg-gray-800 border-t border-gray-700 p-4">
                     <div class="flex items-center justify-between mb-3">
                         <h3 class="text-lg font-semibold flex items-center">
                             <i class="fas fa-film mr-2 text-purple-400"></i>
