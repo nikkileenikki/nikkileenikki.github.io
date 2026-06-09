@@ -5503,17 +5503,45 @@ return compactInlineStyles(html);
                 const dataUrl = e.target.result;
                 const img = new Image();
                 img.onload = function() {
+                    const natW = img.naturalWidth;
+                    const natH = img.naturalHeight;
+                    const aspectRatio = natH / natW;
+
+                    // Fit image within the placeholder box, preserving aspect ratio
+                    const boxW = element.width;
+                    const boxH = element.height;
+                    let fitW = boxW;
+                    let fitH = Math.round(boxW * aspectRatio);
+                    if (fitH > boxH) {
+                        fitH = boxH;
+                        fitW = Math.round(boxH / aspectRatio);
+                    }
+
                     element.type = 'image';
                     element.src = dataUrl;
                     element.filename = file.name;
-                    element.aspectRatio = img.naturalHeight / img.naturalWidth;
-                    // Determine which corner handle to hide based on corner
-                    const hideHandle = corner === 'tr' ? 'ne' : corner === 'br' ? 'se' : '';
+                    element.aspectRatio = aspectRatio;
+                    element.width = fitW;
+                    element.height = fitH;
+
+                    // Re-snap to corner with new dimensions
+                    if (element.stickyCorner) enforceStickyMargin(element);
+
+                    const hideHandle = corner === 'tr' ? 'ne' : corner === 'br' ? 'se' : corner === 'tl' ? 'nw' : '';
                     const handles = ['nw', 'ne', 'sw', 'se'].map(h =>
                         `<div class="resize-handle ${h}" style="${h === hideHandle ? 'display:none;' : ''}"></div>`
                     ).join('');
-                    $el.html(`<img src="${dataUrl}" style="width:100%;height:100%;object-fit:contain;pointer-events:none;">${handles}`);
-                    $el.css({ background: 'transparent', border: 'none' });
+
+                    // No object-fit — element is already the exact image size
+                    $el.html(`<img src="${dataUrl}" style="width:100%;height:100%;display:block;pointer-events:none;">${handles}`);
+                    $el.css({
+                        background: 'transparent',
+                        border: 'none',
+                        width: fitW + 'px',
+                        height: fitH + 'px',
+                        left: element.x + 'px',
+                        top: element.y + 'px'
+                    });
                     $el.removeClass('template-dropzone-empty');
                     makeImageDropzone($el, element, corner);
                 };
