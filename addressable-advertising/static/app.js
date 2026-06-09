@@ -448,7 +448,6 @@
         });
 
         $('#exportJpgBtn').on('click', function() {
-            $('#importExportMenu').addClass('hidden');
             exportCanvasAsJpg();
         });
 
@@ -465,16 +464,6 @@
         $('#loadProjectInput').on('change', loadProject);
         $('#clearBtn').on('click', clearAll);
 
-        $('#importExportBtn').on('click', function(e) {
-            e.stopPropagation();
-            $('#importExportMenu').toggleClass('hidden');
-        });
-
-        $(document).on('click.importExport', function(e) {
-            if (!$(e.target).closest('#importExportDropdownWrapper').length) {
-                $('#importExportMenu').addClass('hidden');
-            }
-        });
 
         $('#bannerName').on('input', function() {
             let value = $(this).val();

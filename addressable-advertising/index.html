@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>HTML5 Ad Builder</title>
+    <title>AA Builder</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/gsap.min.js"></script>
     <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
@@ -45,11 +45,11 @@
             <div class="p-3 flex-1 overflow-y-auto">
                 <h1 class="text-xl font-bold mb-3 flex items-center">
                     <i class="fas fa-ad mr-2 text-blue-400"></i>
-                    Ad Builder
+                    AA Builder
                 </h1>                
                 <!-- Add Elements -->
                 <div class="mb-2">
-                    <h2 class="text-lg font-semibold mb-3">Add Elements</h2>
+                    <h2 class="text-lg font-semibold mb-3 hidden">Add Elements</h2>
                     <div class="space-y-2">
                         <input type="file" id="fileInput" accept="image/jpeg,image/png,image/gif,image/svg+xml,image/webp" multiple class="hidden">
                     </div>
@@ -539,18 +539,10 @@
                 </div>
                 <div class="flex items-center space-x-2">
                     <!-- Export Dropdown -->
-                    <div class="relative" id="importExportDropdownWrapper">
-                        <button id="importExportBtn" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-1 rounded text-sm transition-colors flex items-center space-x-1">
-                            <i class="fas fa-file-export"></i>
-                            <span>Export Image</span>
-                            <i class="fas fa-chevron-down text-xs ml-1"></i>
-                        </button>
-                        <div id="importExportMenu" class="hidden absolute right-0 mt-1 w-56 bg-white rounded-lg shadow-xl border border-gray-200 z-50 py-1 text-gray-800 text-sm">
-                            <button id="exportJpgBtn" class="w-full flex items-center px-4 py-2 hover:bg-gray-100 transition-colors">
-                                <i class="fas fa-image mr-3 text-orange-500 w-4"></i>Export .JPG
-                            </button>
-                        </div>
-                    </div>
+                    <button id="exportJpgBtn" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-1 rounded text-sm transition-colors flex items-center space-x-1">
+                        <i class="fas fa-image"></i>
+                        <span>Export Image</span>
+                    </button>
                 </div>
             </div>
 
