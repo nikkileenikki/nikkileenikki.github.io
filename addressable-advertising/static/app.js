@@ -5703,7 +5703,7 @@ return compactInlineStyles(html);
         const line1El = {
             id: line1Id, locked: false, templateProtected: true,
             type: 'text', text: '', placeholder: 'Insert your message here',
-            x: RIGHT_CONTENT_LEFT, y: MARGIN, width: 505, height: 670,
+            x: RIGHT_CONTENT_LEFT, y: MARGIN, width: 505, height: 500,
             rotation: 0, opacity: 1,
             fontSize: 80, fontFamily: 'Arial', color: '#111827',
             bold: false, italic: false, underline: false, textAlign: 'left',
