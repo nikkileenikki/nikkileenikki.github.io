@@ -141,6 +141,8 @@
         updateStageZoom();
         updateTimelineRuler();
         syncLegacyStateToStore();
+        loadDefaultTemplate();
+        initInlineTextEditing();
     });
     
     // ============================================
@@ -1848,6 +1850,7 @@
                 moveFolderByDelta(element.folderId, deltaX, deltaY);
             } else {
                 moveElementTo(element, finalX, finalY);
+                enforceStickyMargin(element);
             }
 
             updatePropertiesPanel();
@@ -1867,6 +1870,7 @@
             const { newWidth, newHeight, newX, newY } = computeResizeResult(element, mouseX, mouseY);
 
             applyElementResize(element, newWidth, newHeight, newX, newY);
+            enforceStickyMargin(element);
 
             updatePropertiesPanel();
         } else {
@@ -5430,6 +5434,236 @@ return compactInlineStyles(html);
         }
     }
     
+    // ============================================
+    // STICKY MARGIN ENFORCEMENT (75px safe zone)
+    // ============================================
+    const SAFE_MARGIN = 75;
+
+    function enforceStickyMargin(element) {
+        if (!element.stickyCorner) return;
+        const corner = element.stickyCorner;
+        let x = element.x;
+        let y = element.y;
+
+        if (corner === 'tr' || corner === 'br') {
+            x = canvasWidth - element.width - SAFE_MARGIN;
+        }
+        if (corner === 'tl' || corner === 'bl') {
+            x = SAFE_MARGIN;
+        }
+        if (corner === 'tr' || corner === 'tl') {
+            y = SAFE_MARGIN;
+        }
+        if (corner === 'br' || corner === 'bl') {
+            y = canvasHeight - element.height - SAFE_MARGIN;
+        }
+
+        moveElementTo(element, x, y);
+    }
+
+    // ============================================
+    // DEFAULT TEMPLATE
+    // ============================================
+    function loadDefaultTemplate() {
+        const MARGIN = SAFE_MARGIN;
+        const LOGO_SIZE = 300;
+        const QR_SIZE = 220;
+
+        // Logo placeholder (top-right, sticky to tr corner)
+        elementCounter++;
+        const logoId = `element_${elementCounter}`;
+        const logoEl = {
+            id: logoId, locked: false, type: 'shape', shapeType: 'rectangle',
+            fillColor: '#e5e7eb', borderColor: '#9ca3af', borderWidth: 2, borderRadius: 8,
+            transparent: false,
+            x: canvasWidth - LOGO_SIZE - MARGIN, y: MARGIN,
+            width: LOGO_SIZE, height: LOGO_SIZE,
+            rotation: 0, opacity: 1,
+            shadowX: 0, shadowY: 0, shadowBlur: 0, shadowSpread: 0, shadowColor: '#000000', shadowHover: false,
+            glowX: 0, glowY: 0, glowBlur: 0, glowSpread: 0, glowColor: '#ffffff', glowHover: false,
+            zIndex: getNextElementZIndex(), animations: [], interactions: initInteractionProperties(),
+            stickyCorner: 'tr'
+        };
+        elements.push(logoEl);
+        const $logo = $(`<div class="canvas-element" id="${logoId}" style="
+            left:${logoEl.x}px;top:${logoEl.y}px;width:${logoEl.width}px;height:${logoEl.height}px;
+            background-color:${logoEl.fillColor};border:${logoEl.borderWidth}px solid ${logoEl.borderColor};
+            border-radius:${logoEl.borderRadius}px;opacity:1;z-index:${logoEl.zIndex};
+            display:flex;align-items:center;justify-content:center;
+            font-size:24px;color:#6b7280;font-family:Arial;">
+            <span style="pointer-events:none">Logo</span>
+            <div class="resize-handle nw"></div><div class="resize-handle ne"></div>
+            <div class="resize-handle sw"></div><div class="resize-handle se"></div>
+        </div>`);
+        appendElementToCanvas($logo, logoEl);
+
+        // QR code placeholder (bottom-right, sticky to br corner)
+        elementCounter++;
+        const qrId = `element_${elementCounter}`;
+        const qrEl = {
+            id: qrId, locked: false, type: 'shape', shapeType: 'rectangle',
+            fillColor: '#ffffff', borderColor: '#111827', borderWidth: 3, borderRadius: 0,
+            transparent: false,
+            x: canvasWidth - QR_SIZE - MARGIN, y: canvasHeight - QR_SIZE - MARGIN,
+            width: QR_SIZE, height: QR_SIZE,
+            rotation: 0, opacity: 1,
+            shadowX: 0, shadowY: 0, shadowBlur: 0, shadowSpread: 0, shadowColor: '#000000', shadowHover: false,
+            glowX: 0, glowY: 0, glowBlur: 0, glowSpread: 0, glowColor: '#ffffff', glowHover: false,
+            zIndex: getNextElementZIndex(), animations: [], interactions: initInteractionProperties(),
+            stickyCorner: 'br'
+        };
+        elements.push(qrEl);
+        const $qr = $(`<div class="canvas-element" id="${qrId}" style="
+            left:${qrEl.x}px;top:${qrEl.y}px;width:${qrEl.width}px;height:${qrEl.height}px;
+            background-color:${qrEl.fillColor};border:${qrEl.borderWidth}px solid ${qrEl.borderColor};
+            opacity:1;z-index:${qrEl.zIndex};
+            display:flex;align-items:center;justify-content:center;
+            font-size:24px;color:#374151;font-family:Arial;">
+            <span style="pointer-events:none">QR Code</span>
+            <div class="resize-handle nw"></div><div class="resize-handle ne"></div>
+            <div class="resize-handle sw"></div><div class="resize-handle se"></div>
+        </div>`);
+        appendElementToCanvas($qr, qrEl);
+
+        // Body text lines
+        const bodyLines = ['Line 1 text here', 'Line 2 text here', 'Line 3 text here'];
+        const bodyX = 120;
+        let bodyY = 220;
+        bodyLines.forEach(function(line) {
+            elementCounter++;
+            const tid = `element_${elementCounter}`;
+            const tel = {
+                id: tid, locked: false, type: 'text', text: line,
+                x: bodyX, y: bodyY, width: 900, height: 110,
+                rotation: 0, opacity: 1,
+                fontSize: 80, fontFamily: 'Arial', color: '#111827',
+                bold: false, italic: false, underline: false, textAlign: 'left',
+                shadowX: 0, shadowY: 0, shadowBlur: 0, shadowColor: '#000000', shadowHover: false,
+                glowX: 0, glowY: 0, glowBlur: 0, glowSpread: 0, glowColor: '#ffffff', glowHover: false,
+                zIndex: getNextElementZIndex(), animations: [], interactions: initInteractionProperties()
+            };
+            elements.push(tel);
+            const $tel = $(`<div class="canvas-element text-element template-text" id="${tid}" style="
+                left:${tel.x}px;top:${tel.y}px;width:${tel.width}px;height:${tel.height}px;
+                opacity:1;font-size:${tel.fontSize}px;font-family:${tel.fontFamily};color:${tel.color};
+                font-weight:normal;font-style:normal;text-decoration:none;text-align:left;
+                line-height:1.2;word-wrap:break-word;z-index:${tel.zIndex};
+                display:flex;align-items:center;">
+                <span class="text-content">${line}</span>
+                <div class="resize-handle nw"></div><div class="resize-handle ne"></div>
+                <div class="resize-handle sw"></div><div class="resize-handle se"></div>
+            </div>`);
+            appendElementToCanvas($tel, tel);
+            bodyY += 140;
+        });
+
+        // CTA text
+        elementCounter++;
+        const ctaId = `element_${elementCounter}`;
+        const ctaEl = {
+            id: ctaId, locked: false, type: 'text', text: 'Call to action',
+            x: 700, y: 820, width: 800, height: 110,
+            rotation: 0, opacity: 1,
+            fontSize: 80, fontFamily: 'Arial', color: '#10b981',
+            bold: false, italic: false, underline: false, textAlign: 'left',
+            shadowX: 0, shadowY: 0, shadowBlur: 0, shadowColor: '#000000', shadowHover: false,
+            glowX: 0, glowY: 0, glowBlur: 0, glowSpread: 0, glowColor: '#ffffff', glowHover: false,
+            zIndex: getNextElementZIndex(), animations: [], interactions: initInteractionProperties()
+        };
+        elements.push(ctaEl);
+        const $cta = $(`<div class="canvas-element text-element template-text" id="${ctaId}" style="
+            left:${ctaEl.x}px;top:${ctaEl.y}px;width:${ctaEl.width}px;height:${ctaEl.height}px;
+            opacity:1;font-size:${ctaEl.fontSize}px;font-family:${ctaEl.fontFamily};color:${ctaEl.color};
+            font-weight:normal;font-style:normal;text-decoration:none;text-align:left;
+            line-height:1.2;word-wrap:break-word;z-index:${ctaEl.zIndex};display:flex;align-items:center;">
+            <span class="text-content">Call to action</span>
+            <div class="resize-handle nw"></div><div class="resize-handle ne"></div>
+            <div class="resize-handle sw"></div><div class="resize-handle se"></div>
+        </div>`);
+        appendElementToCanvas($cta, ctaEl);
+
+        // Disclaimer text
+        elementCounter++;
+        const disId = `element_${elementCounter}`;
+        const disEl = {
+            id: disId, locked: false, type: 'text', text: '*Disclaimer',
+            x: 120, y: canvasHeight - 80, width: 600, height: 60,
+            rotation: 0, opacity: 1,
+            fontSize: 32, fontFamily: 'Arial', color: '#374151',
+            bold: false, italic: false, underline: false, textAlign: 'left',
+            shadowX: 0, shadowY: 0, shadowBlur: 0, shadowColor: '#000000', shadowHover: false,
+            glowX: 0, glowY: 0, glowBlur: 0, glowSpread: 0, glowColor: '#ffffff', glowHover: false,
+            zIndex: getNextElementZIndex(), animations: [], interactions: initInteractionProperties()
+        };
+        elements.push(disEl);
+        const $dis = $(`<div class="canvas-element text-element template-text" id="${disId}" style="
+            left:${disEl.x}px;top:${disEl.y}px;width:${disEl.width}px;height:${disEl.height}px;
+            opacity:1;font-size:${disEl.fontSize}px;font-family:${disEl.fontFamily};color:${disEl.color};
+            font-weight:normal;font-style:normal;text-decoration:none;text-align:left;
+            line-height:1.2;word-wrap:break-word;z-index:${disEl.zIndex};display:flex;align-items:center;">
+            <span class="text-content">*Disclaimer</span>
+            <div class="resize-handle nw"></div><div class="resize-handle ne"></div>
+            <div class="resize-handle sw"></div><div class="resize-handle se"></div>
+        </div>`);
+        appendElementToCanvas($dis, disEl);
+
+        updateLayersList();
+    }
+
+    // ============================================
+    // INLINE TEXT EDITING (double-click)
+    // ============================================
+    function initInlineTextEditing() {
+        $canvas.on('dblclick', '.template-text', function(e) {
+            e.stopPropagation();
+            const $el = $(this);
+            const id = $el.attr('id');
+            const element = elements.find(el => el.id === id);
+            if (!element) return;
+
+            const $span = $el.find('.text-content');
+            $span.attr('contenteditable', 'true');
+            $span.css({ outline: 'none', cursor: 'text', 'user-select': 'text', 'pointer-events': 'auto' });
+            $span.focus();
+
+            // Place cursor at end
+            const range = document.createRange();
+            range.selectNodeContents($span[0]);
+            range.collapse(false);
+            const sel = window.getSelection();
+            sel.removeAllRanges();
+            sel.addRange(range);
+
+            function saveEdit() {
+                $span.removeAttr('contenteditable');
+                $span.css({ cursor: '', 'user-select': '', 'pointer-events': '' });
+                const html = $span.html();
+                element.text = html;
+                updateLayersList();
+            }
+
+            $span.off('keydown.inlineEdit').on('keydown.inlineEdit', function(ev) {
+                if (ev.key === 'Enter') {
+                    ev.preventDefault();
+                    document.execCommand('insertHTML', false, '<br>');
+                }
+                if (ev.key === 'Escape') {
+                    saveEdit();
+                    $span.blur();
+                }
+            });
+
+            $span.off('blur.inlineEdit').on('blur.inlineEdit', function() {
+                saveEdit();
+            });
+
+            // Prevent drag/select while editing
+            $el.off('mousedown.inlineEdit').on('mousedown.inlineEdit', function(ev) {
+                if ($span.attr('contenteditable') === 'true') ev.stopPropagation();
+            });
+        });
+    }
+
     // Helper function to convert Blob to Data URL
     function blobToDataURL(blob) {
         return new Promise((resolve, reject) => {
