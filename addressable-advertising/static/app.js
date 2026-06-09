@@ -5676,7 +5676,7 @@ return compactInlineStyles(html);
             type: 'text', text: '', placeholder: 'Call to action',
             x: CONTENT_LEFT, y: 820, width: 900, height: 110,
             rotation: 0, opacity: 1,
-            fontSize: 80, fontFamily: 'Arial', color: '#10b981',
+            fontSize: 80, fontFamily: 'Arial', color: '#111827',
             bold: false, italic: false, underline: false, textAlign: 'left',
             shadowX: 0, shadowY: 0, shadowBlur: 0, shadowColor: '#000000', shadowHover: false,
             glowX: 0, glowY: 0, glowBlur: 0, glowSpread: 0, glowColor: '#ffffff', glowHover: false,
