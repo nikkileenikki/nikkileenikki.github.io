@@ -1487,6 +1487,13 @@
             canvasHeight = height;
             syncCanvasSizeToStore();
             updateCanvasSize();
+            // Reload template layout when switching
+            clearTemplate();
+            if (value === '1920x1080-center') {
+                loadCenterTemplate();
+            } else {
+                loadDefaultTemplate();
+            }
         }
     }
     
@@ -5527,6 +5534,223 @@ return compactInlineStyles(html);
             <div class="resize-handle nw"></div><div class="resize-handle ne"></div>
             <div class="resize-handle sw"></div><div class="resize-handle se"></div>
         </div>`);
+    }
+
+    function clearTemplate() {
+        // Remove all canvas elements and reset state
+        elements = [];
+        groups = [];
+        selectedElement = null;
+        selectedFolder = null;
+        elementCounter = 0;
+        syncSelectedElementToStore();
+        $canvas.find('.canvas-element, .canvas-folder').remove();
+        $propertiesPanel.addClass('hidden');
+        updateLayersList();
+        if (typeof rebuildTimeline === 'function') rebuildTimeline();
+    }
+
+    function loadCenterTemplate() {
+        const MARGIN = SAFE_MARGIN;
+        const SIDEBAR_W = 608;
+        const SIDEBAR_X = Math.round((canvasWidth - SIDEBAR_W) / 2); // 656
+        const LOGO_W = 300, LOGO_H = 200;
+        const QR_SIZE = 220;
+        const LEFT_CONTENT_RIGHT = SIDEBAR_X;  // left white area width
+        const RIGHT_CONTENT_LEFT = SIDEBAR_X + SIDEBAR_W + MARGIN; // 1339
+
+        // --- Background ---
+        elementCounter++;
+        const bgId = `element_${elementCounter}`;
+        const bgEl = {
+            id: bgId, locked: false, lockedMovement: true, type: 'shape', shapeType: 'rectangle',
+            fillColor: '#ffffff', borderColor: '#ffffff', borderWidth: 0, borderRadius: 0,
+            transparent: false,
+            x: 0, y: 0, width: canvasWidth, height: canvasHeight,
+            rotation: 0, opacity: 1,
+            shadowX: 0, shadowY: 0, shadowBlur: 0, shadowSpread: 0, shadowColor: '#000000', shadowHover: false,
+            glowX: 0, glowY: 0, glowBlur: 0, glowSpread: 0, glowColor: '#ffffff', glowHover: false,
+            zIndex: getNextElementZIndex(), animations: [], interactions: initInteractionProperties()
+        };
+        elements.push(bgEl);
+        const $bg = $(`<div class="canvas-element" id="${bgId}" style="
+            left:0px;top:0px;width:${canvasWidth}px;height:${canvasHeight}px;
+            background-color:#ffffff;opacity:1;z-index:${bgEl.zIndex};">
+        </div>`);
+        appendElementToCanvas($bg, bgEl);
+
+        // --- Center black sidebar (placeholder) ---
+        elementCounter++;
+        const sideId = `element_${elementCounter}`;
+        const sideEl = {
+            id: sideId, locked: true, templatePlaceholder: true,
+            type: 'shape', shapeType: 'rectangle',
+            fillColor: '#000000', borderColor: '#000000', borderWidth: 0, borderRadius: 0,
+            transparent: false,
+            x: SIDEBAR_X, y: 0, width: SIDEBAR_W, height: 1080,
+            rotation: 0, opacity: 1,
+            shadowX: 0, shadowY: 0, shadowBlur: 0, shadowSpread: 0, shadowColor: '#000000', shadowHover: false,
+            glowX: 0, glowY: 0, glowBlur: 0, glowSpread: 0, glowColor: '#ffffff', glowHover: false,
+            zIndex: getNextElementZIndex(), animations: [], interactions: initInteractionProperties()
+        };
+        elements.push(sideEl);
+        const $side = $(`<div class="canvas-element" id="${sideId}" style="
+            left:${SIDEBAR_X}px;top:0px;width:${SIDEBAR_W}px;height:1080px;
+            background-color:#000000;opacity:1;z-index:${sideEl.zIndex};pointer-events:none;">
+        </div>`);
+        appendElementToCanvas($side, sideEl);
+
+        // --- Logo dropzone (top-left, sticky tl) ---
+        elementCounter++;
+        const logoId = `element_${elementCounter}`;
+        const logoEl = {
+            id: logoId, locked: false, templateProtected: true,
+            type: 'shape', shapeType: 'rectangle',
+            fillColor: '#e5e7eb', borderColor: '#9ca3af', borderWidth: 2, borderRadius: 8,
+            transparent: false,
+            x: MARGIN, y: MARGIN,
+            width: LOGO_W, height: LOGO_H,
+            rotation: 0, opacity: 1,
+            shadowX: 0, shadowY: 0, shadowBlur: 0, shadowSpread: 0, shadowColor: '#000000', shadowHover: false,
+            glowX: 0, glowY: 0, glowBlur: 0, glowSpread: 0, glowColor: '#ffffff', glowHover: false,
+            zIndex: getNextElementZIndex(), animations: [], interactions: initInteractionProperties(),
+            stickyCorner: 'tl'
+        };
+        elements.push(logoEl);
+        const $logo = $(`<div class="canvas-element template-dropzone-empty" id="${logoId}" style="
+            left:${logoEl.x}px;top:${logoEl.y}px;width:${logoEl.width}px;height:${logoEl.height}px;
+            background-color:${logoEl.fillColor};border:${logoEl.borderWidth}px solid ${logoEl.borderColor};
+            border-radius:${logoEl.borderRadius}px;opacity:1;z-index:${logoEl.zIndex};
+            display:flex;align-items:center;justify-content:center;flex-direction:column;gap:8px;
+            font-size:18px;color:#6b7280;font-family:Arial;cursor:pointer;">
+            <i class="fas fa-image" style="font-size:32px;pointer-events:none;"></i>
+            <span style="pointer-events:none;font-size:14px;">Drop Logo Here</span>
+            <div class="resize-handle nw" style="display:none;"></div>
+            <div class="resize-handle ne"></div>
+            <div class="resize-handle sw"></div><div class="resize-handle se"></div>
+        </div>`);
+        appendElementToCanvas($logo, logoEl);
+        makeImageDropzone($logo, logoEl, 'tl');
+
+        // --- Image dropzone (left area, vertically centered) ---
+        const imgDZ_W = Math.min(450, LEFT_CONTENT_RIGHT - MARGIN * 2);
+        const imgDZ_H = 500;
+        const imgDZ_X = MARGIN;
+        const imgDZ_Y = Math.round((canvasHeight - imgDZ_H) / 2);
+        elementCounter++;
+        const imgDzId = `element_${elementCounter}`;
+        const imgDzEl = {
+            id: imgDzId, locked: false, templateProtected: true,
+            type: 'shape', shapeType: 'rectangle',
+            fillColor: '#f3f4f6', borderColor: '#9ca3af', borderWidth: 2, borderRadius: 8,
+            transparent: false,
+            x: imgDZ_X, y: imgDZ_Y, width: imgDZ_W, height: imgDZ_H,
+            rotation: 0, opacity: 1,
+            shadowX: 0, shadowY: 0, shadowBlur: 0, shadowSpread: 0, shadowColor: '#000000', shadowHover: false,
+            glowX: 0, glowY: 0, glowBlur: 0, glowSpread: 0, glowColor: '#ffffff', glowHover: false,
+            zIndex: getNextElementZIndex(), animations: [], interactions: initInteractionProperties()
+        };
+        elements.push(imgDzEl);
+        const $imgDz = $(`<div class="canvas-element template-dropzone-empty" id="${imgDzId}" style="
+            left:${imgDZ_X}px;top:${imgDZ_Y}px;width:${imgDZ_W}px;height:${imgDZ_H}px;
+            background-color:${imgDzEl.fillColor};border:${imgDzEl.borderWidth}px solid ${imgDzEl.borderColor};
+            border-radius:${imgDzEl.borderRadius}px;opacity:1;z-index:${imgDzEl.zIndex};
+            display:flex;align-items:center;justify-content:center;flex-direction:column;gap:12px;
+            font-size:18px;color:#6b7280;font-family:Arial;cursor:pointer;">
+            <i class="fas fa-image" style="font-size:48px;pointer-events:none;"></i>
+            <span style="pointer-events:none;font-size:16px;">Drop Image Here</span>
+            <div class="resize-handle nw"></div><div class="resize-handle ne"></div>
+            <div class="resize-handle sw"></div><div class="resize-handle se"></div>
+        </div>`);
+        appendElementToCanvas($imgDz, imgDzEl);
+        makeImageDropzone($imgDz, imgDzEl, null);
+
+        // --- QR dropzone (bottom-right, sticky br) ---
+        elementCounter++;
+        const qrId = `element_${elementCounter}`;
+        const qrEl = {
+            id: qrId, locked: false, templateProtected: true,
+            type: 'shape', shapeType: 'rectangle',
+            fillColor: '#ffffff', borderColor: '#111827', borderWidth: 2, borderRadius: 0,
+            transparent: false,
+            x: canvasWidth - QR_SIZE - MARGIN, y: canvasHeight - QR_SIZE - MARGIN,
+            width: QR_SIZE, height: QR_SIZE,
+            rotation: 0, opacity: 1,
+            shadowX: 0, shadowY: 0, shadowBlur: 0, shadowSpread: 0, shadowColor: '#000000', shadowHover: false,
+            glowX: 0, glowY: 0, glowBlur: 0, glowSpread: 0, glowColor: '#ffffff', glowHover: false,
+            zIndex: getNextElementZIndex(), animations: [], interactions: initInteractionProperties(),
+            stickyCorner: 'br'
+        };
+        elements.push(qrEl);
+        const $qr = $(`<div class="canvas-element template-dropzone-empty" id="${qrId}" style="
+            left:${qrEl.x}px;top:${qrEl.y}px;width:${qrEl.width}px;height:${qrEl.height}px;
+            background-color:${qrEl.fillColor};border:${qrEl.borderWidth}px solid ${qrEl.borderColor};
+            opacity:1;z-index:${qrEl.zIndex};
+            display:flex;align-items:center;justify-content:center;flex-direction:column;gap:8px;
+            font-size:18px;color:#374151;font-family:Arial;cursor:pointer;">
+            <i class="fas fa-qrcode" style="font-size:40px;pointer-events:none;"></i>
+            <span style="pointer-events:none;font-size:14px;">Drop QR Code Here</span>
+            <div class="resize-handle nw"></div><div class="resize-handle ne"></div>
+            <div class="resize-handle sw"></div>
+            <div class="resize-handle se" style="display:none;"></div>
+        </div>`);
+        appendElementToCanvas($qr, qrEl);
+        makeImageDropzone($qr, qrEl, 'br');
+
+        // --- Line 1 text (right of sidebar) ---
+        elementCounter++;
+        const line1Id = `element_${elementCounter}`;
+        const line1El = {
+            id: line1Id, locked: false, templateProtected: true,
+            type: 'text', text: '', placeholder: 'Line 1 text here',
+            x: RIGHT_CONTENT_LEFT, y: MARGIN, width: 850, height: 670,
+            rotation: 0, opacity: 1,
+            fontSize: 80, fontFamily: 'Arial', color: '#111827',
+            bold: false, italic: false, underline: false, textAlign: 'left',
+            shadowX: 0, shadowY: 0, shadowBlur: 0, shadowColor: '#000000', shadowHover: false,
+            glowX: 0, glowY: 0, glowBlur: 0, glowSpread: 0, glowColor: '#ffffff', glowHover: false,
+            zIndex: getNextElementZIndex(), animations: [], interactions: initInteractionProperties()
+        };
+        elements.push(line1El);
+        appendElementToCanvas(makeTemplateTextEl(line1Id, line1El), line1El);
+
+        // --- CTA text ---
+        elementCounter++;
+        const ctaId = `element_${elementCounter}`;
+        const ctaEl = {
+            id: ctaId, locked: false, templateProtected: true,
+            type: 'text', text: '', placeholder: 'Call to action',
+            x: RIGHT_CONTENT_LEFT, y: 820, width: 900, height: 110,
+            rotation: 0, opacity: 1,
+            fontSize: 80, fontFamily: 'Arial', color: '#111827',
+            bold: false, italic: false, underline: false, textAlign: 'left',
+            shadowX: 0, shadowY: 0, shadowBlur: 0, shadowColor: '#000000', shadowHover: false,
+            glowX: 0, glowY: 0, glowBlur: 0, glowSpread: 0, glowColor: '#ffffff', glowHover: false,
+            zIndex: getNextElementZIndex(), animations: [], interactions: initInteractionProperties()
+        };
+        elements.push(ctaEl);
+        appendElementToCanvas(makeTemplateTextEl(ctaId, ctaEl), ctaEl);
+
+        // --- Disclaimer text ---
+        const disHeight = 50;
+        elementCounter++;
+        const disId = `element_${elementCounter}`;
+        const disEl = {
+            id: disId, locked: false, templateProtected: true,
+            type: 'text', text: '', placeholder: '*Disclaimer',
+            x: RIGHT_CONTENT_LEFT, y: canvasHeight - disHeight - MARGIN,
+            width: 900, height: disHeight,
+            rotation: 0, opacity: 1,
+            fontSize: 32, fontFamily: 'Arial', color: '#374151',
+            bold: false, italic: false, underline: false, textAlign: 'left',
+            shadowX: 0, shadowY: 0, shadowBlur: 0, shadowColor: '#000000', shadowHover: false,
+            glowX: 0, glowY: 0, glowBlur: 0, glowSpread: 0, glowColor: '#ffffff', glowHover: false,
+            zIndex: getNextElementZIndex(), animations: [], interactions: initInteractionProperties()
+        };
+        elements.push(disEl);
+        appendElementToCanvas(makeTemplateTextEl(disId, disEl), disEl);
+
+        updateLayersList();
     }
 
     function loadDefaultTemplate() {
