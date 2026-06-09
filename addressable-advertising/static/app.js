@@ -36,11 +36,11 @@
     let editingAnimation = null; // For editing existing animations
     
     // Canvas dimensions
-    let canvasWidth = 300;
-    let canvasHeight = 250;
-    let stageZoom = 1.0; // Stage zoom level (0.25 to 2.0)
-    
-    // Ensure stageZoom is initialized to exact 1.0
+    let canvasWidth = 1920;
+    let canvasHeight = 1080;
+    let stageZoom = 0.5; // Stage zoom level (0.25 to 2.0)
+
+    // Ensure stageZoom is initialized to exact value
     stageZoom = Math.round(stageZoom * 4) / 4;
     
     // DOM elements - initialized after DOM is ready
