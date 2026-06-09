@@ -5464,20 +5464,95 @@ return compactInlineStyles(html);
     // ============================================
     // DEFAULT TEMPLATE
     // ============================================
+    function makeImageDropzone($el, element, corner) {
+        $el.addClass('template-dropzone');
+        $el.on('dragover.dropzone', function(ev) {
+            ev.preventDefault();
+            ev.stopPropagation();
+            $el.css('outline', '3px dashed #3b82f6');
+        });
+        $el.on('dragleave.dropzone drop.dropzone', function() {
+            $el.css('outline', '');
+        });
+        $el.on('drop.dropzone', function(ev) {
+            ev.preventDefault();
+            ev.stopPropagation();
+            $el.css('outline', '');
+            const file = ev.originalEvent.dataTransfer.files[0];
+            if (!file || !file.type.startsWith('image/')) return;
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const dataUrl = e.target.result;
+                const img = new Image();
+                img.onload = function() {
+                    // Replace placeholder with actual image, keep position/size/stickyCorner
+                    element.type = 'image';
+                    element.src = dataUrl;
+                    element.filename = file.name;
+                    element.aspectRatio = img.naturalHeight / img.naturalWidth;
+                    $el.html(`
+                        <img src="${dataUrl}" style="width:100%;height:100%;object-fit:contain;pointer-events:none;">
+                        <div class="resize-handle nw"></div><div class="resize-handle ne"></div>
+                        <div class="resize-handle sw"></div><div class="resize-handle se"></div>
+                    `);
+                    $el.css({ background: 'transparent', border: 'none' });
+                    // Re-attach dropzone so user can re-drop
+                    makeImageDropzone($el, element, corner);
+                };
+                img.src = dataUrl;
+            };
+            reader.readAsDataURL(file);
+        });
+    }
+
+    function makeTemplateTextEl(id, el) {
+        return $(`<div class="canvas-element text-element template-text" id="${id}" style="
+            left:${el.x}px;top:${el.y}px;width:${el.width}px;height:${el.height}px;
+            opacity:1;font-size:${el.fontSize}px;font-family:${el.fontFamily};color:${el.color};
+            font-weight:normal;font-style:normal;text-decoration:none;text-align:left;
+            line-height:1.2;word-wrap:break-word;z-index:${el.zIndex};display:flex;align-items:flex-start;">
+            <span class="text-content" style="display:block;white-space:pre-wrap;">${el.text}</span>
+            <div class="resize-handle nw"></div><div class="resize-handle ne"></div>
+            <div class="resize-handle sw"></div><div class="resize-handle se"></div>
+        </div>`);
+    }
+
     function loadDefaultTemplate() {
         const MARGIN = SAFE_MARGIN;
-        const LOGO_SIZE = 300;
+        const LOGO_W = 300, LOGO_H = 200;
         const QR_SIZE = 220;
 
-        // Logo placeholder (top-right, sticky to tr corner)
+        // --- Black sidebar 608x1080, top-left ---
+        elementCounter++;
+        const sideId = `element_${elementCounter}`;
+        const sideEl = {
+            id: sideId, locked: false, type: 'shape', shapeType: 'rectangle',
+            fillColor: '#000000', borderColor: '#000000', borderWidth: 0, borderRadius: 0,
+            transparent: false,
+            x: 0, y: 0, width: 608, height: 1080,
+            rotation: 0, opacity: 1,
+            shadowX: 0, shadowY: 0, shadowBlur: 0, shadowSpread: 0, shadowColor: '#000000', shadowHover: false,
+            glowX: 0, glowY: 0, glowBlur: 0, glowSpread: 0, glowColor: '#ffffff', glowHover: false,
+            zIndex: getNextElementZIndex(), animations: [], interactions: initInteractionProperties()
+        };
+        elements.push(sideEl);
+        const $side = $(`<div class="canvas-element" id="${sideId}" style="
+            left:0px;top:0px;width:608px;height:1080px;
+            background-color:#000000;opacity:1;z-index:${sideEl.zIndex};">
+            <div class="resize-handle nw"></div><div class="resize-handle ne"></div>
+            <div class="resize-handle sw"></div><div class="resize-handle se"></div>
+        </div>`);
+        appendElementToCanvas($side, sideEl);
+
+        // --- Logo dropzone (top-right, sticky tr) ---
         elementCounter++;
         const logoId = `element_${elementCounter}`;
         const logoEl = {
             id: logoId, locked: false, type: 'shape', shapeType: 'rectangle',
             fillColor: '#e5e7eb', borderColor: '#9ca3af', borderWidth: 2, borderRadius: 8,
             transparent: false,
-            x: canvasWidth - LOGO_SIZE - MARGIN, y: MARGIN,
-            width: LOGO_SIZE, height: LOGO_SIZE,
+            x: canvasWidth - LOGO_W - MARGIN, y: MARGIN,
+            width: LOGO_W, height: LOGO_H,
             rotation: 0, opacity: 1,
             shadowX: 0, shadowY: 0, shadowBlur: 0, shadowSpread: 0, shadowColor: '#000000', shadowHover: false,
             glowX: 0, glowY: 0, glowBlur: 0, glowSpread: 0, glowColor: '#ffffff', glowHover: false,
@@ -5489,20 +5564,22 @@ return compactInlineStyles(html);
             left:${logoEl.x}px;top:${logoEl.y}px;width:${logoEl.width}px;height:${logoEl.height}px;
             background-color:${logoEl.fillColor};border:${logoEl.borderWidth}px solid ${logoEl.borderColor};
             border-radius:${logoEl.borderRadius}px;opacity:1;z-index:${logoEl.zIndex};
-            display:flex;align-items:center;justify-content:center;
-            font-size:24px;color:#6b7280;font-family:Arial;">
-            <span style="pointer-events:none">Logo</span>
+            display:flex;align-items:center;justify-content:center;flex-direction:column;gap:8px;
+            font-size:18px;color:#6b7280;font-family:Arial;cursor:pointer;">
+            <i class="fas fa-image" style="font-size:32px;pointer-events:none;"></i>
+            <span style="pointer-events:none;font-size:14px;">Drop Logo Here</span>
             <div class="resize-handle nw"></div><div class="resize-handle ne"></div>
             <div class="resize-handle sw"></div><div class="resize-handle se"></div>
         </div>`);
         appendElementToCanvas($logo, logoEl);
+        makeImageDropzone($logo, logoEl, 'tr');
 
-        // QR code placeholder (bottom-right, sticky to br corner)
+        // --- QR dropzone (bottom-right, sticky br) ---
         elementCounter++;
         const qrId = `element_${elementCounter}`;
         const qrEl = {
             id: qrId, locked: false, type: 'shape', shapeType: 'rectangle',
-            fillColor: '#ffffff', borderColor: '#111827', borderWidth: 3, borderRadius: 0,
+            fillColor: '#ffffff', borderColor: '#111827', borderWidth: 2, borderRadius: 0,
             transparent: false,
             x: canvasWidth - QR_SIZE - MARGIN, y: canvasHeight - QR_SIZE - MARGIN,
             width: QR_SIZE, height: QR_SIZE,
@@ -5517,18 +5594,20 @@ return compactInlineStyles(html);
             left:${qrEl.x}px;top:${qrEl.y}px;width:${qrEl.width}px;height:${qrEl.height}px;
             background-color:${qrEl.fillColor};border:${qrEl.borderWidth}px solid ${qrEl.borderColor};
             opacity:1;z-index:${qrEl.zIndex};
-            display:flex;align-items:center;justify-content:center;
-            font-size:24px;color:#374151;font-family:Arial;">
-            <span style="pointer-events:none">QR Code</span>
+            display:flex;align-items:center;justify-content:center;flex-direction:column;gap:8px;
+            font-size:18px;color:#374151;font-family:Arial;cursor:pointer;">
+            <i class="fas fa-qrcode" style="font-size:40px;pointer-events:none;"></i>
+            <span style="pointer-events:none;font-size:14px;">Drop QR Code Here</span>
             <div class="resize-handle nw"></div><div class="resize-handle ne"></div>
             <div class="resize-handle sw"></div><div class="resize-handle se"></div>
         </div>`);
         appendElementToCanvas($qr, qrEl);
+        makeImageDropzone($qr, qrEl, 'br');
 
-        // Body text lines
+        // --- Body text lines ---
         const bodyLines = ['Line 1 text here', 'Line 2 text here', 'Line 3 text here'];
-        const bodyX = 120;
-        let bodyY = 220;
+        const bodyX = 680;
+        let bodyY = 200;
         bodyLines.forEach(function(line) {
             elementCounter++;
             const tid = `element_${elementCounter}`;
@@ -5543,26 +5622,16 @@ return compactInlineStyles(html);
                 zIndex: getNextElementZIndex(), animations: [], interactions: initInteractionProperties()
             };
             elements.push(tel);
-            const $tel = $(`<div class="canvas-element text-element template-text" id="${tid}" style="
-                left:${tel.x}px;top:${tel.y}px;width:${tel.width}px;height:${tel.height}px;
-                opacity:1;font-size:${tel.fontSize}px;font-family:${tel.fontFamily};color:${tel.color};
-                font-weight:normal;font-style:normal;text-decoration:none;text-align:left;
-                line-height:1.2;word-wrap:break-word;z-index:${tel.zIndex};
-                display:flex;align-items:center;">
-                <span class="text-content">${line}</span>
-                <div class="resize-handle nw"></div><div class="resize-handle ne"></div>
-                <div class="resize-handle sw"></div><div class="resize-handle se"></div>
-            </div>`);
-            appendElementToCanvas($tel, tel);
-            bodyY += 140;
+            appendElementToCanvas(makeTemplateTextEl(tid, tel), tel);
+            bodyY += 150;
         });
 
-        // CTA text
+        // --- CTA text ---
         elementCounter++;
         const ctaId = `element_${elementCounter}`;
         const ctaEl = {
             id: ctaId, locked: false, type: 'text', text: 'Call to action',
-            x: 700, y: 820, width: 800, height: 110,
+            x: 900, y: 820, width: 800, height: 110,
             rotation: 0, opacity: 1,
             fontSize: 80, fontFamily: 'Arial', color: '#10b981',
             bold: false, italic: false, underline: false, textAlign: 'left',
@@ -5571,23 +5640,14 @@ return compactInlineStyles(html);
             zIndex: getNextElementZIndex(), animations: [], interactions: initInteractionProperties()
         };
         elements.push(ctaEl);
-        const $cta = $(`<div class="canvas-element text-element template-text" id="${ctaId}" style="
-            left:${ctaEl.x}px;top:${ctaEl.y}px;width:${ctaEl.width}px;height:${ctaEl.height}px;
-            opacity:1;font-size:${ctaEl.fontSize}px;font-family:${ctaEl.fontFamily};color:${ctaEl.color};
-            font-weight:normal;font-style:normal;text-decoration:none;text-align:left;
-            line-height:1.2;word-wrap:break-word;z-index:${ctaEl.zIndex};display:flex;align-items:center;">
-            <span class="text-content">Call to action</span>
-            <div class="resize-handle nw"></div><div class="resize-handle ne"></div>
-            <div class="resize-handle sw"></div><div class="resize-handle se"></div>
-        </div>`);
-        appendElementToCanvas($cta, ctaEl);
+        appendElementToCanvas(makeTemplateTextEl(ctaId, ctaEl), ctaEl);
 
-        // Disclaimer text
+        // --- Disclaimer text ---
         elementCounter++;
         const disId = `element_${elementCounter}`;
         const disEl = {
             id: disId, locked: false, type: 'text', text: '*Disclaimer',
-            x: 120, y: canvasHeight - 80, width: 600, height: 60,
+            x: 680, y: canvasHeight - 90, width: 700, height: 60,
             rotation: 0, opacity: 1,
             fontSize: 32, fontFamily: 'Arial', color: '#374151',
             bold: false, italic: false, underline: false, textAlign: 'left',
@@ -5596,16 +5656,7 @@ return compactInlineStyles(html);
             zIndex: getNextElementZIndex(), animations: [], interactions: initInteractionProperties()
         };
         elements.push(disEl);
-        const $dis = $(`<div class="canvas-element text-element template-text" id="${disId}" style="
-            left:${disEl.x}px;top:${disEl.y}px;width:${disEl.width}px;height:${disEl.height}px;
-            opacity:1;font-size:${disEl.fontSize}px;font-family:${disEl.fontFamily};color:${disEl.color};
-            font-weight:normal;font-style:normal;text-decoration:none;text-align:left;
-            line-height:1.2;word-wrap:break-word;z-index:${disEl.zIndex};display:flex;align-items:center;">
-            <span class="text-content">*Disclaimer</span>
-            <div class="resize-handle nw"></div><div class="resize-handle ne"></div>
-            <div class="resize-handle sw"></div><div class="resize-handle se"></div>
-        </div>`);
-        appendElementToCanvas($dis, disEl);
+        appendElementToCanvas(makeTemplateTextEl(disId, disEl), disEl);
 
         updateLayersList();
     }
@@ -5645,7 +5696,20 @@ return compactInlineStyles(html);
             $span.off('keydown.inlineEdit').on('keydown.inlineEdit', function(ev) {
                 if (ev.key === 'Enter') {
                     ev.preventDefault();
-                    document.execCommand('insertHTML', false, '<br>');
+                    ev.stopPropagation();
+                    // Insert <br> via Selection API (execCommand is deprecated)
+                    const sel = window.getSelection();
+                    if (sel && sel.rangeCount) {
+                        const range = sel.getRangeAt(0);
+                        range.deleteContents();
+                        const br = document.createElement('br');
+                        range.insertNode(br);
+                        // Move cursor after the <br>
+                        range.setStartAfter(br);
+                        range.setEndAfter(br);
+                        sel.removeAllRanges();
+                        sel.addRange(range);
+                    }
                 }
                 if (ev.key === 'Escape') {
                     saveEdit();
