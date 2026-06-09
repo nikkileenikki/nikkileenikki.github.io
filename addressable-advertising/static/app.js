@@ -1538,6 +1538,12 @@
             return;
         }
 
+        // lockedMovement: selectable and editable but cannot be dragged or resized
+        if (element.lockedMovement) {
+            selectElement(id);
+            return;
+        }
+
         // Check if element is in a folder
         const inFolder = element.folderId !== undefined && element.folderId !== null;
         
@@ -1714,6 +1720,11 @@
 
         const parentFolder = element.folderId ? groups.find(g => g.id === element.folderId) : null;
         if (element.locked || (parentFolder && parentFolder.locked)) {
+            selectElement(id);
+            return;
+        }
+
+        if (element.lockedMovement) {
             selectElement(id);
             return;
         }
@@ -5492,18 +5503,18 @@ return compactInlineStyles(html);
                 const dataUrl = e.target.result;
                 const img = new Image();
                 img.onload = function() {
-                    // Replace placeholder with actual image, keep position/size/stickyCorner
                     element.type = 'image';
                     element.src = dataUrl;
                     element.filename = file.name;
                     element.aspectRatio = img.naturalHeight / img.naturalWidth;
-                    $el.html(`
-                        <img src="${dataUrl}" style="width:100%;height:100%;object-fit:contain;pointer-events:none;">
-                        <div class="resize-handle nw"></div><div class="resize-handle ne"></div>
-                        <div class="resize-handle sw"></div><div class="resize-handle se"></div>
-                    `);
+                    // Determine which corner handle to hide based on corner
+                    const hideHandle = corner === 'tr' ? 'ne' : corner === 'br' ? 'se' : '';
+                    const handles = ['nw', 'ne', 'sw', 'se'].map(h =>
+                        `<div class="resize-handle ${h}" style="${h === hideHandle ? 'display:none;' : ''}"></div>`
+                    ).join('');
+                    $el.html(`<img src="${dataUrl}" style="width:100%;height:100%;object-fit:contain;pointer-events:none;">${handles}`);
                     $el.css({ background: 'transparent', border: 'none' });
-                    // Re-attach dropzone so user can re-drop
+                    $el.removeClass('template-dropzone-empty');
                     makeImageDropzone($el, element, corner);
                 };
                 img.src = dataUrl;
@@ -5534,7 +5545,7 @@ return compactInlineStyles(html);
         elementCounter++;
         const bgId = `element_${elementCounter}`;
         const bgEl = {
-            id: bgId, locked: false, type: 'shape', shapeType: 'rectangle',
+            id: bgId, locked: false, lockedMovement: true, type: 'shape', shapeType: 'rectangle',
             fillColor: '#ffffff', borderColor: '#ffffff', borderWidth: 0, borderRadius: 0,
             transparent: false,
             x: 0, y: 0, width: canvasWidth, height: canvasHeight,
@@ -5590,7 +5601,7 @@ return compactInlineStyles(html);
             stickyCorner: 'tr'
         };
         elements.push(logoEl);
-        const $logo = $(`<div class="canvas-element" id="${logoId}" style="
+        const $logo = $(`<div class="canvas-element template-dropzone-empty" id="${logoId}" style="
             left:${logoEl.x}px;top:${logoEl.y}px;width:${logoEl.width}px;height:${logoEl.height}px;
             background-color:${logoEl.fillColor};border:${logoEl.borderWidth}px solid ${logoEl.borderColor};
             border-radius:${logoEl.borderRadius}px;opacity:1;z-index:${logoEl.zIndex};
@@ -5598,7 +5609,8 @@ return compactInlineStyles(html);
             font-size:18px;color:#6b7280;font-family:Arial;cursor:pointer;">
             <i class="fas fa-image" style="font-size:32px;pointer-events:none;"></i>
             <span style="pointer-events:none;font-size:14px;">Drop Logo Here</span>
-            <div class="resize-handle nw"></div><div class="resize-handle ne"></div>
+            <div class="resize-handle nw"></div>
+            <div class="resize-handle ne" style="display:none;"></div>
             <div class="resize-handle sw"></div><div class="resize-handle se"></div>
         </div>`);
         appendElementToCanvas($logo, logoEl);
@@ -5621,7 +5633,7 @@ return compactInlineStyles(html);
             stickyCorner: 'br'
         };
         elements.push(qrEl);
-        const $qr = $(`<div class="canvas-element" id="${qrId}" style="
+        const $qr = $(`<div class="canvas-element template-dropzone-empty" id="${qrId}" style="
             left:${qrEl.x}px;top:${qrEl.y}px;width:${qrEl.width}px;height:${qrEl.height}px;
             background-color:${qrEl.fillColor};border:${qrEl.borderWidth}px solid ${qrEl.borderColor};
             opacity:1;z-index:${qrEl.zIndex};
@@ -5630,7 +5642,8 @@ return compactInlineStyles(html);
             <i class="fas fa-qrcode" style="font-size:40px;pointer-events:none;"></i>
             <span style="pointer-events:none;font-size:14px;">Drop QR Code Here</span>
             <div class="resize-handle nw"></div><div class="resize-handle ne"></div>
-            <div class="resize-handle sw"></div><div class="resize-handle se"></div>
+            <div class="resize-handle sw"></div>
+            <div class="resize-handle se" style="display:none;"></div>
         </div>`);
         appendElementToCanvas($qr, qrEl);
         makeImageDropzone($qr, qrEl, 'br');
@@ -5813,10 +5826,10 @@ return compactInlineStyles(html);
         canvasEl.style.backgroundImage = 'none';
         canvasEl.style.background = 'white';
 
-        // Suppress placeholder pseudo-elements during export
+        // Suppress placeholder pseudo-elements and empty dropzones during export
         const suppressStyle = document.createElement('style');
         suppressStyle.id = 'export-suppress-placeholder';
-        suppressStyle.textContent = '.template-text .text-content:empty::before { content: none !important; }';
+        suppressStyle.textContent = '.template-text .text-content:empty::before { content: none !important; } .template-dropzone-empty { display: none !important; }';
         document.head.appendChild(suppressStyle);
 
         function restoreAfterExport() {
