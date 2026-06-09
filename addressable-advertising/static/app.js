@@ -1716,15 +1716,17 @@
         const element = elements.find(el => el.id === id);
         if (!element) return;
 
-        if (element.templatePlaceholder) return;
+        if (element.templatePlaceholder) { isResizing = false; return; }
 
         const parentFolder = element.folderId ? groups.find(g => g.id === element.folderId) : null;
         if (element.locked || (parentFolder && parentFolder.locked)) {
+            isResizing = false;
             selectElement(id);
             return;
         }
 
         if (element.lockedMovement) {
+            isResizing = false;
             selectElement(id);
             return;
         }
@@ -5558,8 +5560,7 @@ return compactInlineStyles(html);
         const $bg = $(`<div class="canvas-element" id="${bgId}" style="
             left:0px;top:0px;width:${canvasWidth}px;height:${canvasHeight}px;
             background-color:#ffffff;opacity:1;z-index:${bgEl.zIndex};">
-            <div class="resize-handle nw"></div><div class="resize-handle ne"></div>
-            <div class="resize-handle sw"></div><div class="resize-handle se"></div>
+
         </div>`);
         appendElementToCanvas($bg, bgEl);
 
@@ -5750,8 +5751,12 @@ return compactInlineStyles(html);
             }
 
             function saveEdit() {
+                if ($span.attr('contenteditable') !== 'true') return;
                 $span.removeAttr('contenteditable');
                 $span.css({ cursor: '', 'user-select': '', 'pointer-events': '' });
+                // Clear browser selection so the text cursor disappears
+                const sel = window.getSelection();
+                if (sel) sel.removeAllRanges();
                 element.text = getCleanHtml($span[0]);
                 updateLayersList();
             }
@@ -5789,9 +5794,12 @@ return compactInlineStyles(html);
                 saveEdit();
             });
 
-            // Prevent drag/select while editing
-            $el.off('mousedown.inlineEdit').on('mousedown.inlineEdit', function(ev) {
-                if ($span.attr('contenteditable') === 'true') ev.stopPropagation();
+            // Save and exit edit when clicking outside the span
+            $(document).off('mousedown.inlineEditGlobal').on('mousedown.inlineEditGlobal', function(ev) {
+                if ($span.attr('contenteditable') === 'true' && !$.contains($span[0], ev.target) && ev.target !== $span[0]) {
+                    saveEdit();
+                    $(document).off('mousedown.inlineEditGlobal');
+                }
             });
         });
     }
