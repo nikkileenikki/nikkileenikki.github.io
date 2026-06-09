@@ -1887,6 +1887,7 @@
 
             applyElementResize(element, newWidth, newHeight, newX, newY);
             enforceStickyMargin(element);
+            redrawDropzoneCanvas(element);
 
             updatePropertiesPanel();
         } else {
@@ -5482,6 +5483,22 @@ return compactInlineStyles(html);
     // ============================================
     // DEFAULT TEMPLATE
     // ============================================
+    function redrawDropzoneCanvas(element) {
+        if (!element.src) return;
+        const $el = $(`#${element.id}`);
+        const cvs = $el.find('canvas')[0];
+        if (!cvs) return;
+        const w = element.width;
+        const h = element.height;
+        cvs.width = w;
+        cvs.height = h;
+        cvs.style.width = w + 'px';
+        cvs.style.height = h + 'px';
+        const img = new Image();
+        img.onload = function() { cvs.getContext('2d').drawImage(img, 0, 0, w, h); };
+        img.src = element.src;
+    }
+
     function makeImageDropzone($el, element, corner) {
         $el.addClass('template-dropzone');
         $el.on('dragover.dropzone', function(ev) {
