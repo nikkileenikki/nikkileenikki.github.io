@@ -2079,8 +2079,10 @@
         if ((e.keyCode === 8 || e.keyCode === 46) && !isTyping) {
             // Prevent default browser back navigation on Backspace
             e.preventDefault();
-            
+
             // Delete the selected element
+            const elToDelete = elements.find(el => el.id === selectedElement);
+            if (elToDelete && elToDelete.templateProtected) return;
             saveState();
             elements = elements.filter(el => el.id !== selectedElement);
             $(`#${selectedElement}`).remove();
@@ -2229,7 +2231,7 @@
         const id = $(e.currentTarget).data('id');
         const element = elements.find(el => el.id === id);
         const parentFolder = element && element.folderId ? groups.find(g => g.id === element.folderId) : null;
-        if (!element || element.locked || (parentFolder && parentFolder.locked)) return;
+        if (!element || element.locked || element.templateProtected || (parentFolder && parentFolder.locked)) return;
         saveState();
         elements = elements.filter(el => el.id !== id);
         $(`#${id}`).remove();
@@ -5511,12 +5513,13 @@ return compactInlineStyles(html);
     }
 
     function makeTemplateTextEl(id, el) {
+        const placeholder = el.placeholder || el.text;
         return $(`<div class="canvas-element text-element template-text" id="${id}" style="
             left:${el.x}px;top:${el.y}px;width:${el.width}px;height:${el.height}px;
             opacity:1;font-size:${el.fontSize}px;font-family:${el.fontFamily};color:${el.color};
             font-weight:normal;font-style:normal;text-decoration:none;text-align:left;
             line-height:1.2;word-wrap:break-word;z-index:${el.zIndex};display:flex;align-items:flex-start;">
-            <span class="text-content" style="display:block;white-space:pre-wrap;">${el.text}</span>
+            <span class="text-content" data-placeholder="${placeholder}" style="display:block;white-space:pre-wrap;min-height:1.2em;width:100%;"></span>
             <div class="resize-handle nw"></div><div class="resize-handle ne"></div>
             <div class="resize-handle sw"></div><div class="resize-handle se"></div>
         </div>`);
@@ -5574,7 +5577,8 @@ return compactInlineStyles(html);
         elementCounter++;
         const logoId = `element_${elementCounter}`;
         const logoEl = {
-            id: logoId, locked: false, type: 'shape', shapeType: 'rectangle',
+            id: logoId, locked: false, templateProtected: true,
+            type: 'shape', shapeType: 'rectangle',
             fillColor: '#e5e7eb', borderColor: '#9ca3af', borderWidth: 2, borderRadius: 8,
             transparent: false,
             x: canvasWidth - LOGO_W - MARGIN, y: MARGIN,
@@ -5604,7 +5608,8 @@ return compactInlineStyles(html);
         elementCounter++;
         const qrId = `element_${elementCounter}`;
         const qrEl = {
-            id: qrId, locked: false, type: 'shape', shapeType: 'rectangle',
+            id: qrId, locked: false, templateProtected: true,
+            type: 'shape', shapeType: 'rectangle',
             fillColor: '#ffffff', borderColor: '#111827', borderWidth: 2, borderRadius: 0,
             transparent: false,
             x: canvasWidth - QR_SIZE - MARGIN, y: canvasHeight - QR_SIZE - MARGIN,
@@ -5637,7 +5642,8 @@ return compactInlineStyles(html);
         elementCounter++;
         const line1Id = `element_${elementCounter}`;
         const line1El = {
-            id: line1Id, locked: false, type: 'text', text: 'Line 1 text here',
+            id: line1Id, locked: false, templateProtected: true,
+            type: 'text', text: '', placeholder: 'Line 1 text here',
             x: CONTENT_LEFT, y: MARGIN, width: 850, height: 670,
             rotation: 0, opacity: 1,
             fontSize: 80, fontFamily: 'Arial', color: '#111827',
@@ -5653,7 +5659,8 @@ return compactInlineStyles(html);
         elementCounter++;
         const ctaId = `element_${elementCounter}`;
         const ctaEl = {
-            id: ctaId, locked: false, type: 'text', text: 'Call to action',
+            id: ctaId, locked: false, templateProtected: true,
+            type: 'text', text: '', placeholder: 'Call to action',
             x: CONTENT_LEFT, y: 820, width: 900, height: 110,
             rotation: 0, opacity: 1,
             fontSize: 80, fontFamily: 'Arial', color: '#10b981',
@@ -5670,7 +5677,8 @@ return compactInlineStyles(html);
         elementCounter++;
         const disId = `element_${elementCounter}`;
         const disEl = {
-            id: disId, locked: false, type: 'text', text: '*Disclaimer',
+            id: disId, locked: false, templateProtected: true,
+            type: 'text', text: '', placeholder: '*Disclaimer',
             x: CONTENT_LEFT, y: canvasHeight - disHeight - MARGIN,
             width: 900, height: disHeight,
             rotation: 0, opacity: 1,
@@ -5700,21 +5708,38 @@ return compactInlineStyles(html);
             const $span = $el.find('.text-content');
             $span.attr('contenteditable', 'true');
             $span.css({ outline: 'none', cursor: 'text', 'user-select': 'text', 'pointer-events': 'auto' });
-            $span.focus();
+
+            // Ensure there's a zero-width text node so cursor can always be placed
+            if ($span[0].childNodes.length === 0) {
+                $span[0].appendChild(document.createTextNode(''));
+            }
+
+            $span[0].focus();
 
             // Place cursor at end
-            const range = document.createRange();
-            range.selectNodeContents($span[0]);
-            range.collapse(false);
-            const sel = window.getSelection();
-            sel.removeAllRanges();
-            sel.addRange(range);
+            try {
+                const range = document.createRange();
+                range.selectNodeContents($span[0]);
+                range.collapse(false);
+                const sel = window.getSelection();
+                sel.removeAllRanges();
+                sel.addRange(range);
+            } catch(e) {}
+
+            function getCleanHtml(span) {
+                // Return empty string if only whitespace/br nodes remain
+                const clone = span.cloneNode(true);
+                // Strip trailing <br> added for newline rendering
+                while (clone.lastChild && clone.lastChild.nodeName === 'BR') {
+                    clone.removeChild(clone.lastChild);
+                }
+                return clone.innerHTML.trim();
+            }
 
             function saveEdit() {
                 $span.removeAttr('contenteditable');
                 $span.css({ cursor: '', 'user-select': '', 'pointer-events': '' });
-                const html = $span.html();
-                element.text = html;
+                element.text = getCleanHtml($span[0]);
                 updateLayersList();
             }
 
@@ -5788,6 +5813,23 @@ return compactInlineStyles(html);
         canvasEl.style.backgroundImage = 'none';
         canvasEl.style.background = 'white';
 
+        // Suppress placeholder pseudo-elements during export
+        const suppressStyle = document.createElement('style');
+        suppressStyle.id = 'export-suppress-placeholder';
+        suppressStyle.textContent = '.template-text .text-content:empty::before { content: none !important; }';
+        document.head.appendChild(suppressStyle);
+
+        function restoreAfterExport() {
+            wrapper.style.transform = prevWrapperTransform;
+            wrapper.style.margin = prevWrapperMargin;
+            wrapper.style.marginRight = prevWrapperMarginRight;
+            wrapper.style.marginBottom = prevWrapperMarginBottom;
+            canvasEl.style.backgroundImage = prevCanvasBgImage;
+            canvasEl.style.background = prevCanvasBg;
+            const s = document.getElementById('export-suppress-placeholder');
+            if (s) s.remove();
+        }
+
         html2canvas(canvasEl, {
             useCORS: true,
             allowTaint: true,
@@ -5795,22 +5837,12 @@ return compactInlineStyles(html);
             width: canvasWidth,
             height: canvasHeight,
         }).then(function(rendered) {
-            wrapper.style.transform = prevWrapperTransform;
-            wrapper.style.margin = prevWrapperMargin;
-            wrapper.style.marginRight = prevWrapperMarginRight;
-            wrapper.style.marginBottom = prevWrapperMarginBottom;
-            canvasEl.style.backgroundImage = prevCanvasBgImage;
-            canvasEl.style.background = prevCanvasBg;
+            restoreAfterExport();
             rendered.toBlob(function(blob) {
                 saveAs(blob, name + '.jpg');
             }, 'image/jpeg', 0.95);
         }).catch(function(err) {
-            wrapper.style.transform = prevWrapperTransform;
-            wrapper.style.margin = prevWrapperMargin;
-            wrapper.style.marginRight = prevWrapperMarginRight;
-            wrapper.style.marginBottom = prevWrapperMarginBottom;
-            canvasEl.style.backgroundImage = prevCanvasBgImage;
-            canvasEl.style.background = prevCanvasBg;
+            restoreAfterExport();
             _err('JPG export failed:', err);
             alert('JPG export failed: ' + err.message);
         });

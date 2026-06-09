@@ -888,3 +888,11 @@ input, select, button, textarea, label {
     right: 0;
     height: 1px;
 }
+
+/* Template text placeholder */
+.template-text .text-content:empty::before {
+    content: attr(data-placeholder);
+    color: #aaaaaa;
+    pointer-events: none;
+    font-style: italic;
+}
