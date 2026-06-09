@@ -5149,26 +5149,22 @@ return compactInlineStyles(html);
     // ZOOM CONTROLS
     // ============================================
     function updateStageZoom() {
-        $canvasWrapper.css({
-            transform: `scale(${stageZoom})`,
-            transformOrigin: 'center center',
-            width: `${canvasWidth}px`,
-            height: `${canvasHeight}px`,
-            margin: '0'
-        });
-
-        const $container = $('#canvasContainer');
         const scaledWidth = canvasWidth * stageZoom;
         const scaledHeight = canvasHeight * stageZoom;
 
-        const containerWidth = $container.width();
-        const containerHeight = $container.height();
+        // Scale the canvas visually but collapse the layout footprint to the scaled size
+        $canvasWrapper.css({
+            transform: `scale(${stageZoom})`,
+            transformOrigin: 'top left',
+            width: `${canvasWidth}px`,
+            height: `${canvasHeight}px`,
+            marginRight: `${scaledWidth - canvasWidth}px`,
+            marginBottom: `${scaledHeight - canvasHeight}px`,
+            marginLeft: '0',
+            marginTop: '0'
+        });
 
-        const needsHorizontalScroll = scaledWidth > containerWidth;
-        const needsVerticalScroll = scaledHeight > containerHeight;
-
-        $('#canvasViewportInner').css('padding', (needsHorizontalScroll || needsVerticalScroll) ? '40px' : '24px');
-        $('#stageZoomInput').val(parseFloat((stageZoom * 100).toFixed(2)));
+        $('#stageZoomInput').val(Math.round(stageZoom * 100));
     }
     
     function stageZoomIn() {
@@ -5447,10 +5443,23 @@ return compactInlineStyles(html);
     function exportCanvasAsJpg() {
         const canvasEl = document.getElementById('canvas');
         const name = ($('#bannerName').val() || 'banner').trim();
-        // Temporarily reset transform so html2canvas captures at true canvas resolution
         const wrapper = document.getElementById('canvasWrapper');
-        const prevTransform = wrapper.style.transform;
+
+        // Temporarily strip zoom transform and checkered background for clean capture
+        const prevWrapperTransform = wrapper.style.transform;
+        const prevWrapperMargin = wrapper.style.margin;
+        const prevWrapperMarginRight = wrapper.style.marginRight;
+        const prevWrapperMarginBottom = wrapper.style.marginBottom;
+        const prevCanvasBg = canvasEl.style.background;
+        const prevCanvasBgImage = canvasEl.style.backgroundImage;
+
         wrapper.style.transform = 'none';
+        wrapper.style.margin = '0';
+        wrapper.style.marginRight = '0';
+        wrapper.style.marginBottom = '0';
+        canvasEl.style.backgroundImage = 'none';
+        canvasEl.style.background = 'white';
+
         html2canvas(canvasEl, {
             useCORS: true,
             allowTaint: true,
@@ -5458,12 +5467,22 @@ return compactInlineStyles(html);
             width: canvasWidth,
             height: canvasHeight,
         }).then(function(rendered) {
-            wrapper.style.transform = prevTransform;
+            wrapper.style.transform = prevWrapperTransform;
+            wrapper.style.margin = prevWrapperMargin;
+            wrapper.style.marginRight = prevWrapperMarginRight;
+            wrapper.style.marginBottom = prevWrapperMarginBottom;
+            canvasEl.style.backgroundImage = prevCanvasBgImage;
+            canvasEl.style.background = prevCanvasBg;
             rendered.toBlob(function(blob) {
                 saveAs(blob, name + '.jpg');
             }, 'image/jpeg', 0.95);
         }).catch(function(err) {
-            wrapper.style.transform = prevTransform;
+            wrapper.style.transform = prevWrapperTransform;
+            wrapper.style.margin = prevWrapperMargin;
+            wrapper.style.marginRight = prevWrapperMarginRight;
+            wrapper.style.marginBottom = prevWrapperMarginBottom;
+            canvasEl.style.backgroundImage = prevCanvasBgImage;
+            canvasEl.style.background = prevCanvasBg;
             _err('JPG export failed:', err);
             alert('JPG export failed: ' + err.message);
         });
