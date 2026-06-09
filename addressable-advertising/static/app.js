@@ -5483,6 +5483,17 @@ return compactInlineStyles(html);
     // ============================================
     // DEFAULT TEMPLATE
     // ============================================
+    function drawImageContained(cvs, img, w, h) {
+        const ctx = cvs.getContext('2d');
+        ctx.clearRect(0, 0, w, h);
+        const scale = Math.min(w / img.naturalWidth, h / img.naturalHeight);
+        const dw = img.naturalWidth * scale;
+        const dh = img.naturalHeight * scale;
+        const dx = (w - dw) / 2;
+        const dy = (h - dh) / 2;
+        ctx.drawImage(img, dx, dy, dw, dh);
+    }
+
     function redrawDropzoneCanvas(element) {
         if (!element.src) return;
         const $el = $(`#${element.id}`);
@@ -5495,7 +5506,7 @@ return compactInlineStyles(html);
         cvs.style.width = w + 'px';
         cvs.style.height = h + 'px';
         const img = new Image();
-        img.onload = function() { cvs.getContext('2d').drawImage(img, 0, 0, w, h); };
+        img.onload = function() { drawImageContained(cvs, img, w, h); };
         img.src = element.src;
     }
 
@@ -5520,35 +5531,19 @@ return compactInlineStyles(html);
                 const dataUrl = e.target.result;
                 const img = new Image();
                 img.onload = function() {
-                    const natW = img.naturalWidth;
-                    const natH = img.naturalHeight;
-                    const aspectRatio = natH / natW;
-
-                    // Fit within placeholder box preserving aspect ratio
-                    const boxW = element.width;
-                    const boxH = element.height;
-                    let fitW = boxW;
-                    let fitH = Math.round(boxW * aspectRatio);
-                    if (fitH > boxH) {
-                        fitH = boxH;
-                        fitW = Math.round(boxH / aspectRatio);
-                    }
+                    const w = element.width;
+                    const h = element.height;
 
                     element.type = 'image';
                     element.src = dataUrl;
                     element.filename = file.name;
-                    element.aspectRatio = aspectRatio;
-                    element.width = fitW;
-                    element.height = fitH;
 
-                    if (element.stickyCorner) enforceStickyMargin(element);
-
-                    // Draw onto a <canvas> so html2canvas captures pixels exactly
+                    // Draw onto a <canvas> with contain (letterbox) so html2canvas captures pixels exactly
                     const cvs = document.createElement('canvas');
-                    cvs.width = fitW;
-                    cvs.height = fitH;
-                    cvs.style.cssText = `width:${fitW}px;height:${fitH}px;display:block;pointer-events:none;`;
-                    cvs.getContext('2d').drawImage(img, 0, 0, fitW, fitH);
+                    cvs.width = w;
+                    cvs.height = h;
+                    cvs.style.cssText = `width:${w}px;height:${h}px;display:block;pointer-events:none;`;
+                    drawImageContained(cvs, img, w, h);
 
                     const hideHandle = corner === 'tr' ? 'ne' : corner === 'br' ? 'se' : corner === 'tl' ? 'nw' : '';
                     const handles = ['nw', 'ne', 'sw', 'se'].map(h =>
@@ -5559,8 +5554,8 @@ return compactInlineStyles(html);
                     $el.css({
                         background: 'transparent',
                         border: 'none',
-                        width: fitW + 'px',
-                        height: fitH + 'px',
+                        width: w + 'px',
+                        height: h + 'px',
                         left: element.x + 'px',
                         top: element.y + 'px'
                     });
