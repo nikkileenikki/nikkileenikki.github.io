@@ -138,6 +138,7 @@
         
         initEventListeners();
         updateCanvasSize();
+        updateStageZoom();
         updateTimelineRuler();
         syncLegacyStateToStore();
     });
@@ -5446,17 +5447,23 @@ return compactInlineStyles(html);
     function exportCanvasAsJpg() {
         const canvasEl = document.getElementById('canvas');
         const name = ($('#bannerName').val() || 'banner').trim();
+        // Temporarily reset transform so html2canvas captures at true canvas resolution
+        const wrapper = document.getElementById('canvasWrapper');
+        const prevTransform = wrapper.style.transform;
+        wrapper.style.transform = 'none';
         html2canvas(canvasEl, {
             useCORS: true,
             allowTaint: true,
             scale: 1,
-            width: canvasEl.offsetWidth,
-            height: canvasEl.offsetHeight,
+            width: canvasWidth,
+            height: canvasHeight,
         }).then(function(rendered) {
+            wrapper.style.transform = prevTransform;
             rendered.toBlob(function(blob) {
                 saveAs(blob, name + '.jpg');
             }, 'image/jpeg', 0.95);
         }).catch(function(err) {
+            wrapper.style.transform = prevTransform;
             _err('JPG export failed:', err);
             alert('JPG export failed: ' + err.message);
         });
