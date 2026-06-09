@@ -5702,8 +5702,8 @@ return compactInlineStyles(html);
         const line1Id = `element_${elementCounter}`;
         const line1El = {
             id: line1Id, locked: false, templateProtected: true,
-            type: 'text', text: '', placeholder: 'Line 1 text here',
-            x: RIGHT_CONTENT_LEFT, y: MARGIN, width: 850, height: 670,
+            type: 'text', text: '', placeholder: 'Insert your message here',
+            x: RIGHT_CONTENT_LEFT, y: MARGIN, width: 505, height: 670,
             rotation: 0, opacity: 1,
             fontSize: 80, fontFamily: 'Arial', color: '#111827',
             bold: false, italic: false, underline: false, textAlign: 'left',
@@ -5720,7 +5720,7 @@ return compactInlineStyles(html);
         const ctaEl = {
             id: ctaId, locked: false, templateProtected: true,
             type: 'text', text: '', placeholder: 'Call to action',
-            x: RIGHT_CONTENT_LEFT, y: 820, width: 900, height: 110,
+            x: RIGHT_CONTENT_LEFT, y: 600, width: 505, height: 110,
             rotation: 0, opacity: 1,
             fontSize: 80, fontFamily: 'Arial', color: '#111827',
             bold: false, italic: false, underline: false, textAlign: 'left',
@@ -5738,7 +5738,7 @@ return compactInlineStyles(html);
         const disEl = {
             id: disId, locked: false, templateProtected: true,
             type: 'text', text: '', placeholder: '*Disclaimer',
-            x: RIGHT_CONTENT_LEFT, y: canvasHeight - disHeight - MARGIN,
+            x: MARGIN, y: canvasHeight - disHeight - MARGIN,
             width: 900, height: disHeight,
             rotation: 0, opacity: 1,
             fontSize: 32, fontFamily: 'Arial', color: '#374151',
@@ -5872,7 +5872,7 @@ return compactInlineStyles(html);
         const line1Id = `element_${elementCounter}`;
         const line1El = {
             id: line1Id, locked: false, templateProtected: true,
-            type: 'text', text: '', placeholder: 'Line 1 text here',
+            type: 'text', text: '', placeholder: 'Insert your message here',
             x: CONTENT_LEFT, y: MARGIN, width: 850, height: 670,
             rotation: 0, opacity: 1,
             fontSize: 80, fontFamily: 'Arial', color: '#111827',
