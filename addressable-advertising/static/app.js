@@ -1474,12 +1474,14 @@
     
     function handleCanvasSizeChange(e) {
         const value = $(e.target).val();
-        
+
         if (value === 'custom') {
             $('#customWidth, #customHeight').removeClass('hidden');
         } else {
             $('#customWidth, #customHeight').addClass('hidden');
-            const [width, height] = value.split('x').map(Number);
+            // Value may be "WxH" or "WxH-variant"; extract numeric dimensions only
+            const dimMatch = value.match(/^(\d+)x(\d+)/);
+            const [width, height] = dimMatch ? [parseInt(dimMatch[1]), parseInt(dimMatch[2])] : [1920, 1080];
             saveState();
             canvasWidth = width;
             canvasHeight = height;
@@ -5783,13 +5785,15 @@ return compactInlineStyles(html);
                 saveEdit();
             });
 
-            // Save and exit edit when clicking outside the span
-            $(document).off('mousedown.inlineEditGlobal').on('mousedown.inlineEditGlobal', function(ev) {
-                if ($span.attr('contenteditable') === 'true' && !$.contains($span[0], ev.target) && ev.target !== $span[0]) {
+            // Use capture phase so stopPropagation on child elements can't block this
+            function globalCaptureSave(ev) {
+                if ($span.attr('contenteditable') === 'true' && !$span[0].contains(ev.target) && ev.target !== $span[0]) {
                     saveEdit();
-                    $(document).off('mousedown.inlineEditGlobal');
+                    document.removeEventListener('mousedown', globalCaptureSave, true);
                 }
-            });
+            }
+            document.removeEventListener('mousedown', globalCaptureSave, true);
+            document.addEventListener('mousedown', globalCaptureSave, true);
         });
     }
 

@@ -44,7 +44,7 @@
             <!-- FIX #1: Added missing closing > on this div -->
             <div class="p-3 flex-1 overflow-y-auto">
                 <h1 class="text-xl font-bold mb-3 flex items-center">
-                    <i class="fas fa-ad mr-2 text-blue-400"></i>
+                    <span class="mr-2 text-blue-400 font-bold text-sm">AA</span>
                     AA Builder
                 </h1>                
                 <!-- Add Elements -->
@@ -514,10 +514,10 @@
                             value="addressable-advertising">
                     </div>
 
-                    <label class="text-sm text-gray-400 whitespace-nowrap">Canvas Size:</label>
+                    <label class="text-sm text-gray-400 whitespace-nowrap">Template:</label>
                     <select id="canvasSize" class="bg-gray-700 rounded px-3 py-1 text-sm">
-                        <option value="1920x1080" selected>1920x1080</option>
-                        <option value="custom">Custom Size</option>
+                        <option value="1920x1080-left" selected>1920x1080-left</option>
+                        <option value="1920x1080-center">1920x1080-center</option>
                     </select>
                     <input type="number" id="customWidth" class="bg-gray-700 rounded px-3 py-1 text-sm w-20 hidden" placeholder="Width">
                     <input type="number" id="customHeight" class="bg-gray-700 rounded px-3 py-1 text-sm w-20 hidden" placeholder="Height">
