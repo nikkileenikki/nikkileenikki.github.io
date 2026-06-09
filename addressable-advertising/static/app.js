@@ -1529,12 +1529,15 @@
         const element = elements.find(el => el.id === id);
         if (!element) return;
 
+        // templatePlaceholder elements are fully non-interactive
+        if (element.templatePlaceholder) return;
+
         const parentFolder = element.folderId ? groups.find(g => g.id === element.folderId) : null;
         if (element.locked || (parentFolder && parentFolder.locked)) {
             selectElement(id);
             return;
         }
-        
+
         // Check if element is in a folder
         const inFolder = element.folderId !== undefined && element.folderId !== null;
         
@@ -1706,6 +1709,8 @@
         const id = $element.attr('id');
         const element = elements.find(el => el.id === id);
         if (!element) return;
+
+        if (element.templatePlaceholder) return;
 
         const parentFolder = element.folderId ? groups.find(g => g.id === element.folderId) : null;
         if (element.locked || (parentFolder && parentFolder.locked)) {
@@ -5522,11 +5527,12 @@ return compactInlineStyles(html);
         const LOGO_W = 300, LOGO_H = 200;
         const QR_SIZE = 220;
 
-        // --- Black sidebar 608x1080, top-left ---
+        // --- Black sidebar 608x1080, top-left (fully locked placeholder) ---
         elementCounter++;
         const sideId = `element_${elementCounter}`;
         const sideEl = {
-            id: sideId, locked: false, type: 'shape', shapeType: 'rectangle',
+            id: sideId, locked: true, templatePlaceholder: true,
+            type: 'shape', shapeType: 'rectangle',
             fillColor: '#000000', borderColor: '#000000', borderWidth: 0, borderRadius: 0,
             transparent: false,
             x: 0, y: 0, width: 608, height: 1080,
@@ -5538,9 +5544,7 @@ return compactInlineStyles(html);
         elements.push(sideEl);
         const $side = $(`<div class="canvas-element" id="${sideId}" style="
             left:0px;top:0px;width:608px;height:1080px;
-            background-color:#000000;opacity:1;z-index:${sideEl.zIndex};">
-            <div class="resize-handle nw"></div><div class="resize-handle ne"></div>
-            <div class="resize-handle sw"></div><div class="resize-handle se"></div>
+            background-color:#000000;opacity:1;z-index:${sideEl.zIndex};pointer-events:none;">
         </div>`);
         appendElementToCanvas($side, sideEl);
 
@@ -5604,34 +5608,31 @@ return compactInlineStyles(html);
         appendElementToCanvas($qr, qrEl);
         makeImageDropzone($qr, qrEl, 'br');
 
-        // --- Body text lines ---
-        const bodyLines = ['Line 1 text here', 'Line 2 text here', 'Line 3 text here'];
-        const bodyX = 680;
-        let bodyY = 200;
-        bodyLines.forEach(function(line) {
-            elementCounter++;
-            const tid = `element_${elementCounter}`;
-            const tel = {
-                id: tid, locked: false, type: 'text', text: line,
-                x: bodyX, y: bodyY, width: 900, height: 110,
-                rotation: 0, opacity: 1,
-                fontSize: 80, fontFamily: 'Arial', color: '#111827',
-                bold: false, italic: false, underline: false, textAlign: 'left',
-                shadowX: 0, shadowY: 0, shadowBlur: 0, shadowColor: '#000000', shadowHover: false,
-                glowX: 0, glowY: 0, glowBlur: 0, glowSpread: 0, glowColor: '#ffffff', glowHover: false,
-                zIndex: getNextElementZIndex(), animations: [], interactions: initInteractionProperties()
-            };
-            elements.push(tel);
-            appendElementToCanvas(makeTemplateTextEl(tid, tel), tel);
-            bodyY += 150;
-        });
+        const SIDEBAR_W = 608;
+        const CONTENT_LEFT = SIDEBAR_W + MARGIN; // 683px — 75px from right edge of sidebar
+
+        // --- Line 1 text (75px from top and left of content area) ---
+        elementCounter++;
+        const line1Id = `element_${elementCounter}`;
+        const line1El = {
+            id: line1Id, locked: false, type: 'text', text: 'Line 1 text here',
+            x: CONTENT_LEFT, y: MARGIN, width: 900, height: 110,
+            rotation: 0, opacity: 1,
+            fontSize: 80, fontFamily: 'Arial', color: '#111827',
+            bold: false, italic: false, underline: false, textAlign: 'left',
+            shadowX: 0, shadowY: 0, shadowBlur: 0, shadowColor: '#000000', shadowHover: false,
+            glowX: 0, glowY: 0, glowBlur: 0, glowSpread: 0, glowColor: '#ffffff', glowHover: false,
+            zIndex: getNextElementZIndex(), animations: [], interactions: initInteractionProperties()
+        };
+        elements.push(line1El);
+        appendElementToCanvas(makeTemplateTextEl(line1Id, line1El), line1El);
 
         // --- CTA text ---
         elementCounter++;
         const ctaId = `element_${elementCounter}`;
         const ctaEl = {
             id: ctaId, locked: false, type: 'text', text: 'Call to action',
-            x: 900, y: 820, width: 800, height: 110,
+            x: CONTENT_LEFT, y: 820, width: 900, height: 110,
             rotation: 0, opacity: 1,
             fontSize: 80, fontFamily: 'Arial', color: '#10b981',
             bold: false, italic: false, underline: false, textAlign: 'left',
@@ -5642,12 +5643,14 @@ return compactInlineStyles(html);
         elements.push(ctaEl);
         appendElementToCanvas(makeTemplateTextEl(ctaId, ctaEl), ctaEl);
 
-        // --- Disclaimer text ---
+        // --- Disclaimer text (75px from left and bottom of canvas) ---
+        const disHeight = 50;
         elementCounter++;
         const disId = `element_${elementCounter}`;
         const disEl = {
             id: disId, locked: false, type: 'text', text: '*Disclaimer',
-            x: 680, y: canvasHeight - 90, width: 700, height: 60,
+            x: CONTENT_LEFT, y: canvasHeight - disHeight - MARGIN,
+            width: 900, height: disHeight,
             rotation: 0, opacity: 1,
             fontSize: 32, fontFamily: 'Arial', color: '#374151',
             bold: false, italic: false, underline: false, textAlign: 'left',
