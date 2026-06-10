@@ -1,4 +1,3 @@
-
 <!doctype html>
 <html>
 <head>
@@ -52,13 +51,22 @@
 			<span>Clickthrough height: </span><input type="number" id="c-height" class="overlayCalc" value="159"/><br>
 		</div>
 	</div>
+	<div id="ft-video-trans">
+		<h3><b>Video Transcode Bitrate</b></h3>
+		<div id="ft-video-leftBox">
+			<span>Video Bitrate: </span><span class="transcode-setting">800</span><span class="transcode-setting"> kbps</span><br>
+			<span>Audio Bitrate: </span><span class="transcode-setting">96</span><span class="transcode-setting"> kbps</span><br>
+			<span>Audio Samplerate: </span><span class="transcode-setting">32000</span><span class="transcode-setting"> khz</span><br>
+			<span>Framerate: </span><span class="transcode-setting">25</span><span class="transcode-setting"> fps</span><br>
+		</div>
+	</div>
 <br>
 <br>
 <br>
 	<div id="query-string">
 		<h3><b>Query String Converter</b></h3>
 		<div>
-			<textarea type="text" id="queryString" >https://www.google.com</textarea><br>
+			<textarea type="text" id="queryString" >https://www.example.com</textarea><br>
 			<!-- <span>AddCSS</span><textarea type="text" id="queryStringScript" onClick="this.setSelectionRange(0, this.value.length)">https://secure-ds.serving-sys.com/BurstingRes/CustomScripts/PL_AddCSS_NCM.js?css1=</textarea><br>
 			<span>FB Sharer</span><textarea type="text" id="fbSharerScript" onClick="this.setSelectionRange(0, this.value.length)">https://www.facebook.com/sharer/sharer.php?u=[FB SHARE URL]&_rdc=1&_rdr</textarea><br> -->
 			<input type="button" onclick="decode()" value="Decode">
@@ -366,6 +374,32 @@
 				<td>Lottie web</td>
 				<td>
 					<textarea class="ebscript secure" type="text" onClick="this.setSelectionRange(0, this.value.length)" value='' readonly><script src="https://cdnjs.cloudflare.com/ajax/libs/lottie-web/5.10.0/lottie.min.js"></script></textarea>
+				</td>
+			</tr>
+			<tr>
+				<td>JS template</td>
+				<td>
+					<textarea class="ebfunctions" type="text"  value='' readonly>function politeLoad(callback) {
+	if (document.readyState === "complete") { callback(); }
+	else { window.addEventListener("load", callback); }
+}
+
+function init() {
+	gsap.set('#container', { autoAlpha: 1 });
+	addEvent();
+}
+
+function addEvent() {
+	$('#click').on('click', function () {
+		myFT.clickTag(tag, "https://kult.my/");
+	});
+
+	document.getElementById('container').addEventListener('click', function() {
+		myFT.clickTag(1,  "https://kult.my/");
+	});
+}
+
+window.onload = function () { politeLoad(init); };</textarea>
 				</td>
 			</tr>
 			<tr>
@@ -1037,6 +1071,17 @@ div#latest {
 }
 #dco-version{
 	width: 350px;
+}
+#ft-video-leftBox span {
+    width: 150px;
+    display: inline-block;
+}
+#ft-video-leftBox .transcode-setting{
+	width: unset !important;
+    display: inline !important;
+}
+#ft-video-calc, #ft-video-trans{
+	display: inline-block;
 }
 @media only screen and (max-width: 768px) {
 #getURL {
