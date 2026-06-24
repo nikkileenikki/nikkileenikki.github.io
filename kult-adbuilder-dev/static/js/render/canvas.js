@@ -91,13 +91,13 @@ export function createElementDOM({ element, getAbsolutePosition }) {
                 z-index: ${element.zIndex};
                 ${visibilityStyle}
             ">
-                ${escapeHtml(element.text)}
                 <div class="resize-handle nw"></div>
                 <div class="resize-handle ne"></div>
                 <div class="resize-handle sw"></div>
                 <div class="resize-handle se"></div>
             </div>
         `);
+        $element.prepend(document.createTextNode(element.text));
     } else if (element.type === 'shape') {
         let shapeStyle = `background-color: ${element.fillColor};`;
         if (element.shapeType === 'circle') {

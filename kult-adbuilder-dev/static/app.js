@@ -883,13 +883,13 @@
                 white-space: pre-wrap;
                 z-index: ${element.zIndex};
             ">
-                ${text}
                 <div class="resize-handle nw"></div>
                 <div class="resize-handle ne"></div>
                 <div class="resize-handle sw"></div>
                 <div class="resize-handle se"></div>
             </div>
         `);
+        $element.prepend(document.createTextNode(text));
         
         appendElementToCanvas($element, element);
         updateLayersList();
