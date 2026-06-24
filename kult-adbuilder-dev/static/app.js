@@ -23,6 +23,7 @@
     const MAX_UNDO_STACK = 50;
     let selectedElement = null;
     let selectedFolder = null; // NEW: Track selected folder
+    let editingTextElementId = null; // Set when double-clicking to edit an existing text element
     let lastClickTime = 0; // Track last click time for multi-click detection
     let lastClickedElement = null; // Track last clicked element
     let clickCount = 0; // Track number of clicks for triple-click detection
@@ -218,6 +219,18 @@
     }
 
     function bindCanvasInteractionEvents() {
+        $canvas.on('dblclick', '.text-element', function(e) {
+            e.stopPropagation();
+            const id = $(this).attr('id');
+            if (!id) return;
+            const element = elements.find(el => el.id === id);
+            if (!element || element.locked) return;
+            selectElement(id);
+            editingTextElementId = id;
+            $('#textContent').val(element.text);
+            $textModal.removeClass('hidden');
+            setTimeout(() => $('#textContent').focus(), 100);
+        });
         $canvas.on('mousedown', '.canvas-element', handleElementMouseDown);
         $canvas.on('mousedown', '.canvas-folder', handleFolderMouseDown);
         $canvas.on('mousedown', '.resize-handle', handleResizeStart);
@@ -806,6 +819,7 @@
     
     function closeTextModal() {
         $textModal.addClass('hidden');
+        editingTextElementId = null;
     }
     
     function saveText() {
@@ -814,8 +828,21 @@
             alert('Please enter some text');
             return;
         }
-        saveState();
-        addTextToCanvas(text);
+        if (editingTextElementId) {
+            const element = elements.find(el => el.id === editingTextElementId);
+            if (element) {
+                saveState();
+                element.text = text;
+                const $el = $(`#${editingTextElementId}`);
+                $el.contents().filter(function() { return this.nodeType === Node.TEXT_NODE; }).remove();
+                $el.prepend(document.createTextNode(text));
+                updateLayersList();
+            }
+            editingTextElementId = null;
+        } else {
+            saveState();
+            addTextToCanvas(text);
+        }
         closeTextModal();
     }
     
