@@ -87,6 +87,7 @@ export function createElementDOM({ element, getAbsolutePosition }) {
                 text-align: ${element.textAlign};
                 line-height: 1.2;
                 word-wrap: break-word;
+                white-space: pre-wrap;
                 z-index: ${element.zIndex};
                 ${visibilityStyle}
             ">
