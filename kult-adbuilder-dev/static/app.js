@@ -23,7 +23,6 @@
     const MAX_UNDO_STACK = 50;
     let selectedElement = null;
     let selectedFolder = null; // NEW: Track selected folder
-    let editingTextElementId = null; // Set when double-clicking to edit an existing text element
     let lastClickTime = 0; // Track last click time for multi-click detection
     let lastClickedElement = null; // Track last clicked element
     let clickCount = 0; // Track number of clicks for triple-click detection
@@ -222,14 +221,7 @@
         $canvas.on('dblclick', '.text-element', function(e) {
             e.stopPropagation();
             const id = $(this).attr('id');
-            if (!id) return;
-            const element = elements.find(el => el.id === id);
-            if (!element || element.locked) return;
-            selectElement(id);
-            editingTextElementId = id;
-            $('#textContent').val(element.text);
-            $textModal.removeClass('hidden');
-            setTimeout(() => $('#textContent').focus(), 100);
+            if (id) startInlineTextEdit(id);
         });
         $canvas.on('mousedown', '.canvas-element', handleElementMouseDown);
         $canvas.on('mousedown', '.canvas-folder', handleFolderMouseDown);
@@ -819,7 +811,6 @@
     
     function closeTextModal() {
         $textModal.addClass('hidden');
-        editingTextElementId = null;
     }
     
     function saveText() {
@@ -828,21 +819,8 @@
             alert('Please enter some text');
             return;
         }
-        if (editingTextElementId) {
-            const element = elements.find(el => el.id === editingTextElementId);
-            if (element) {
-                saveState();
-                element.text = text;
-                const $el = $(`#${editingTextElementId}`);
-                $el.contents().filter(function() { return this.nodeType === Node.TEXT_NODE; }).remove();
-                $el.prepend(document.createTextNode(text));
-                updateLayersList();
-            }
-            editingTextElementId = null;
-        } else {
-            saveState();
-            addTextToCanvas(text);
-        }
+        saveState();
+        addTextToCanvas(text);
         closeTextModal();
     }
     
@@ -916,7 +894,90 @@
         updateLayersList();
         selectElement(id);
     }
-    
+
+    function startInlineTextEdit(id) {
+        const element = elements.find(el => el.id === id);
+        if (!element || element.locked) return;
+
+        selectElement(id);
+
+        // Remove any existing overlay (e.g. clicking a second text element)
+        $canvas.find('.text-edit-overlay').remove();
+
+        const $el = $(`#${id}`);
+
+        const $overlay = $('<div>').addClass('text-edit-overlay').attr('contenteditable', 'true').css({
+            position: 'absolute',
+            left: element.x + 'px',
+            top: element.y + 'px',
+            width: element.width + 'px',
+            minHeight: element.height + 'px',
+            fontSize: element.fontSize + 'px',
+            fontFamily: element.fontFamily,
+            color: element.color,
+            fontWeight: element.bold ? 'bold' : 'normal',
+            fontStyle: element.italic ? 'italic' : 'normal',
+            textDecoration: element.underline ? 'underline' : 'none',
+            textAlign: element.textAlign,
+            lineHeight: '1.2',
+            wordWrap: 'break-word',
+            transform: `rotate(${element.rotation}deg)`,
+            opacity: element.opacity,
+            zIndex: 99999,
+            outline: '2px solid #3b82f6',
+            outlineOffset: '2px',
+            background: 'transparent',
+            cursor: 'text',
+            padding: '0',
+            margin: '0',
+            boxSizing: 'border-box',
+            whiteSpace: 'pre-wrap',
+            userSelect: 'text'
+        }).text(element.text);
+
+        $el.css('opacity', 0);
+        $canvas.append($overlay);
+
+        // Place cursor at end
+        $overlay[0].focus();
+        const range = document.createRange();
+        range.selectNodeContents($overlay[0]);
+        const sel = window.getSelection();
+        sel.removeAllRanges();
+        sel.addRange(range);
+
+        let committed = false;
+
+        function commitEdit(cancel) {
+            if (committed) return;
+            committed = true;
+            const newText = cancel
+                ? element.text
+                : ($overlay[0].innerText || '').replace(/\n$/, '') || element.text;
+            $overlay.remove();
+            $el.css('opacity', element.opacity);
+            if (!cancel && newText !== element.text) {
+                saveState();
+                element.text = newText;
+                $el.contents().filter(function() { return this.nodeType === Node.TEXT_NODE; }).remove();
+                $el.prepend(document.createTextNode(newText));
+                $('#propText').val(newText);
+                updateLayersList();
+            }
+        }
+
+        $overlay.on('blur', () => setTimeout(() => commitEdit(false), 80));
+        $overlay.on('mousedown', e => e.stopPropagation());
+        $overlay.on('keydown', function(e) {
+            e.stopPropagation();
+            if (e.key === 'Escape') {
+                e.preventDefault();
+                commitEdit(true);
+                $overlay[0].blur();
+            }
+        });
+    }
+
     // ============================================
     // CLICKTHROUGH MANAGEMENT
     // ============================================

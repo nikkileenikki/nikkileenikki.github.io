@@ -899,3 +899,13 @@ input, select, button, textarea, label {
 .lock-flash {
     animation: lock-flash 0.6s ease-out forwards;
 }
+
+.text-edit-overlay {
+    caret-color: currentColor;
+    pointer-events: auto;
+}
+
+.text-edit-overlay:focus {
+    outline: 2px solid #3b82f6;
+    outline-offset: 2px;
+}
