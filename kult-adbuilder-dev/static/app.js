@@ -1499,8 +1499,8 @@
     }
     
     function updateCustomCanvasSize() {
-        const width = parseInt($('#customWidth').val()) || 300;
-        const height = parseInt($('#customHeight').val()) || 250;
+        const width = Math.max(50, Math.min(2000, parseInt($('#customWidth').val()) || 300));
+        const height = Math.max(50, Math.min(2000, parseInt($('#customHeight').val()) || 250));
         saveState();
         canvasWidth = width;
         canvasHeight = height;
@@ -2067,8 +2067,10 @@
         if (!selectedElement) return;
         
         // Delete/Backspace keys: 8=backspace, 46=delete
-        // Only delete element if NOT typing in an input field
-        if ((e.keyCode === 8 || e.keyCode === 46) && !isTyping) {
+        // Only delete element if NOT typing in an input field and no modal is open
+        const isAnyModalOpen = [$textModal, $clickthroughModal, $shapeModal, $videoModal, $animModal]
+            .some($m => !$m.hasClass('hidden'));
+        if ((e.keyCode === 8 || e.keyCode === 46) && !isTyping && !isAnyModalOpen) {
             // Prevent default browser back navigation on Backspace
             e.preventDefault();
             
@@ -4467,7 +4469,9 @@
         
         sortedElements.forEach((element, exportIndex) => {
             if (element.visible === false) return;
-            const exportZIndex = exportIndex;
+            const exportZIndex = element.zIndex ?? exportIndex;
+            const parentFolder = element.folderId ? groups.find(g => g.id === element.folderId) : null;
+            const effectiveOpacity = element.opacity * (parentFolder && parentFolder.opacity != null ? parentFolder.opacity : 1);
             if (element.type === 'image') {
                 // Images in root folder (no subfolder)
                 const imgSrc = `image_${imageCounter}.${getExtensionFromDataUrl(element.src)}`;
@@ -4480,7 +4484,7 @@
             width: ${Math.round(element.width)}px;
             height: ${Math.round(element.height)}px;
             object-fit: contain;
-            opacity: ${element.opacity};
+            opacity: ${effectiveOpacity};
             transform: rotate(${element.rotation}deg);
             ${borderRadius}
             z-index: ${exportZIndex};
@@ -4532,7 +4536,7 @@
             top: ${Math.round(element.y)}px;
             width: ${Math.round(element.width)}px;
             height: ${Math.round(element.height)}px;
-            opacity: ${element.opacity};
+            opacity: ${effectiveOpacity};
             transform: rotate(${element.rotation}deg);
             font-size: ${Math.round(element.fontSize)}px;
             font-family: ${element.fontFamily};
@@ -4588,8 +4592,7 @@
             opacity: 0;
             transform: rotate(${element.rotation}deg);
             z-index: ${exportZIndex};
-            user-select: none;
-            cursor: pointer;
+            pointer-events: none;
         "></div>`;
             } else if (element.type === 'shape') {
                 let borderRadius = '0';
@@ -4637,7 +4640,7 @@
             top: ${Math.round(element.y)}px;
             width: ${Math.round(element.width)}px;
             height: ${Math.round(element.height)}px;
-            opacity: ${element.opacity};
+            opacity: ${effectiveOpacity};
             transform: rotate(${element.rotation}deg);
             background-color: ${bgColor};
             border-radius: ${borderRadius};
@@ -4672,7 +4675,7 @@
             top: ${Math.round(element.y)}px;
             width: ${Math.round(element.width)}px;
             height: ${Math.round(element.height)}px;
-            opacity: ${element.opacity};
+            opacity: ${effectiveOpacity};
             transform: rotate(${element.rotation}deg);
             z-index: ${exportZIndex};
         "></ft-video>`;
