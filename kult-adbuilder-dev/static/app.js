@@ -3989,7 +3989,7 @@
         
         // Process individual element animations
         elements.forEach(element => {
-            element.animations.forEach(anim => {
+            (element.animations || []).forEach(anim => {
                 const types = anim.types || [anim.type]; // Support multi-animation
                 
                 // Merge props from all selected animation types
@@ -4411,6 +4411,7 @@
 
         rootItems.forEach(item => {
             if (item.kind === 'folder') {
+                if (item.data.visible === false) return;
                 const folderChildren = elements
                     .filter(el => el.folderId === item.data.id)
                     .sort((a, b) => (a.zIndex ?? 0) - (b.zIndex ?? 0));
@@ -4465,6 +4466,7 @@
         let imageCounter = 0;
         
         sortedElements.forEach((element, exportIndex) => {
+            if (element.visible === false) return;
             const exportZIndex = exportIndex;
             if (element.type === 'image') {
                 // Images in root folder (no subfolder)
@@ -4664,7 +4666,7 @@
                 const validTriggers = ['autoplay', 'mouseover', 'click'];
                 const playTrigger = validTriggers.includes(element.playTrigger) ? element.playTrigger : 'autoplay';
                 elementsHtml += `
-        <ft-video id="${element.videoName}" name="${element.videoName}"${autoplayAttr}${mutedAttr}${controlsAttr} data-play-trigger="${playTrigger}" style="
+        <ft-video id="${element.id}" name="${element.videoName}"${autoplayAttr}${mutedAttr}${controlsAttr} data-play-trigger="${playTrigger}" style="
             position: absolute;
             left: ${Math.round(element.x)}px;
             top: ${Math.round(element.y)}px;
@@ -4677,7 +4679,7 @@
             }
             
             // Generate animations
-            element.animations.forEach(anim => {
+            (element.animations || []).forEach(anim => {
                 const types = anim.types || [anim.type];
                 
                 // Merge props from all selected animation types
