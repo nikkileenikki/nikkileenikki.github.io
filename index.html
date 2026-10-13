@@ -17,6 +17,10 @@
 			<span>Width: </span><input type="number" id="r-width" class="ratioCalc" value="1920"/>
 			<span>Height: </span><input type="number" id="r-height" class="ratioCalc" value="1080"/>
 			<br><br>
+			<b>0.5x Dimension</b><br>
+			<span>Width: </span><input type="number" id="r05-width" class="ratioCalc" value="960"/>
+			<span>Height: </span><input type="number" id="r05-height" class="ratioCalc" value="540"/>
+			<br><br>
 			<b>1.5x Dimension</b><br>
 			<span>Width: </span><input type="number" id="r15-width" class="ratioCalc" value="2880"/>
 			<span>Height: </span><input type="number" id="r15-height" class="ratioCalc" value="1620"/>
@@ -652,6 +656,8 @@ function calcARC(){
 function calcRetina(){
 	var a = $( "#r-width" ).val();
 	var b = $( "#r-height" ).val();
+	document.getElementById("r05-width").value = a*0.5;
+	document.getElementById("r05-height").value = b*0.5;
 	document.getElementById("r15-width").value = a*1.5;
 	document.getElementById("r15-height").value = b*1.5;
 	document.getElementById("r20-width").value = a*2;
